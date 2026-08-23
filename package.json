@@ -1,0 +1,15 @@
+{
+  "name": "panaclaw-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "El cerebro de la marca PanaClaw y el hub de herramientas: la portada y el cotizador.",
+  "scripts": {
+    "instalar": "npm --prefix cotizador install",
+    "build": "node scripts/construir.mjs",
+    "pantalla": "npm --prefix cotizador run dev",
+    "test": "npm --prefix cotizador run test",
+    "tipos": "npm --prefix cotizador run tipos",
+    "verificar": "node herramientas/verificar.mjs"
+  }
+}

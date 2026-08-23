@@ -351,6 +351,80 @@ function huecos() {
 }
 
 /* ------------------------------------------------------------------ *
+ * El hub — la portada y el cotizador
+ *
+ * Desde que este repositorio publica algo, hay código de cara al cliente que
+ * también puede desincronizarse de `datos/marca.json`, y el código no se
+ * revisa leyéndolo: se revisa aquí.
+ *
+ * Se vigilan dos cosas y solo dos, que son las que se rompen solas:
+ *
+ *   · Ningún hex fuera de `datos/marca.json`. El día que alguien maquete un
+ *     estado de error con un rojo cualquiera o un «correcto» con un verde, el
+ *     acento único deja de ser único y nadie lo nota mirando la pantalla.
+ *   · El trazado del logo pegado en `index.html` sigue siendo el de
+ *     `marca.json`. Es una copia a propósito —esa página no se construye— y
+ *     una copia sin vigilancia es una divergencia esperando su turno.
+ *
+ * Los importes NO se vigilan aquí, y es deliberado: el cotizador no escribe
+ * ninguno. Los lee de `datos/precios.json` al arrancar, que es una garantía
+ * más fuerte que cualquier comprobación de texto, y sus propias pruebas
+ * (`npm test`) comprueban que lo que imprime coincide con lo declarado.
+ *
+ * ESCAPE EXPLÍCITO, igual que en los `.md`: una línea que termine en un
+ * comentario `v: motivo` queda exenta. Lo usa `cotizador/src/pdf/marca.ts`
+ * para los dos grises de papel, que no son de la paleta y están declarados.
+ * ------------------------------------------------------------------ */
+
+const ESCAPE_CODIGO = /(?:\/\*|\/\/)\s*v:\s*\S[^\n]*?(?:\*\/)?\s*$/;
+
+/** Lo que se publica: la portada y el código del cotizador. */
+const RUTAS_DEL_HUB = ['index.html', 'cotizador/src'];
+
+function archivosDelHub() {
+  const encontrados = [];
+  for (const relativa of RUTAS_DEL_HUB) {
+    const ruta = join(RAIZ, relativa);
+    if (!existsSync(ruta)) continue;
+    if (statSync(ruta).isDirectory()) {
+      for (const ext of ['.ts', '.tsx', '.css', '.html']) listar(ruta, ext, encontrados);
+    } else {
+      encontrados.push(ruta);
+    }
+  }
+  // Las pruebas quedan fuera: ahí un hex equivocado es justo lo que se está
+  // comprobando que no pase.
+  return encontrados.filter((ruta) => !/\.test\.[jt]sx?$/.test(ruta));
+}
+
+function reglaHub() {
+  const archivos = archivosDelHub();
+
+  for (const ruta of archivos) {
+    readFileSync(ruta, 'utf8')
+      .split('\n')
+      .forEach((contenido, i) => {
+        if (ESCAPE_CODIGO.test(contenido)) return;
+        for (const m of contenido.matchAll(/#[0-9a-fA-F]{6}\b/g)) {
+          if (hexValidos.has(m[0].toLowerCase())) continue;
+          error(rel(ruta), i + 1, `Color ${m[0]} no está en datos/marca.json`);
+        }
+      });
+  }
+
+  const portada = join(RAIZ, 'index.html');
+  if (existsSync(portada) && !readFileSync(portada, 'utf8').includes(marca.logo.pathSVG)) {
+    error(
+      'index.html',
+      0,
+      'El trazado del logo no coincide con datos/marca.json → logo.pathSVG. Cópialo de allí.',
+    );
+  }
+
+  return archivos.length;
+}
+
+/* ------------------------------------------------------------------ *
  * Ejecución
  * ------------------------------------------------------------------ */
 
@@ -359,6 +433,7 @@ reglaRangos();
 reglaJerga();
 reglaColor();
 reglaTipografia();
+const archivosDeCodigo = reglaHub();
 enlaces();
 huecos();
 
@@ -369,7 +444,10 @@ const pintar = (lista, icono) => {
 };
 
 console.log(`\nPanaClaw Workspace — verificación`);
-console.log(`${md.length} archivos .md · ${importesValidos.size} importes declarados · ${hexValidos.size} colores declarados\n`);
+console.log(
+  `${md.length} archivos .md · ${archivosDeCodigo} del hub · ` +
+    `${importesValidos.size} importes declarados · ${hexValidos.size} colores declarados\n`,
+);
 
 if (avisos.length) {
   console.log(`Avisos (${avisos.length}):`);
@@ -380,7 +458,7 @@ if (avisos.length) {
 if (errores.length) {
   console.log(`Errores (${errores.length}):`);
   pintar(errores, '✗');
-  console.log(`\n✗ La verificación falló. Corrige el .md, nunca los datos/*.json al revés.\n`);
+  console.log(`\n✗ La verificación falló. Corrige el archivo, nunca los datos/*.json al revés.\n`);
   process.exit(1);
 }
 

@@ -1,0 +1,196 @@
+@import 'tailwindcss';
+
+/* La única familia de la marca. Se sirve desde el propio paquete: sin llamadas
+   a Google Fonts, que en una herramienta interna solo añaden una dependencia
+   externa y un tercero mirando. */
+@import '@fontsource/archivo/300.css';
+@import '@fontsource/archivo/400.css';
+@import '@fontsource/archivo/500.css';
+@import '@fontsource/archivo/600.css';
+@import '@fontsource/archivo/700.css';
+
+/* ------------------------------------------------------------------
+   Los tokens de datos/marca.json.
+
+   Son los seis hex de `color.tokens` y las medidas de `forma`, y no hay más:
+   ni un azul, ni un verde de «correcto», ni un ámbar de «cuidado». Cuando algo
+   necesita gritar, grita en ember (que es fondo, nunca texto) o en naranja.
+   ------------------------------------------------------------------ */
+@theme {
+  --color-negro: #100101;
+  --color-naranja: #ff5100;
+  --color-ember: #ff1e1e;
+  --color-blanco: #fff7f7;
+  --color-gris: #bababa;
+
+  --radius-campo: 12px;
+  --radius-tarjeta: 20px;
+  --radius-pastilla: 999px;
+
+  --font-sans:
+    'Archivo', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background-color: var(--color-negro);
+    /* Los halos son de ember y de naranja muy diluidos: es el fondo del sitio,
+       traído a la herramienta. Se componen desde los tokens, no de unos `rgb()`
+       copiados a mano que el día que cambie la paleta se quedarían atrás.
+       Fijos, para que no se muevan al bajar. */
+    background-image:
+      radial-gradient(
+        60rem 32rem at 12% -12%,
+        color-mix(in srgb, var(--color-ember) 16%, transparent),
+        transparent 68%
+      ),
+      radial-gradient(
+        52rem 30rem at 96% 4%,
+        color-mix(in srgb, var(--color-naranja) 12%, transparent),
+        transparent 70%
+      );
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    color: var(--color-blanco);
+    font-family: var(--font-sans);
+    font-weight: 300;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3 {
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  /* El foco se ve siempre y es naranja: es el acento de la marca haciendo
+     trabajo de accesibilidad, no un extra. */
+  :focus-visible {
+    outline: 2px solid var(--color-naranja);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: var(--color-naranja);
+    color: var(--color-blanco);
+  }
+}
+
+@layer components {
+  /* La tarjeta de PanaClaw: un rectángulo de vidrio apenas más claro que el
+     fondo, nunca una caja blanca. */
+  .tarjeta {
+    border-radius: var(--radius-tarjeta);
+    border: 1px solid rgb(255 255 255 / 0.1);
+    background: rgb(255 255 255 / 0.02);
+    box-shadow: 0 14px 48px rgb(0 0 0 / 0.55);
+  }
+
+  .cristal {
+    backdrop-filter: blur(26px) saturate(150%);
+    -webkit-backdrop-filter: blur(26px) saturate(150%);
+    background: rgb(9 1 1 / 0.88);
+  }
+
+  /* El antetítulo naranja sobre negro: la firma tipográfica más reconocible
+     de la marca. */
+  .antetitulo {
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--color-naranja);
+  }
+
+  .campo {
+    width: 100%;
+    border-radius: var(--radius-campo);
+    border: 1px solid rgb(255 255 255 / 0.12);
+    background: rgb(255 255 255 / 0.03);
+    padding: 0.55rem 0.8rem;
+    font-size: 0.9375rem;
+    font-weight: 400;
+    color: var(--color-blanco);
+  }
+
+  .campo::placeholder {
+    color: rgb(186 186 186 / 0.5);
+  }
+
+  .campo:hover {
+    border-color: rgb(255 255 255 / 0.2);
+  }
+
+  .etiqueta {
+    display: block;
+    margin-bottom: 0.3rem;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-gris);
+  }
+
+  .boton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    border-radius: var(--radius-pastilla);
+    padding: 0.5rem 1.05rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    white-space: nowrap;
+    transition: filter 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .boton:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .boton-primario {
+    background: var(--color-naranja);
+    color: var(--color-blanco);
+    font-weight: 600;
+  }
+
+  .boton-primario:not(:disabled):hover {
+    filter: brightness(1.12);
+  }
+
+  .boton-secundario {
+    border: 1px solid rgb(255 255 255 / 0.16);
+    background: rgb(255 255 255 / 0.03);
+    color: var(--color-blanco);
+  }
+
+  .boton-secundario:not(:disabled):hover {
+    border-color: rgb(255 255 255 / 0.32);
+    background: rgb(255 255 255 / 0.07);
+  }
+
+  .boton-fantasma {
+    color: var(--color-gris);
+  }
+
+  .boton-fantasma:not(:disabled):hover {
+    color: var(--color-blanco);
+  }
+
+  /* El punto naranja de 8 px como marcador de lista. Nunca un check verde,
+     nunca un guion. */
+  .vineta {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    flex: none;
+    border-radius: 999px;
+    background: var(--color-naranja);
+  }
+}

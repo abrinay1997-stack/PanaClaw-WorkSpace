@@ -1,0 +1,709 @@
+<!doctype html>
+<html lang="es-PA">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Herramientas · PanaClaw</title>
+    <meta
+      name="description"
+      content="Punto de entrada a las herramientas de PanaClaw: la página web, el cotizador y el CRM."
+    />
+    <!-- Interna. No la busca nadie desde fuera y no debería encontrarse. -->
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#100101" />
+    <link rel="icon" href="hub/assets/icono.svg" />
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      href="hub/assets/fuentes/archivo-latin-600-normal.woff2"
+      crossorigin
+    />
+
+    <style>
+      /* ------------------------------------------------------------------
+         ARCHIVO, servida desde aquí mismo.
+
+         `datos/marca.json` declara Archivo como única familia de la marca y
+         prohíbe cualquier otra. Sin estas cuatro declaraciones la página caía
+         en la Arial del sistema, que es exactamente la familia que el
+         verificador vigila para que no se cuele en una pieza.
+
+         Los archivos van dentro del repositorio y no se piden a Google: una
+         herramienta interna no debería avisar a un tercero cada vez que
+         alguien la abre, y así sigue funcionando sin red. Son 57 KB, los
+         cuatro pesos que esta página usa, bajo licencia SIL Open Font
+         (`hub/assets/fuentes/LICENSE`).
+         ------------------------------------------------------------------ */
+      @font-face {
+        font-family: 'Archivo';
+        font-style: normal;
+        font-weight: 300;
+        font-display: swap;
+        src: url('hub/assets/fuentes/archivo-latin-300-normal.woff2') format('woff2');
+      }
+      @font-face {
+        font-family: 'Archivo';
+        font-style: normal;
+        font-weight: 400;
+        font-display: swap;
+        src: url('hub/assets/fuentes/archivo-latin-400-normal.woff2') format('woff2');
+      }
+      @font-face {
+        font-family: 'Archivo';
+        font-style: normal;
+        font-weight: 600;
+        font-display: swap;
+        src: url('hub/assets/fuentes/archivo-latin-600-normal.woff2') format('woff2');
+      }
+      @font-face {
+        font-family: 'Archivo';
+        font-style: normal;
+        font-weight: 700;
+        font-display: swap;
+        src: url('hub/assets/fuentes/archivo-latin-700-normal.woff2') format('woff2');
+      }
+
+      /* ------------------------------------------------------------------
+         LOS TOKENS DE LA MARCA
+
+         Son los cinco hex de `datos/marca.json` → `color.tokens` que esta
+         página usa, y no hay más: ni un azul, ni un verde de «correcto», ni un
+         ámbar de «cuidado». El ember es fondo y jamás toca un texto.
+
+         `node herramientas/verificar.mjs` comprueba que ningún hex de este
+         archivo esté fuera de `datos/marca.json`, así que inventarse un color
+         aquí rompe la verificación.
+
+         Esta página NO se construye. Es HTML con los estilos dentro y sin
+         dependencias, y esa propiedad —abrirla con doble clic y verla igual
+         que publicada— vale más que meterla en un empaquetador para no ganar
+         nada.
+         ------------------------------------------------------------------ */
+      :root {
+        --negro: #100101;
+        --naranja: #ff5100;
+        --ember: #ff1e1e;
+        --blanco: #fff7f7;
+        --gris: #bababa;
+
+        --borde: rgb(255 255 255 / 0.1);
+        --borde-fuerte: rgb(255 255 255 / 0.26);
+        --vidrio: rgb(255 255 255 / 0.02);
+        --vidrio-alto: rgb(255 255 255 / 0.05);
+        --sombra: 0 14px 48px rgb(0 0 0 / 0.55);
+
+        --fuente:
+          'Archivo', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+          sans-serif;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        font-family: var(--fuente);
+        font-weight: 300;
+        color: var(--blanco);
+        background-color: var(--negro);
+        /* Ember y naranja muy diluidos: es el fondo del sitio traído aquí.
+           Se componen desde los tokens con `color-mix` en vez de escribir unos
+           `rgb()` a mano, que el día que cambie la paleta se quedarían atrás
+           sin que nadie los mirara. Fijo, para que no se mueva al bajar. */
+        background-image:
+          radial-gradient(
+            64rem 34rem at 10% -14%,
+            color-mix(in srgb, var(--ember) 18%, transparent),
+            transparent 68%
+          ),
+          radial-gradient(
+            54rem 32rem at 96% 2%,
+            color-mix(in srgb, var(--naranja) 14%, transparent),
+            transparent 70%
+          );
+        background-attachment: fixed;
+        background-repeat: no-repeat;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      a {
+        color: inherit;
+      }
+
+      :focus-visible {
+        outline: 2px solid var(--naranja);
+        outline-offset: 3px;
+      }
+
+      ::selection {
+        background: var(--naranja);
+        color: var(--blanco);
+      }
+
+      .solo-lectores {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      /* Cabecera --------------------------------------------------------- */
+
+      .cabecera {
+        width: 100%;
+        max-width: 68rem;
+        margin: 0 auto;
+        padding: 1.5rem 1.25rem 0;
+      }
+
+      .pastilla {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.7rem 1.25rem;
+        border: 1px solid var(--borde);
+        border-radius: 999px;
+        background: rgb(9 1 1 / 0.88);
+        backdrop-filter: blur(26px) saturate(150%);
+        -webkit-backdrop-filter: blur(26px) saturate(150%);
+        box-shadow: var(--sombra);
+      }
+
+      .marca {
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+      }
+
+      /* El símbolo NO es cuadrado —100 × 81.56— y deformarlo está en la lista
+         de usos prohibidos. Por eso lleva el alto fijado y el ancho
+         automático, nunca al revés. */
+      .simbolo {
+        display: block;
+        height: 1.4rem;
+        width: auto;
+        color: var(--naranja);
+      }
+
+      /* PANACLAW en versalitas muy espaciadas seguido de un punto naranja,
+         tal como lo declara `datos/marca.json` → `logo.wordmark`. */
+      .wordmark {
+        font-size: 0.9375rem;
+        font-weight: 700;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+      }
+
+      .wordmark span {
+        color: var(--naranja);
+      }
+
+      .pastilla-nota {
+        font-size: 0.75rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--gris);
+      }
+
+      @media (max-width: 32rem) {
+        .pastilla-nota {
+          display: none;
+        }
+      }
+
+      /* Presentación ----------------------------------------------------- */
+
+      main {
+        flex: 1;
+        width: 100%;
+        max-width: 68rem;
+        margin: 0 auto;
+        padding: 3.5rem 1.25rem 4rem;
+      }
+
+      .intro {
+        margin-bottom: 3rem;
+      }
+
+      .antetitulo {
+        margin: 0 0 1rem;
+        font-size: 0.8125rem;
+        font-weight: 400;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--naranja);
+      }
+
+      .intro h1 {
+        margin: 0 0 1rem;
+        max-width: 20ch;
+        font-size: clamp(2.25rem, 6vw, 3.75rem);
+        font-weight: 600;
+        line-height: 1;
+        letter-spacing: -0.02em;
+        text-transform: uppercase;
+      }
+
+      .intro h1 em {
+        font-style: normal;
+        color: var(--naranja);
+      }
+
+      .intro p {
+        margin: 0;
+        max-width: 52ch;
+        font-size: 1.0625rem;
+        line-height: 1.6;
+        color: var(--gris);
+      }
+
+      /* Tarjetas --------------------------------------------------------- */
+
+      .herramientas {
+        display: grid;
+        gap: 1.25rem;
+        grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      /* La tarjeta de PanaClaw: un rectángulo de vidrio apenas más claro que
+         el fondo, nunca una caja blanca. */
+      .tarjeta {
+        position: relative;
+        isolation: isolate;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        padding: 1.6rem;
+        border: 1px solid var(--borde);
+        border-radius: 20px;
+        background: var(--vidrio);
+        box-shadow: var(--sombra);
+        text-decoration: none;
+        overflow: hidden;
+        transition:
+          transform 0.2s ease,
+          border-color 0.2s ease,
+          background-color 0.2s ease;
+      }
+
+      /* Un velo naranja que se enciende al pasar el cursor. Vive en un
+         pseudo-elemento para no tocar el fondo real de la tarjeta. */
+      .tarjeta::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        background: radial-gradient(
+          26rem 13rem at 18% 0%,
+          color-mix(in srgb, var(--naranja) 18%, transparent),
+          transparent 70%
+        );
+        opacity: 0;
+        transition: opacity 0.24s ease;
+      }
+
+      .tarjeta:hover::before,
+      .tarjeta:focus-visible::before {
+        opacity: 1;
+      }
+
+      .tarjeta:hover,
+      .tarjeta:focus-visible {
+        transform: translateY(-4px);
+        border-color: var(--borde-fuerte);
+        background: var(--vidrio-alto);
+      }
+
+      .tarjeta:active {
+        transform: translateY(-1px);
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .tarjeta,
+        .tarjeta::before,
+        .ir svg {
+          transition: none;
+        }
+        .tarjeta:hover,
+        .tarjeta:focus-visible,
+        .tarjeta:active {
+          transform: none;
+        }
+      }
+
+      .tarjeta-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin-bottom: 1.4rem;
+      }
+
+      .icono {
+        display: grid;
+        place-items: center;
+        width: 2.75rem;
+        height: 2.75rem;
+        border-radius: 14px;
+        border: 1px solid color-mix(in srgb, var(--naranja) 24%, transparent);
+        background: color-mix(in srgb, var(--naranja) 10%, transparent);
+        color: var(--naranja);
+      }
+
+      .icono svg {
+        width: 1.35rem;
+        height: 1.35rem;
+      }
+
+      /* Dice de un vistazo si la herramienta vive aquí o se abre fuera. */
+      .etiqueta {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.3rem 0.65rem;
+        border: 1px solid var(--borde);
+        border-radius: 999px;
+        background: rgb(255 255 255 / 0.04);
+        color: var(--gris);
+        font-size: 0.625rem;
+        font-weight: 500;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      .etiqueta svg {
+        width: 0.7rem;
+        height: 0.7rem;
+      }
+
+      .tarjeta h2 {
+        margin: 0 0 0.5rem;
+        font-size: 1.1875rem;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+
+      .tarjeta p {
+        margin: 0 0 1.5rem;
+        font-size: 0.9375rem;
+        line-height: 1.6;
+        color: var(--gris);
+      }
+
+      /* No es un <button> de verdad: la tarjeta entera ya es el enlace, así
+         que esto es solo la parte que se ve como botón. `margin-top: auto` los
+         alinea abajo aunque las descripciones tengan distinto largo. */
+      .ir {
+        margin-top: auto;
+        align-self: flex-start;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.55rem 1.1rem;
+        border-radius: 999px;
+        background: var(--naranja);
+        color: var(--blanco);
+        font-size: 0.875rem;
+        font-weight: 600;
+      }
+
+      .ir svg {
+        width: 0.95rem;
+        height: 0.95rem;
+        transition: transform 0.2s ease;
+      }
+
+      .tarjeta:hover .ir svg,
+      .tarjeta:focus-visible .ir svg {
+        transform: translateX(3px);
+      }
+
+      /* Pie -------------------------------------------------------------- */
+
+      footer {
+        border-top: 1px solid var(--borde);
+        padding: 1.75rem 1.25rem;
+      }
+
+      .pie-contenido {
+        max-width: 68rem;
+        margin: 0 auto;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        font-size: 0.8125rem;
+        color: var(--gris);
+      }
+
+      .pie-contenido a {
+        text-decoration: underline;
+        text-decoration-color: var(--borde-fuerte);
+        text-underline-offset: 3px;
+      }
+
+      .pie-contenido a:hover {
+        color: var(--naranja);
+      }
+    </style>
+  </head>
+
+  <body>
+    <header class="cabecera">
+      <div class="pastilla">
+        <span class="marca">
+          <!-- El símbolo de la marca, trazado. Es el mismo `logo.pathSVG` de
+               `datos/marca.json`, pegado aquí para que esta página siga sin
+               dependencias ni paso de construcción. Si cambia allí,
+               `herramientas/verificar.mjs` avisa de que aquí quedó el viejo. -->
+          <svg class="simbolo" viewBox="0 0 100 81.56" fill="currentColor" aria-hidden="true">
+            <path
+              fill-rule="evenodd"
+              d="M73.43 28.64L54.69 50.19L42.73 77.94L67.38 50.63L67.45 47.83L68.19 44.36Z M81.03 21.85L73.95 28.93L85.68 40.52L67.9 58.38L75.2 65.76L100 40.52Z M74.61 15.5L74.39 15.5L73.8 16.09L73.65 16.39L73.28 16.61L72.69 17.2L72.62 17.42L67.6 22.44L67.6 22.59L72.1 27.01L72.25 27.01L79.19 20.08Z M25.17 15.35L0 40.3L25.39 65.32L32.32 58.16L14.32 40.37L32.18 22.36Z M59.26 1.77L32.69 28.79L32.62 31.52L31.59 36.31L26.64 51.74L45.68 29.75L50.41 19.41Z M75.94 0.15L52.18 27.24L50.85 31L41.62 43.62L23.91 81.56L48.12 52.55L49.89 47.98L59.04 35.65Z"
+            />
+          </svg>
+          <span class="wordmark">PanaClaw<span>.</span></span>
+        </span>
+        <span class="pastilla-nota">Herramientas</span>
+      </div>
+    </header>
+
+    <main>
+      <div class="intro">
+        <p class="antetitulo">Uso interno</p>
+        <h1>Todo lo de <em>PanaClaw</em>, en una puerta.</h1>
+        <p>
+          La página que ve el cliente, el cotizador que arma su propuesta y el panel donde caen sus
+          mensajes. Elige y te lleva directo.
+        </p>
+      </div>
+
+      <!-- ====================================================================
+           LAS HERRAMIENTAS
+
+           Cada una es un <li> con su <a class="tarjeta">. Para añadir otra:
+           copia un bloque entero y cambia el `href`, el título, la
+           descripción, la etiqueta y el icono. La rejilla se reacomoda sola.
+
+           La etiqueta de arriba a la derecha dice si la herramienta vive aquí
+           («En el hub») o si se abre fuera («Pestaña nueva»). Si cambias un
+           `href` de interno a externo —o al revés—, cámbiale también la
+           etiqueta, el `target` y el texto para lectores de pantalla.
+
+           El cotizador es el único SIN enlace externo: vive en este mismo
+           repositorio y se sirve desde este mismo dominio, en `/cotizador/`.
+           ==================================================================== -->
+      <ul class="herramientas">
+        <li>
+          <a class="tarjeta" href="https://panaclaw.com" target="_blank" rel="noopener noreferrer">
+            <span class="tarjeta-top">
+              <span class="icono" aria-hidden="true">
+                <!-- Globo -->
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.75"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M3 12h18" />
+                  <path d="M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18Z" />
+                </svg>
+              </span>
+              <span class="etiqueta">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.25"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M14 4h6v6" />
+                  <path d="M20 4 10 14" />
+                  <path d="M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4" />
+                </svg>
+                Pestaña nueva
+              </span>
+            </span>
+            <h2>Página web</h2>
+            <p>
+              El sitio público: planes, precios, eBot, seguridad y el cotizador que el cliente usa
+              por su cuenta.
+            </p>
+            <span class="ir">
+              Abrir
+              <span class="solo-lectores">la página web, en una pestaña nueva</span>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M5 12h14" />
+                <path d="m12 5 7 7-7 7" />
+              </svg>
+            </span>
+          </a>
+        </li>
+
+        <li>
+          <a class="tarjeta" href="./cotizador/">
+            <span class="tarjeta-top">
+              <span class="icono" aria-hidden="true">
+                <!-- Documento con cálculo -->
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.75"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z" />
+                  <path d="M14 3v5h5" />
+                  <path d="M9 13h6" />
+                  <path d="M9 17h4" />
+                </svg>
+              </span>
+              <span class="etiqueta">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.25"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M3 10.5 12 4l9 6.5" />
+                  <path d="M5 10v9h14v-9" />
+                </svg>
+                En el hub
+              </span>
+            </span>
+            <h2>Cotizador</h2>
+            <p>
+              Arma la propuesta desde el listado de precios, saca el PDF y el mensaje de WhatsApp, y
+              guarda lo emitido.
+            </p>
+            <span class="ir">
+              Abrir
+              <span class="solo-lectores">el cotizador</span>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M5 12h14" />
+                <path d="m12 5 7 7-7 7" />
+              </svg>
+            </span>
+          </a>
+        </li>
+
+        <li>
+          <a
+            class="tarjeta"
+            href="https://panaclaw-oficial.abrinay1997.workers.dev/admin/overview"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <span class="tarjeta-top">
+              <span class="icono" aria-hidden="true">
+                <!-- Conversación -->
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.75"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M8 14H6a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3h7a3 3 0 0 1 3 3v1" />
+                  <path
+                    d="M11 20h5l4 3v-3a3 3 0 0 0 3-3v-4a3 3 0 0 0-3-3h-9a3 3 0 0 0-3 3v4a3 3 0 0 0 3 3Z"
+                  />
+                </svg>
+              </span>
+              <span class="etiqueta">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.25"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M14 4h6v6" />
+                  <path d="M20 4 10 14" />
+                  <path d="M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4" />
+                </svg>
+                Pestaña nueva
+              </span>
+            </span>
+            <h2>CRM</h2>
+            <p>
+              El panel de eBot: conversaciones de WhatsApp, Instagram, Messenger y Telegram, y los
+              clientes que dejaron sus datos.
+            </p>
+            <span class="ir">
+              Abrir
+              <span class="solo-lectores">el CRM, en una pestaña nueva</span>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M5 12h14" />
+                <path d="m12 5 7 7-7 7" />
+              </svg>
+            </span>
+          </a>
+        </li>
+      </ul>
+    </main>
+
+    <footer>
+      <div class="pie-contenido">
+        <span>PanaClaw · Panamá · Sitios rápidos. Código tuyo.</span>
+        <a href="https://panaclaw.com" target="_blank" rel="noopener noreferrer"
+          >Ir a panaclaw.com</a
+        >
+      </div>
+    </footer>
+  </body>
+</html>

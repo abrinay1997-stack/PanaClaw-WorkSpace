@@ -2,11 +2,16 @@
 
 El cerebro de la marca **PanaClaw**, agencia de sitios web en Panamá.
 
-No es un proyecto de software: no se compila, no se despliega y no tiene
-interfaz. Es una base de conocimiento pensada para que **cualquier agente de IA**
-—Claude, Grok, Gemini, Pomelli, Canva— entre, entienda la marca en una sola
+Es sobre todo una base de conocimiento, pensada para que **cualquier agente de
+IA** —Claude, Grok, Gemini, Pomelli, Canva— entre, entienda la marca en una sola
 lectura y devuelva un entregable que suene, se vea y cobre exactamente como
 PanaClaw.
+
+Y desde agosto de 2026 es también **el hub de herramientas del equipo**: una
+portada con acceso a la página web, al cotizador y al CRM, publicada en Netlify.
+El cotizador vive aquí y no en el repositorio del sitio por una razón concreta
+—lee `datos/precios.json` directamente, así que no puede cotizar un precio que
+la marca no publique—. Está explicado abajo.
 
 > **Si eres un agente, empieza por [`CLAUDE.md`](CLAUDE.md).** Trae las reglas
 > duras y la tabla que te manda al resto según lo que te hayan pedido.
@@ -129,7 +134,70 @@ skills/           Procedimientos empaquetados para agentes
 orquestador/      Reglas duras, enrutador y protocolo de entrega
 herramientas/     verificar.mjs
 operacion/        Sincronización con el sitio y deuda conocida
+
+── lo único que se publica ──────────────────────────────────────
+
+index.html        La portada del hub. Sin construir, sin dependencias.
+hub/assets/       Su icono y la tipografía de la marca
+cotizador/        La herramienta. Lee datos/precios.json de aquí arriba.
+scripts/          construir.mjs — arma publico/
+netlify.toml      Cómo lo publica Netlify
 ```
+
+---
+
+## El hub de herramientas
+
+Lo único de este repositorio que sale a la web. Todo lo demás —`datos/`, `adn/`,
+`catalogo/`, `prompts/`— se queda dentro.
+
+```
+/                 la portada, con las tres tarjetas
+/cotizador/       el cotizador y su historial
+```
+
+| Herramienta | Dónde vive |
+| --- | --- |
+| **Portada** | Aquí: `index.html` |
+| **Cotizador** | Aquí: [`cotizador/`](cotizador/) |
+| **Página web** | Fuera: `abrinay1997-stack/PanaClaw` → panaclaw.com |
+| **CRM · eBot** | Fuera: su propio servidor |
+
+### Por qué el cotizador está aquí
+
+Porque **importa `datos/precios.json` de la raíz**, sin copia y sin archivo
+generado. La regla 1 de la marca —ninguna cifra que no esté en `precios.json`—
+deja de depender de que alguien se acuerde: un precio que cambia allí cambia en
+la pantalla, en el PDF y en el mensaje de WhatsApp a la vez.
+
+Lo demás que hace, y las dos reglas de marca que lleva escritas en el sistema de
+tipos, está en [`cotizador/README.md`](cotizador/README.md).
+
+### Ponerlo en marcha
+
+```bash
+npm run instalar    # dependencias del cotizador
+npm test            # las reglas de precio, el PDF y el mensaje
+npm run pantalla    # la pantalla con recarga en caliente, en :5173
+npm run build       # verifica, prueba y deja el sitio en publico/
+```
+
+La portada **no se construye**: es un `index.html` con los estilos dentro y sin
+dependencias. Abrirla con doble clic y verla igual que publicada vale más que
+meterla en un empaquetador para no ganar nada.
+
+### Publicar
+
+Netlify, con [`netlify.toml`](netlify.toml) ya escrito. Al conectar el
+repositorio, la única decisión que queda por tomar a mano es la puerta: el hub
+es interno, así que hay que encender la protección por contraseña de Netlify
+(Site configuration → Access control → Password protection). Sin eso, el
+historial de propuestas —con nombres y teléfonos de clientes— queda a la vista
+de quien dé con la dirección.
+
+El sitio se sirve en su propio subdominio de `panaclaw.com`, no en la raíz: ahí
+vive la página pública. La portada lleva `noindex` en el HTML y en las cabeceras
+del servidor.
 
 ---
 
@@ -140,8 +208,9 @@ node herramientas/verificar.mjs
 ```
 
 Sin dependencias. Vigila que ninguna cifra se haya salido de `precios.json`,
-ningún hex de `marca.json`, que no se cuele jerga y que no haya enlaces rotos.
-Detalles en [`herramientas/README.md`](herramientas/README.md).
+ningún hex de `marca.json` —también en el código del hub—, que no se cuele jerga
+y que no haya enlaces rotos. Detalles en
+[`herramientas/README.md`](herramientas/README.md).
 
 ---
 
@@ -183,3 +252,6 @@ bloqueaba el flujo de Pomelli. Ya dice `PANACLAW.`
 - **No es un histórico.** Lo que deja de ser cierto se borra. El historial de git
   ya guarda lo viejo.
 - **No es documentación del código del sitio.** Eso está en el otro repositorio.
+- **No es el sitio.** El hub que se publica desde aquí es interno y para el
+  equipo. Lo que ve un cliente vive en `abrinay1997-stack/PanaClaw`, y desde
+  aquí no se edita.

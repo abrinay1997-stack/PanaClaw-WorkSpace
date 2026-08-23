@@ -211,6 +211,31 @@ trabajo de código; es una reescritura de contenido y se hace con
 
 ---
 
+## 9 · El hub se publica sin puerta hasta que alguien la ponga `[$]`
+
+**Qué pasa.** El hub —la portada y el cotizador— sale a Netlify en cuanto se
+conecta el repositorio, y Netlify no pide contraseña por defecto. La portada
+lleva `noindex` en el HTML y en las cabeceras, así que no la va a encontrar un
+buscador, pero cualquiera que dé con la dirección entra.
+
+**Qué se ve si entra.** Los precios no son el problema: PanaClaw los publica en
+su web a propósito. Lo delicado es el **historial de propuestas**, que guarda
+nombre del negocio, contacto y teléfono de cada cliente al que se le ha cotizado.
+
+**Cómo se cierra.** En Netlify: Site configuration → Access control → Password
+protection. Es función del plan de pago, y esa es la razón por la que no está
+puesta ya.
+
+**Mientras tanto.** El historial vive en el navegador de cada persona, no en un
+servidor, así que quien entre sin permiso ve la herramienta vacía: los datos de
+clientes no viajan a ningún sitio. Lo que hay que evitar es repartir la
+dirección.
+
+**Bloquea:** que el equipo empiece a usar el cotizador con clientes reales desde
+más de un equipo.
+
+---
+
 ## Cómo se usa este documento
 
 Cualquier agente que vaya a producir una campaña, conectar una herramienta

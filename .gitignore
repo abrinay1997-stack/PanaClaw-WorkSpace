@@ -1,3 +1,7 @@
 node_modules/
+publico/
+dist/
+muestras/
 .DS_Store
 *.log
+.netlify/

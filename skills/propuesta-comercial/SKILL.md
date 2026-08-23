@@ -7,6 +7,16 @@ compromiso: lo que diga se va a tener que cumplir.
 
 ---
 
+> **Hay una herramienta que hace esto.** El cotizador del hub
+> ([`cotizador/`](../../cotizador/)) ejecuta este procedimiento entero: lee
+> `datos/precios.json`, separa los dos totales, arma el «qué NO incluye» solo y
+> saca el PDF y el mensaje de WhatsApp. Si lo que hace falta es un documento
+> para mandar, se usa esa. Esta skill es para cuando hace falta razonar la
+> propuesta —qué plan, por qué, qué queda fuera— o entregarla dentro de una
+> conversación.
+
+---
+
 ## 1 · Cuándo se usa
 
 **Se dispara con:**

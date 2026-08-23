@@ -1,10 +1,14 @@
 # PanaClaw Workspace — Orquestador
 
-Este repositorio es **el cerebro de la marca PanaClaw**, no un proyecto de
-software. No se compila, no se despliega y no tiene interfaz. Existe para que
+Este repositorio es **el cerebro de la marca PanaClaw**. Existe para que
 cualquier agente de IA —Claude, Grok, Gemini, Pomelli, el que sea— pueda entrar,
 entender la marca en una sola lectura y devolver un entregable que suene, se vea
 y cobre exactamente como PanaClaw.
+
+Desde agosto de 2026 publica además **el hub de herramientas del equipo**: la
+portada (`index.html`) y el cotizador (`cotizador/`). Es la única parte que se
+compila y se despliega; el resto sigue siendo conocimiento y no se toca al
+construir. Si vas a tocar el hub, lee antes la sección 7.
 
 **Si eres un agente y solo vas a leer un archivo, lee este.** Al final hay una
 tabla que te manda al resto según lo que te haya pedido el humano.
@@ -60,6 +64,14 @@ skills/         Procedimientos empaquetados para agentes.
 orquestador/    Reglas duras, enrutador y protocolo de entrega.
 herramientas/   verificar.mjs — comprueba que nada de esto se haya desincronizado.
 operacion/      Cómo se mantiene vivo este repositorio.
+
+── lo único que se publica ─────────────────────────────────────
+
+index.html      Portada del hub. Sin construir y sin dependencias.
+hub/assets/     Su icono y la tipografía de la marca.
+cotizador/      La herramienta. IMPORTA datos/precios.json de aquí arriba.
+scripts/        construir.mjs — verifica, prueba y arma publico/.
+netlify.toml    Cómo lo publica Netlify.
 ```
 
 **La jerarquía de autoridad, cuando dos archivos se contradigan:**
@@ -98,7 +110,7 @@ según la petición:
 | Prompts para Grok, GPT u otro modelo ajeno | `prompts/plataformas/grok.md` |
 | Que Meta AI monte el HTML del mes | `prompts/plataformas/meta-ai.md` |
 | Diseños en Canva | `prompts/plataformas/canva.md` |
-| Precios, cotizar, armar una propuesta | `datos/precios.json` → `catalogo/` → `skills/propuesta-comercial/SKILL.md` |
+| Precios, cotizar, armar una propuesta | `datos/precios.json` → `catalogo/` → `skills/propuesta-comercial/SKILL.md` (y existe el cotizador del hub, que la ejecuta entera) |
 | Explicar un producto, comparar planes | `catalogo/` del producto + `catalogo/08-fronteras.md` |
 | Copy de web, correo, WhatsApp, orgánico | la base de arriba + `prompts/texto/organico.md` |
 | Revisar por qué una pieza no se entiende, o no suena a la marca | `adn/06-claridad.md` — las tres alturas y el traductor |
@@ -106,6 +118,7 @@ según la petición:
 | Responder una objeción de un cliente | `adn/04-audiencia.md` (las objeciones están catalogadas ahí) |
 | Crear una skill nueva | `skills/README.md` + `skills/_plantilla/SKILL.md` |
 | Saber si el repo está al día | `operacion/sincronizacion.md` + `node herramientas/verificar.mjs` |
+| **Tocar el hub o el cotizador** | la sección 7 de aquí abajo + `cotizador/README.md` |
 
 ---
 
@@ -143,7 +156,35 @@ realidad está mal en el sitio. Si encuentras una contradicción, la reportas.
 
 ---
 
-## 7. Lo que este repositorio NO es
+## 7. Si vas a tocar el hub
+
+El hub es la portada más el cotizador, y son la única parte de este repositorio
+que se ejecuta. Cuatro cosas que hay que saber antes:
+
+1. **El cotizador no contiene ni una cifra.** Importa
+   [`datos/precios.json`](datos/precios.json) de la raíz y compone el catálogo
+   con lo que encuentre. Si necesitas un precio nuevo, se añade allí. Nunca se
+   escribe un importe en el código.
+2. **`Totales` no tiene un campo `total`, y es a propósito.** Es la regla 2
+   escrita en el sistema de tipos: mientras no exista dónde guardar la suma de
+   un pago único y uno mensual, ninguna pantalla puede enseñarla por descuido.
+   No lo añadas.
+3. **La prosa del documento son citas literales de `catalogo/`**, recogidas en
+   `cotizador/src/datos/textos.ts` con el archivo de origen anotado encima. No
+   se redacta ahí: si el texto tiene que cambiar, cambia en `catalogo/` y se
+   copia.
+4. **`node herramientas/verificar.mjs` también vigila el código del hub**:
+   ningún hex fuera de `datos/marca.json` y el trazado del logo de `index.html`
+   igual al de `marca.json`. Y `npm test` comprueba que todo importe que el
+   cotizador puede imprimir esté literal en `precios.json`.
+
+El resto —qué revisa antes de emitir, por qué el «qué NO incluye» va antes del
+precio, y por qué el historial vive en el navegador— está en
+[`cotizador/README.md`](cotizador/README.md).
+
+---
+
+## 8. Lo que este repositorio NO es
 
 - **No es un almacén de guiones escritos.** No hay copys finales guardados
   esperando a ser reutilizados. Hay estructuras: el copy se genera cada vez,
@@ -152,3 +193,6 @@ realidad está mal en el sitio. Si encuentras una contradicción, la reportas.
   historial de git ya guarda lo viejo.
 - **No es documentación del código del sitio.** Eso está en el otro repositorio,
   en `docs/`.
+- **No es el sitio.** El hub que se publica desde aquí es interno, para el
+  equipo y con contraseña. Lo que ve un cliente vive en
+  `abrinay1997-stack/PanaClaw` y desde aquí no se edita.
