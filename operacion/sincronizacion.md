@@ -76,6 +76,40 @@ contradicción, se reporta — y se anota en
 | `src/content.config.ts` (schema de `blog`) | El contrato técnico de [`prompts/texto/blog.md`](../prompts/texto/blog.md) — rangos de caracteres y el enum de `category` |
 | `src/content/blog/*.md` | Los temas ya publicados. `skills/blog-seo/SKILL.md` los lee antes de proponer uno nuevo — no viven espejados aquí, se consultan en vivo |
 
+### El hub → `cotizador/`
+
+El cotizador **no** copia nada de `datos/`: importa
+[`datos/precios.json`](../datos/precios.json) directamente, así que los precios
+no hay que sincronizarlos con él. Lo que sí puede desincronizarse es la prosa,
+porque esa sí está escrita dentro:
+
+| Aquí | Se copia a | Qué es |
+|---|---|---|
+| `catalogo/02-capacidades.md` → «Las seis» | `cotizador/src/datos/textos.ts` → `QUE_CONSIGUE` | Qué consigue el cliente con cada capacidad |
+| `catalogo/07-condiciones.md` → «Qué no incluye ningún precio» | `textos.ts` → `NO_INCLUYE_SIEMPRE` | La lista base de exclusiones |
+| `catalogo/07-condiciones.md` → plazos, cancelación, accesos | `textos.ts` → `PLAZO_DESDE`, `CANCELACION`, … | Las condiciones que imprime la propuesta |
+| `catalogo/08-fronteras.md` → las frases oficiales | `textos.ts` → `FRONTERAS` | Las tres frases que van con estas palabras exactas |
+| `catalogo/01-webs.md` + `precios.json` → `secciones` | `textos.ts` → `QUE_CONSIGUE_PLAN` | Qué consigue el cliente con cada plan |
+| `datos/marca.json` → `logo.pathSVG` | `index.html` | El trazado del símbolo en la portada |
+
+**Al cambiar cualquier archivo de `catalogo/`, revisa `textos.ts`.** Las dos
+últimas filas las vigila `node herramientas/verificar.mjs`; las otras cuatro no
+puede vigilarlas —son prosa, no datos— y las tiene que mirar una persona.
+
+Lo que sí está vigilado sin que nadie se acuerde:
+
+- `npm test` comprueba que **todo importe que el cotizador puede imprimir esté
+  literal en `precios.json`**. Un precio que cambie allí y rompa el formato
+  —o un producto nuevo sin precio— hace fallar las pruebas y con ellas el
+  despliegue.
+- `node herramientas/verificar.mjs` comprueba que **ningún hex del hub esté
+  fuera de `marca.json`** y que el trazado del logo de `index.html` siga siendo
+  el de `marca.json`.
+- `npm run build` corre las dos cosas antes de construir, así que un repositorio
+  desincronizado no llega a publicarse.
+
+---
+
 ### Lo que NO tiene espejo en el sitio
 
 Tres bloques se decidieron aquí y no vienen de `abrinay1997-stack/PanaClaw`. No
@@ -86,9 +120,12 @@ se sincronizan: se mantienen aquí y llevan su propia fecha de decisión.
 | `datos/marca.json` → `redesSociales` | La segunda familia tipográfica y la retícula de las piezas de redes | 2026-08-16 |
 | `adn/06-claridad.md` | Qué se dice primero y con qué palabras | 2026-08-17 |
 | `adn/07-redaccion.md` | Cómo se hace que el texto funcione | 2026-08-19 |
+| `index.html` y `cotizador/` | El hub de herramientas del equipo | 2026-08-23 |
 
-Si alguno de los tres acaba mandando también sobre el copy del sitio, el camino
-es el de siempre y va al revés: se lleva primero al sitio y después baja aquí.
+Si alguno de los tres primeros acaba mandando también sobre el copy del sitio,
+el camino es el de siempre y va al revés: se lleva primero al sitio y después
+baja aquí. El hub es otra cosa: es interno, no lo ve ningún cliente y no tiene
+por qué llegar al sitio nunca.
 
 ---
 

@@ -1,0 +1,41 @@
+# Configuración de Netlify para el hub de herramientas de PanaClaw.
+#
+# Este repositorio es sobre todo el cerebro de la marca —`datos/`, `adn/`,
+# `catalogo/`, `prompts/`— y nada de eso se publica. Lo único que sale a la web
+# es lo que `scripts/construir.mjs` deja en `publico/`: la portada y el
+# cotizador ya construido.
+
+[build]
+  # El `npm install` de raíz no toca `cotizador/`, que es un paquete aparte.
+  # Por eso se instala explícitamente antes de construir; sin esto el build
+  # falla en Netlify aunque funcione en local, donde las dependencias ya están.
+  command = "npm run instalar && npm run build"
+  publish = "publico"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# ---------- CABECERAS ----------
+# El hub es interno. Va sin caché agresiva para que un despliegue se vea al
+# instante, y con `noindex` reforzado desde el servidor: la etiqueta del HTML
+# solo protege la portada, y esta cabecera cubre también el cotizador y sus
+# archivos.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
+    Cache-Control = "public, max-age=0, must-revalidate"
+    X-Robots-Tag = "noindex, nofollow"
+
+# La excepción: lo que Vite deja en `assets/` lleva un hash en el nombre, así
+# que un archivo concreto no cambia nunca —si cambia el contenido, cambia el
+# nombre—. Un año de caché inmutable, y las fuentes de Archivo dejan de bajarse
+# en cada visita.
+[[headers]]
+  for = "/cotizador/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

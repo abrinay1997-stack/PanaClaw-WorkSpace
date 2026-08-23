@@ -23,11 +23,18 @@ pueden comprobar mecánicamente:
 | **5 · Un solo acento cromático** | Todo hex existe en `marca.json` |
 | **8 · Los rangos se citan enteros** | El mínimo de un rango sin «desde» delante → aviso |
 
-Y dos más, propias del repositorio:
+Y cuatro más, propias del repositorio:
 
 - **Enlaces internos rotos** — un enrutador que apunta a un archivo que no existe
   deja al agente sin salida
 - **Huecos sin resolver** — `[completa aquí]`, `<tu negocio>`, `TODO`, `TBD` <!-- v: contraejemplos: son los marcadores que la comprobación busca -->
+- **Ningún hex del hub fuera de `marca.json`** — se revisan `index.html` y todo
+  `cotizador/src`. Desde que el repositorio publica algo, hay código de cara al
+  cliente que también se puede desincronizar de la paleta, y el código no se
+  revisa leyéndolo
+- **El logo de la portada sigue siendo el de `marca.json`** — `index.html` lleva
+  el trazado pegado a mano porque esa página no se construye, y una copia sin
+  vigilancia es una divergencia esperando su turno
 
 Las ocho reglas restantes son de criterio y las revisa quien entrega
 ([`orquestador/protocolo-entrega.md`](../orquestador/protocolo-entrega.md)).
@@ -56,6 +63,8 @@ son prompts y ejemplos. Los **hex sí se comprueban** también ahí — un promp
 el naranja equivocado es exactamente el fallo que hay que cazar.
 
 **2 · `skills/_plantilla/`.** Es una plantilla, sus marcadores son a propósito.
+Y las pruebas del cotizador (`*.test.ts`), donde un hex equivocado es justo lo
+que se está comprobando que no pase.
 
 **3 · Escape explícito por línea.** Una línea que termine en
 `<!-- v: motivo -->` queda exenta de todo.
