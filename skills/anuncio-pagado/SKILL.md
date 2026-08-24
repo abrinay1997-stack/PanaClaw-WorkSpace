@@ -34,6 +34,15 @@ Produce copy y especificación de piezas de pauta.
 7. [`campanas/plantillas/estructura-anuncio.md`](../../campanas/plantillas/estructura-anuncio.md)
 8. [`campanas/canales/`](../../campanas/canales/) — el del canal
 9. [`prompts/texto/anuncios.md`](../../prompts/texto/anuncios.md)
+10. **Si el creativo se compone con Meta AI** (imagen + texto ya montados, no
+    solo copy para pegar en el editor del canal):
+    [`prompts/plataformas/meta-ai.md`](../../prompts/plataformas/meta-ai.md) y
+    [`prompts/imagen/texto-en-imagen.md`](../../prompts/imagen/texto-en-imagen.md).
+    El símbolo va como el SVG/Path2D **literal** de esos archivos —nunca
+    descrito para que Meta AI lo redibuje— y la holgura de interlínea se
+    calcula para cada par de líneas del titular, sin saltarse ninguna. Las
+    dos son reglas inquebrantables, iguales para un post orgánico y para un
+    creativo de pauta.
 
 ---
 

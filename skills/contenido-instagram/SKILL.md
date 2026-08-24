@@ -186,10 +186,13 @@ El reparto del trabajo y la prohibición literal de redactar, mejorar,
 acortar, traducir o completar cualquier texto.
 
 ━━ 2. EL SISTEMA VISUAL ━━
-Los cinco hex. Las dos familias con sus roles. La retícula en píxeles. La
-escala completa. EL ORDEN DEL BLOQUE DE TEXTO. LA CUENTA DE LA INTERLÍNEA,
-con sus tres holguras. El velo. La regla del acento naranja. Y si el mes
-lleva carruseles, las reglas de continuidad.
+Los cinco hex. Las dos familias con sus roles. La retícula en píxeles. LA
+ESCALA COMPLETA. EL ORDEN DEL BLOQUE DE TEXTO. EL SÍMBOLO EN SU SVG/PATH2D
+LITERAL —nunca descrito para que lo redibuje: se copia de
+prompts/plataformas/meta-ai.md → «El símbolo, literal»—. LA CUENTA DE LA
+INTERLÍNEA, con sus tres holguras, calculada para CADA par de líneas del
+titular, sin saltarse ninguna. El velo. La regla del acento naranja. Y si el
+mes lleva carruseles, las reglas de continuidad.
 
 ━━ 3. EL CONTRATO DEL HTML ━━
 Las dos fuentes de Google Fonts. Lienzo de 1080×1350 exactos. Botón de
@@ -249,6 +252,10 @@ Antes de entregar, una a una:
 - [ ] ¿Un solo tramo naranja por titular?
 - [ ] ¿Está resuelta la interlínea línea a línea en cada titular que lleva
       tilde, eñe o signo de apertura? → `texto-en-imagen.md`
+- [ ] En un titular con más de un par que necesita holgura, ¿está calculada en
+      **cada** par, o se quedó solo en el primero?
+- [ ] ¿El símbolo de las N piezas es el SVG/Path2D literal de
+      `prompts/plataformas/meta-ai.md`, y no una aproximación con trazos?
 - [ ] En cada carrusel: ¿un solo prompt de fondo, un antetítulo, un anclaje y un
       brillo para todas las diapositivas?
 - [ ] En cada carrusel: lee **solo los tramos naranjas** en orden. ¿Forman una
