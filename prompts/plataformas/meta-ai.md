@@ -85,6 +85,57 @@ https://fonts.googleapis.com/css2?family=Antonio:wght@700&family=Archivo:wght@30
 Sin esas dos, todo lo demás da igual: el navegador cae a una fuente del sistema
 y la pieza deja de ser de la marca.
 
+### El símbolo, literal — nunca se redibuja
+
+**Regla inquebrantable, y hay una prueba delante.** Un prompt que describe el
+símbolo en prosa —«una garra de tres zarpazos», «88 por 72 px, centrado»— no
+basta: Meta AI lo interpretó y devolvió tres trazos blancos con `stroke`, que
+no son el logo de esta marca. El símbolo real son **seis figuras rellenas**
+—dos corchetes angulares, un punto romboidal y tres zarpazos— en `#FF5100`
+plano. Va literal, en las dos versiones que hacen falta, y ninguna se
+aproxima ni se redibuja:
+
+**En la vista previa de cada pieza:**
+
+```html
+<svg width="88" height="72" viewBox="0 0 100 81.56" aria-hidden="true">
+  <path fill="#FF5100" fill-rule="evenodd" d="M73.43 28.64L54.69 50.19L42.73 77.94L67.38 50.63L67.45 47.83L68.19 44.36Z M81.03 21.85L73.95 28.93L85.68 40.52L67.9 58.38L75.2 65.76L100 40.52Z M74.61 15.5L74.39 15.5L73.8 16.09L73.65 16.39L73.28 16.61L72.69 17.2L72.62 17.42L67.6 22.44L67.6 22.59L72.1 27.01L72.25 27.01L79.19 20.08Z M25.17 15.35L0 40.3L25.39 65.32L32.32 58.16L14.32 40.37L32.18 22.36Z M59.26 1.77L32.69 28.79L32.62 31.52L31.59 36.31L26.64 51.74L45.68 29.75L50.41 19.41Z M75.94 0.15L52.18 27.24L50.85 31L41.62 43.62L23.91 81.56L48.12 52.55L49.89 47.98L59.04 35.65Z"/>
+</svg>
+```
+
+**En la función que dibuja el `<canvas>` de exportación —la misma que usan
+todas las piezas—, el mismo trazado, como `Path2D`:**
+
+```js
+const SIMBOLO_PANACLAW = new Path2D("M73.43 28.64L54.69 50.19L42.73 77.94L67.38 50.63L67.45 47.83L68.19 44.36Z M81.03 21.85L73.95 28.93L85.68 40.52L67.9 58.38L75.2 65.76L100 40.52Z M74.61 15.5L74.39 15.5L73.8 16.09L73.65 16.39L73.28 16.61L72.69 17.2L72.62 17.42L67.6 22.44L67.6 22.59L72.1 27.01L72.25 27.01L79.19 20.08Z M25.17 15.35L0 40.3L25.39 65.32L32.32 58.16L14.32 40.37L32.18 22.36Z M59.26 1.77L32.69 28.79L32.62 31.52L31.59 36.31L26.64 51.74L45.68 29.75L50.41 19.41Z M75.94 0.15L52.18 27.24L50.85 31L41.62 43.62L23.91 81.56L48.12 52.55L49.89 47.98L59.04 35.65Z");
+
+ctx.save();
+ctx.translate(anchoLienzo / 2 - 44, yLogoTop); // yLogoTop = 96 en feed; su equivalente en story
+ctx.scale(0.88, 0.88);                          // 88 / 100 = 0.88 — LOS DOS EJES, nunca uno distinto del otro
+ctx.fillStyle = "#FF5100";
+ctx.fill(SIMBOLO_PANACLAW, "evenodd");
+ctx.restore();
+```
+
+Tres cosas que no se negocian, y las tres van literales en el prompt maestro:
+
+```
+1. fill, nunca stroke. Son seis figuras rellenas, no líneas ni trazos.
+2. fill-rule="evenodd" en el SVG y ctx.fill(SIMBOLO, "evenodd") en el canvas.
+   Sin esto los huecos de los corchetes se rellenan y el logo sale como una
+   mancha.
+3. La misma escala en los dos ejes — 0.88 y 0.88 —, nunca un eje distinto
+   del otro. El símbolo no es cuadrado: 100 de ancho por 81.56 de alto.
+   Escalarlo con ejes distintos lo deforma, y deformarlo está en la lista de
+   usos prohibidos de datos/marca.json.
+```
+
+Es el mismo bloque en las N piezas del documento: no se redibuja, no se
+aproxima, no se interpreta la descripción de arriba. Sale de
+[`datos/marca.json`](../../datos/marca.json) → `logo.pathSVG`, y es el mismo
+código que trae [`prompts/imagen/texto-en-imagen.md`](../imagen/texto-en-imagen.md)
+→ «El rayo y el wordmark».
+
 ### Cada pieza, compuesta y a medida real
 
 Cada diapositiva se dibuja a **1080×1350 exactos** —no «aproximadamente
@@ -112,10 +163,19 @@ tamaño (0.88 en XL y L, 0.90 en M) y NO se aplica igual a todas las líneas:
                   + 0.20  si la línea n+1 lleva Ñ o Ü
                   + 0.17  si la línea n   lleva Q, ¿, ¡ o coma
 
-Las tres se suman cuando coinciden. En HTML esa holgura es un margen
-superior en «em» sobre la línea que la necesita, con la interlínea base
-puesta en el bloque. En el lienzo de exportación es ese mismo valor sumado
-al avance vertical de esa línea.
+Las tres se suman cuando coinciden. **Se calcula para CADA par de líneas
+consecutivas del titular, sin excepción — no solo para el primer par que se
+note.** Un titular de cuatro líneas con tilde en la línea 2 y eñe en la línea
+3 lleva DOS holguras distintas, una en cada par que la necesita. El error más
+caro que se comete aquí no es olvidar la fórmula: es aplicarla al primer par
+y dejar el resto del bloque en la interlínea base, como si ya estuviera
+resuelto. Recorre las N líneas del titular una por una, del primer par al
+último, y aplica la fórmula a cada uno — no hay un punto en el que ya se
+puede dejar de calcularla.
+
+En HTML esa holgura es un margen superior en «em» sobre la línea que la
+necesita, con la interlínea base puesta en el bloque. En el lienzo de
+exportación es ese mismo valor sumado al avance vertical de esa línea.
 
 Antonio no rebaja los acentos en versalitas: la tilde de una Á sube 0.27 em
 por encima de la letra. Sin esa holgura la tilde cae DENTRO de las letras de
@@ -269,6 +329,8 @@ Los cinco fallos, por frecuencia:
 | **El lienzo no mide 1080×1350** | El PNG descargado sale de otro tamaño | «El lienzo de exportación tiene que ser exactamente 1080×1350.» |
 | **Aplicó la interlínea igual a todas las líneas** | Una tilde o una eñe metida dentro de las letras de la línea de encima | «Falta la holgura del titular de la pieza N. La línea que lleva la tilde avanza 0.27 más; la que lleva eñe, 0.20; y la que va debajo de una Q o un signo de apertura, 0.17 más.» |
 | **Subió la interlínea de todas** | El bloque del titular se ve suelto y ya no compacto | «La interlínea base sigue siendo 0.88. La holgura va solo en las líneas que la necesitan.» |
+| **Calculó la holgura solo para un par de líneas** | Un titular de varias líneas donde una tilde o una eñe se come la línea de encima, pero solo en una de las transiciones — el resto del bloque sí quedó bien | «Recalcula la holgura de CADA par de líneas de la pieza N, no solo del primero. La línea X necesita su holgura igual que la línea Y — corre la fórmula línea por línea hasta la última.» |
+| **Redibujó el símbolo en vez de copiar el SVG/Path2D** | Trazos con `stroke`, blancos o de otro color, en vez de las seis figuras rellenas en `#FF5100` | «El símbolo de la pieza N no es el de PanaClaw. Reemplázalo por el bloque SVG/Path2D literal de la sección "El símbolo, literal" de este documento: fill, `fill-rule="evenodd"`, escala 0.88 en los dos ejes. No lo redibujes.» |
 | **Generó un fondo por diapositiva** | Al poner el carrusel en tira, cada corte es una imagen distinta | «El fondo del carrusel es una sola panorámica cortada. Usa la misma imagen desplazada −1080·k en cada diapositiva.» |
 | **Cambió el brillo entre diapositivas** | Un escalón de luz en la costura | «El brillo de la imagen es el mismo número en las N diapositivas.» |
 

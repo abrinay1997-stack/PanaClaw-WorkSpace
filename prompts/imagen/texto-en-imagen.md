@@ -336,12 +336,20 @@ llegar al carril. No se sube el velo hasta tapar la imagen.
 ## El rayo y el wordmark
 
 **Símbolo:** 88 de ancho por 72 de alto, centrado horizontalmente, borde superior
-en y=96. Es la garra de tres zarpazos sobre los corchetes angulares. El path
-completo sale de [`datos/marca.json`](../../datos/marca.json) → `logo.pathSVG`,
-en `viewBox="0 0 100 81.56"` y con `fill-rule="evenodd"`. El archivo está en
+en y=96. Son **seis figuras rellenas** —dos corchetes angulares, un punto
+romboidal y tres zarpazos—, no tres trazos. El path completo sale de
+[`datos/marca.json`](../../datos/marca.json) → `logo.pathSVG`, en
+`viewBox="0 0 100 81.56"` y con `fill-rule="evenodd"`. El archivo está en
 [`logo-original.svg`](../../logo-original.svg).
 
-Tres cosas que se rompen solas si no se dicen:
+**Se copia literal, nunca se redibuja.** Un generador al que se le describe el
+símbolo en prosa —«una garra de tres zarpazos», «88 por 72 px»— lo interpreta,
+y lo que devuelve son trazos con `stroke` que no son el logo de esta marca. El
+bloque de código listo para pegar, en sus dos versiones, está en
+[`prompts/plataformas/meta-ai.md`](../plataformas/meta-ai.md) → «El símbolo,
+literal — nunca se redibuja».
+
+Cuatro cosas que se rompen solas si no se dicen:
 
 1. **No es cuadrado.** 100 × 81.56. Meterlo en una caja cuadrada lo estira, y
    estirar el símbolo está en la lista de usos prohibidos.
@@ -349,6 +357,9 @@ Tres cosas que se rompen solas si no se dicen:
    el logo sale como una mancha.
 3. **Naranja `#FF5100` plano**, sin degradado. A 88 píxeles el degradado a ember
    no se ve y solo ensucia el borde.
+4. **`fill`, nunca `stroke`.** Son figuras rellenas, no líneas. Y la escala del
+   `<canvas>` de exportación va igual en los dos ejes —0.88 y 0.88—, nunca uno
+   distinto del otro.
 
 Sobre fondo oscuro no lleva cuadrado detrás: el fondo ya es el cuadrado.
 
@@ -458,6 +469,13 @@ suelta no hay manera de verlo.
 - [ ] **Busca las tildes, las eñes y los signos de apertura del titular.** ¿Cada
       línea que lleva una tiene su holgura sumada al avance? Y si encima de ella
       hay una `Q`, un `¿`, un `¡` o una coma, ¿está sumada también la de abajo?
+- [ ] Si el titular tiene más de un par de líneas que necesita holgura, ¿está
+      calculada en **cada** par, o solo en el primero que se notó? Un titular de
+      cuatro líneas con tilde en la 2 y eñe en la 3 lleva dos holguras distintas,
+      no una.
+- [ ] ¿El símbolo es el SVG/Path2D **literal** de `prompts/plataformas/meta-ai.md`
+      —seis figuras rellenas, `fill`, `fill-rule="evenodd"`, escala 0.88 en los
+      dos ejes—, o alguien lo redibujó con trazos?
 - [ ] Amplía el titular y **mira el punto donde una tilde queda debajo de una
       letra.** Si se tocan, falta holgura. Si hay un dedo de aire, sobra.
 - [ ] ¿El bloque de texto va sin recorte, para que la tilde de la primera línea
