@@ -195,11 +195,14 @@ titular, sin saltarse ninguna. El velo. La regla del acento naranja. Y si el
 mes lleva carruseles, las reglas de continuidad.
 
 ━━ 3. EL CONTRATO DEL HTML ━━
-Las dos fuentes de Google Fonts. Lienzo de 1080×1350 exactos. Botón de
-descarga por pieza y botón de descargar todas. Descripción y hashtags en
-texto seleccionable debajo de cada pieza, con su botón de copiar las dos
-juntas —y sin el prompt del fondo, que no vuelve al documento—. Y las siete
-trampas del exportador de prompts/plataformas/meta-ai.md, literales.
+Las dos fuentes de Google Fonts. Lienzo de 1080×1350 exactos. LA VISTA
+PREVIA A 360 PX DE ANCHO —pieza construida a 1080 y escalada 0.3333, dentro
+de un marco de 360×450 con overflow:hidden— igual en todas las piezas, con
+sus cuatro trampas. Botón de descarga por pieza y botón de descargar todas.
+Descripción y hashtags en texto seleccionable debajo de cada pieza, con su
+botón de copiar las dos juntas —y sin el prompt del fondo, que no vuelve al
+documento—. Y las siete trampas del exportador de
+prompts/plataformas/meta-ai.md, literales.
 
 ━━ 4. EL BLOQUE DE ESTILO ━━
 Literal, de prompts/bloques/estilo-visual.md. Una sola vez.

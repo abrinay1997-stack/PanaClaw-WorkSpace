@@ -140,9 +140,86 @@ código que trae [`prompts/imagen/texto-en-imagen.md`](../imagen/texto-en-imagen
 
 Cada diapositiva se dibuja a **1080×1350 exactos** —no «aproximadamente
 vertical»— con la imagen de fondo a sangre, el velo encima y el texto compuesto
-según [`prompts/imagen/texto-en-imagen.md`](../imagen/texto-en-imagen.md). En
-pantalla se puede ver reducida con `transform: scale()`, pero el lienzo que se
-exporta mide 1080×1350.
+según [`prompts/imagen/texto-en-imagen.md`](../imagen/texto-en-imagen.md). Story
+y reel, a **1080×1920**. Ese es el único maquetado que existe, y es el que se
+exporta.
+
+### La vista previa mide 360 de ancho, en todas
+
+**Un tamaño de pantalla, escrito en píxeles, igual en las N piezas y en todos
+los meses.** Dejarlo en «se puede ver reducida» es pedirle a Meta AI un
+criterio, y este archivo ya sabe cómo acaba eso: un mes las piezas salen
+enormes, al siguiente diminutas, y dentro del mismo documento no siempre
+miden lo mismo.
+
+La cuenta es 1080 ÷ 3. La pieza se construye a su tamaño real y **se encoge
+entera con `transform`**, sin tocar ni una medida del maquetado: así lo que se
+ve en pantalla es exactamente lo que va a salir en el PNG, solo que a un
+tercio. Va literal en el prompt maestro:
+
+```
+La pieza se construye SIEMPRE a su tamaño real en píxeles —1080×1350 en
+feed, 1080×1920 en story—, con todas sus medidas en px reales: cuerpos,
+márgenes, retícula. No hagas una versión pequeña para la pantalla y otra
+grande para el lienzo: se descuadran entre sí y la vista previa deja de
+servir para revisar nada.
+
+Para verla en pantalla se encoge entera, sin cambiar ni una medida:
+
+  :root { --escala-vista: calc(360 / 1080); }   /* 1080 → 360 exactos */
+
+  .marco        { box-sizing: border-box;
+                  width: 360px; height: 450px; overflow: hidden; }
+  .marco--story { height: 640px; }
+  .pieza        { width: 1080px; height: 1350px;
+                  transform: scale(var(--escala-vista));
+                  transform-origin: top left; }
+  .pieza--story { height: 1920px; }
+
+La escala se escribe como esa división, no como 0.3333: redondeada a cuatro
+decimales la pieza mide 359.96 y deja una rendija de fondo contra el borde
+derecho del marco.
+
+360 px de ancho es la vista previa de TODAS las piezas del documento, sea
+cual sea el mes, el tipo de pieza o cuántas haya. No lo ajustes «para que se
+vea mejor» y no lo cambies de una pieza a otra.
+
+Cuatro cosas que fallan justo aquí:
+
+1. transform NO encoge el sitio que la pieza ocupa en la página: escalada
+   sigue ocupando 1080×1350. Por eso el marco lleva su ancho y su alto
+   escritos —360×450, o 360×640 en story— y overflow:hidden. Sin marco, el
+   documento se desplaza a lo ancho y deja huecos enormes entre piezas.
+
+2. transform-origin: top left. Con el valor por defecto (center) la pieza se
+   encoge hacia su centro y se sale del marco por arriba y por la izquierda.
+
+3. Nada de vw, %, clamp() ni «que se adapte a la pantalla» para el tamaño de
+   la vista previa. Es un número fijo: la misma pieza tiene que verse igual
+   en un portátil que en un monitor grande. Lo que se adapta es cuántas
+   columnas caben, nunca el tamaño de la pieza.
+
+4. El borde y la sombra van en el MARCO, no en la pieza, y como outline o
+   box-shadow, nunca como border. Dentro de la pieza, un borde de 1 px
+   escalado a un tercio se queda en un tercio de píxel y desaparece. Y un
+   border en el marco empuja la pieza 1 px hacia dentro y le rasura el
+   borde derecho y el inferior: outline se dibuja por fuera y no mueve
+   nada.
+
+Las piezas se colocan en una rejilla de columnas de 360 px, centrada, y el
+número de columnas es lo único que cambia con el ancho de la ventana:
+
+  .rejilla { display: grid; grid-template-columns: repeat(auto-fill, 360px);
+             gap: 24px; justify-content: center;
+             max-width: 1128px; margin: 0 auto; }
+
+Debajo de cada marco, dentro de esa misma columna de 360 px, van su
+descripción, sus hashtags, el botón de copiar y el botón de descargar.
+```
+
+**No hace falta un zoom ni un «ver a tamaño real».** El tamaño real se ve
+descargando el PNG, que es justo la comprobación que hay que hacer de todas
+formas.
 
 ### El titular se compone línea a línea, con su holgura
 
@@ -251,11 +328,15 @@ Va literal en el prompt maestro:
 Un carrusel se muestra DOS veces en el documento:
 
 1. Primero la tira: las N diapositivas en fila, pegadas por el borde, sin
-   ninguna separación, margen ni borde entre ellas, reducidas para que
-   quepan a lo ancho. Es la única vista donde se ven las costuras.
+   ninguna separación, margen ni borde entre ellas, todas a escala 0.2
+   —216 px de ancho cada una—. Es la única vista donde se ven las costuras.
+   Si las N no caben a lo ancho, la tira se desplaza horizontalmente dentro
+   de su propio contenedor (overflow-x: auto). NO la encojas más para que
+   quepa entera: por debajo de ese tamaño las costuras dejan de verse, que
+   es lo único para lo que sirve la tira.
 
-2. Debajo, cada diapositiva por separado, a su tamaño de vista previa y con
-   su botón de descarga.
+2. Debajo, cada diapositiva por separado, a la vista previa de 360 px como
+   cualquier otra pieza, y con su botón de descarga.
 
 El fondo del carrusel es UNA sola imagen panorámica que cubre 1080×N de
 ancho por 1350 de alto. La diapositiva k NO lleva su propia imagen: lleva la
@@ -371,6 +452,8 @@ Los cinco fallos, por frecuencia:
 | **Cambió el brillo entre diapositivas** | Un escalón de luz en la costura | «El brillo de la imagen es el mismo número en las N diapositivas.» |
 | **Dejó el prompt del fondo debajo de la pieza** | Un párrafo con la receta de la imagen que ya está ahí arriba | «Quita el prompt del fondo del documento. Debajo de cada pieza van la descripción, los hashtags y el botón de copiar, nada más.» |
 | **El botón de copiar no copia** | Se pulsa, no confirma nada y el portapapeles sigue igual | «El botón de copiar tiene que caer a un `<textarea>` oculto con `execCommand('copy')` cuando `navigator.clipboard` no esté, y confirmar con «Copiado». El documento se abre desde el disco.» |
+| **La vista previa sale de otro tamaño** | Las piezas se ven enormes o diminutas, o no todas miden lo mismo | «La vista previa mide 360 px de ancho en todas las piezas: la pieza se construye a 1080 y se escala 0.3333. No la adaptes a la pantalla.» |
+| **Escaló la pieza sin marco** | Huecos enormes entre piezas y la página se desplaza a lo ancho | «El marco lleva su ancho y su alto escritos (360×450) con overflow:hidden, y la pieza va con transform-origin: top left.» |
 
 **Cuenta los hashtags de cada pieza.** Es lo que más se le va: le das seis y
 devuelve nueve.
