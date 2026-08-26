@@ -2,8 +2,8 @@
 
 Produce **un solo prompt maestro, listo para pegar en Meta AI**, que devuelve un
 documento HTML con el mes entero: las piezas ya compuestas con su texto, la
-descripción de cada publicación, sus hashtags y el botón para descargarlas en
-PNG a 1080×1350.
+descripción de cada publicación con sus hashtags y su botón para copiarlos, y el
+botón para descargar cada pieza en PNG a 1080×1350.
 
 ---
 
@@ -197,8 +197,9 @@ mes lleva carruseles, las reglas de continuidad.
 ━━ 3. EL CONTRATO DEL HTML ━━
 Las dos fuentes de Google Fonts. Lienzo de 1080×1350 exactos. Botón de
 descarga por pieza y botón de descargar todas. Descripción y hashtags en
-texto seleccionable debajo de cada pieza. Y las siete trampas del exportador
-de prompts/plataformas/meta-ai.md, literales.
+texto seleccionable debajo de cada pieza, con su botón de copiar las dos
+juntas —y sin el prompt del fondo, que no vuelve al documento—. Y las siete
+trampas del exportador de prompts/plataformas/meta-ai.md, literales.
 
 ━━ 4. EL BLOQUE DE ESTILO ━━
 Literal, de prompts/bloques/estilo-visual.md. Una sola vez.

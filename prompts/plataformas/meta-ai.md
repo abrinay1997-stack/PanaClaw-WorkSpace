@@ -282,11 +282,47 @@ llega a la publicación.
 
 ### El resto del documento
 
-Debajo de cada pieza, en texto seleccionable para copiar y pegar:
+Debajo de cada pieza, en texto seleccionable:
 
 - La **descripción** de la publicación, tal cual
 - Los **hashtags**, tal cual
-- El **prompt del fondo**, por si hay que regenerar esa imagen
+
+Y **un botón que copie las dos cosas juntas al portapapeles**, en el orden y con
+el formato con el que se pegan en Instagram: la descripción, una línea en blanco
+y los hashtags en una sola línea. Es el gesto que se repite doce veces al mes, y
+seleccionar a mano se come una tilde o deja media palabra fuera.
+
+**El prompt del fondo NO va en el documento.** La imagen ya está generada y
+metida dentro del archivo: enseñar al lado la receta de algo que ya existe solo
+alarga la página. Si hay que regenerar un fondo, el prompt sigue estando en el
+prompt maestro, que es de donde salió.
+
+Va literal en el prompt maestro:
+
+```
+Debajo de cada pieza van su descripción y sus hashtags en texto
+seleccionable, y un botón «Copiar descripción» que copie las dos cosas de una
+vez: la descripción, una línea en blanco, y los hashtags en una sola línea
+separados por un espacio.
+
+El botón confirma que copió —cambia a «Copiado» un par de segundos y vuelve—
+porque el portapapeles no se ve y si no confirma se pulsa dos veces.
+
+Copia desde una constante de JavaScript con el texto literal, no leyendo el
+HTML ya pintado. Leer del DOM devuelve el texto con los saltos de línea y los
+espacios que decidió el navegador, no los que están escritos aquí.
+
+El documento se abre con doble clic desde el disco, y ahí navigator.clipboard
+no siempre existe. Envuélvelo en try/catch y cae a un <textarea> oculto con
+document.execCommand('copy'). Sin esa caída el botón no hace nada y tampoco
+avisa de que no hizo nada.
+
+En un carrusel el botón es UNO para toda la pieza, no uno por diapositiva: la
+descripción y los hashtags son de la publicación entera.
+
+No pongas el prompt del fondo en el documento. La imagen ya está generada
+dentro del archivo y repetir su receta no sirve para nada.
+```
 
 ### La interfaz del documento
 
@@ -333,6 +369,8 @@ Los cinco fallos, por frecuencia:
 | **Redibujó el símbolo en vez de copiar el SVG/Path2D** | Trazos con `stroke`, blancos o de otro color, en vez de las seis figuras rellenas en `#FF5100` | «El símbolo de la pieza N no es el de PanaClaw. Reemplázalo por el bloque SVG/Path2D literal de la sección "El símbolo, literal" de este documento: fill, `fill-rule="evenodd"`, escala 0.88 en los dos ejes. No lo redibujes.» |
 | **Generó un fondo por diapositiva** | Al poner el carrusel en tira, cada corte es una imagen distinta | «El fondo del carrusel es una sola panorámica cortada. Usa la misma imagen desplazada −1080·k en cada diapositiva.» |
 | **Cambió el brillo entre diapositivas** | Un escalón de luz en la costura | «El brillo de la imagen es el mismo número en las N diapositivas.» |
+| **Dejó el prompt del fondo debajo de la pieza** | Un párrafo con la receta de la imagen que ya está ahí arriba | «Quita el prompt del fondo del documento. Debajo de cada pieza van la descripción, los hashtags y el botón de copiar, nada más.» |
+| **El botón de copiar no copia** | Se pulsa, no confirma nada y el portapapeles sigue igual | «El botón de copiar tiene que caer a un `<textarea>` oculto con `execCommand('copy')` cuando `navigator.clipboard` no esté, y confirmar con «Copiado». El documento se abre desde el disco.» |
 
 **Cuenta los hashtags de cada pieza.** Es lo que más se le va: le das seis y
 devuelve nueve.
