@@ -334,7 +334,11 @@ function enlaces() {
  * Huecos sin resolver
  * ------------------------------------------------------------------ */
 
-const HUECOS = [/\[completa aquí\]/i, /<tu [^>]+>/i, /\bTODO\b/, /\bTBD\b/, /XXXX/];
+// `TODO` y `TBD` piden dos puntos o paréntesis detrás a propósito: «todo» es
+// una palabra española corriente y los titulares van en versalitas, así que
+// /\bTODO\b/ a secas marcaba «SE CREA TODO A TU NOMBRE» como si fuera un
+// marcador sin resolver. Un hueco de verdad se escribe TODO: o TODO(...).
+const HUECOS = [/\[completa aquí\]/i, /<tu [^>]+>/i, /\bTODO\s*[:(]/, /\bTBD\s*[:(]?\b(?![a-záéíóúñ])/i, /XXXX/];
 
 function huecos() {
   for (const ruta of md) {

@@ -167,23 +167,24 @@ se comen la línea de arriba.**
 
 Antonio **no trae acentos rebajados para versalitas** — no tiene la
 característica `case` de OpenType. Así que la tilde de una `Á` ocupa toda su
-altura natural: llega a **1.1294 em** sobre su línea base, cuando la altura de
-versalita es **0.8594 em**. La tilde sobresale **0.27 em por encima de la letra**.
+altura natural: llega a **1.141 em** sobre su línea base, cuando la altura de
+versalita es **0.860 em**. La tilde sobresale **0.281 em por encima de la letra**.
 
-Con interlínea fija de 0.88, esa tilde sube **0.25 em por encima de la línea base
+Con interlínea fija de 0.88, esa tilde sube **0.261 em por encima de la línea base
 de la línea anterior** — y como las letras de esa línea se apoyan en esa base y
-crecen hacia arriba, la tilde acaba dentro de ellas. Y por abajo pasa
-lo mismo: la cola de una `Q` baja 0.1426 em y el `¿` baja 0.1382 em, así que
-también invaden lo que venga debajo.
+crecen hacia arriba, la tilde acaba dentro de ellas. Y por abajo pasa lo mismo:
+la cola de una `Q` baja 0.157 em, la coma 0.172 y el `¿` 0.141, así que también
+invaden lo que venga debajo.
 
-No es teoría. Renderizado en Antonio 700 a 112 px, midiendo tinta contra tinta:
+No es teoría. Medido el 2026-08-26 en Chromium sobre la Antonio 700 que sirve
+Google Fonts hoy, a 112 px, tinta contra tinta:
 
 | Par de líneas | Con 0.88 en todas |
 |---|---|
-| Versalita lisa sobre versalita lisa | 3 px limpios · **es el hueco de la marca** |
-| Tilde aguda debajo de un asta llena | **solapa 27 px** |
-| Eñe debajo de un asta llena | **solapa 19 px** |
-| Tilde debajo de la cola de una `Q` | **solapa 39 px** |
+| Versalita lisa sobre versalita lisa | 1.6 px limpios · **es el hueco de la marca** |
+| Tilde aguda debajo de un asta llena | **solapa 29 px** |
+| Eñe debajo de un asta llena | **solapa 21 px** |
+| Tilde debajo de la cola de una `Q` | **solapa 47 px** |
 
 ### La cuenta
 
@@ -191,42 +192,73 @@ No es teoría. Renderizado en Antonio 700 a 112 px, midiendo tinta contra tinta:
 avance(n → n+1) = base + holguraSuperior(línea n+1) + holguraInferior(línea n)
 ```
 
-**Lo que la línea de abajo sube** por encima de la altura de versalita:
+**Lo que la línea de abajo sube** por encima de la altura de versalita, más su
+hueco óptico:
 
 | Si la línea de abajo lleva | holguraSuperior |
 |---|---|
-| `Á` `É` `Í` `Ó` `Ú` | **0.27** |
-| `Ñ` `Ü` | **0.20** |
+| `Á` `É` `Í` `Ó` `Ú` | **0.34** |
+| `Ñ` | **0.27** |
+| `Ü` | **0.25** |
 | nada de lo anterior | 0 |
 
-**Lo que la línea de arriba baja** por debajo de su línea base:
+**Lo que la línea de arriba baja** por debajo de su línea base, más su hueco
+óptico:
 
 | Si la línea de arriba lleva | holguraInferior |
 |---|---|
-| `Q` `¿` `¡` `,` | **0.17** |
+| `,` | **0.24** |
+| `Q` | **0.22** |
+| `¿` | **0.20** |
+| `¡` | **0.18** |
 | nada de lo anterior | 0 |
 
-Las dos se suman cuando coinciden. Una línea con tilde debajo de una que termina
-en `Q` avanza `0.88 + 0.27 + 0.17`.
+Si la línea de arriba lleva varios de esos signos, manda el más profundo — no se
+suman entre sí. Lo que sí se suma es una holgura superior con una inferior: una
+línea con tilde debajo de una que termina en coma avanza `0.88 + 0.34 + 0.24`.
+
+### La tabla vieja estaba mal, y así se rompió
+
+**Corregida el 2026-08-26**, después de auditar el primer lote real montado con
+este sistema. Decía `0.27`, `0.20` y `0.17`, y fallaba por dos motivos
+independientes:
+
+1. **De medición.** Partía de una versalita de `0.8594 em` y una tilde de
+   `1.1294` que no son las de la Antonio que Google sirve. Antes de discutir
+   criterio, la holgura ya salía 0.011 em corta.
+2. **De criterio, y es el que rompía las piezas.** Perseguía dejar el **mismo**
+   hueco óptico que hay entre dos versalitas lisas, que son 0.020 em. Entre dos
+   versalitas, 0.020 em se leen como separación: los dos bordes son largos y
+   planos. Entre una tilde puntiaguda y la línea base de arriba, esos mismos
+   0.020 em se leen como **contacto** — el ojo suelda una marca pequeña y
+   aislada a la tinta que tenga más cerca.
+
+> **Una tilde no necesita el hueco de una versalita. Necesita el suyo.**
+
+De ahí sale el número del que cuelga toda la tabla: **0.079 em de tinta limpia**,
+que a 112 px son unos 9 px. Cada holgura es lo que sobresale la tinta, menos los
+0.020 em que ya sobran en la base, más esos 0.079.
 
 ### Por qué el bloque no se afloja
 
-Cada holgura es **exactamente lo que sobresale la tinta**, ni un punto más. El
-hueco óptico que queda es el mismo que ya había entre dos líneas sin tilde, así
-que el bloque se sigue viendo igual de apretado. Comprobado con los mismos pares
-de antes:
+Comprobado con los mismos pares de antes:
 
-| Par de líneas | Con la cuenta puesta |
-|---|---|
-| Versalita lisa sobre versalita lisa | 3 px limpios |
-| Tilde aguda debajo de un asta llena | 3 px limpios |
-| Eñe debajo de un asta llena | 3 px limpios |
-| Tilde debajo de la cola de una `Q` | 8 px limpios |
+| Par de líneas | Con la tabla vieja | Con la tabla nueva |
+|---|---|---|
+| Versalita lisa sobre versalita lisa | 1.6 px | 1.6 px |
+| Tilde aguda debajo de un asta llena | 1.8 px · **se lee pegada** | 8.8 px |
+| Eñe debajo de un asta llena | se tocan | 9.4 px |
+| Coma encima de una tilde | se tocan | 9.1 px |
 
 **La alternativa era subir la interlínea a 1.16 en todas.** Despeja la tilde,
 sí — y afloja el bloque entero para arreglar dos líneas. El titular de esta marca
 es un bloque compacto; una interlínea uniforme que respete las tildes deja de
 serlo. Por eso la holgura va donde hace falta y solo donde hace falta.
+
+**Y hay tope por arriba.** Probado a 0.27, 0.281, 0.32, 0.36 y 0.40 en la tilde:
+por debajo de 0.32 se sigue leyendo pegada, y a partir de 0.40 el bloque se
+afloja y deja de ser el titular de la marca. `0.34` es el valor que despega la
+tilde sin abrir el bloque.
 
 ### Dónde NO se toca
 
@@ -240,9 +272,9 @@ El tope del bloque es el **tope de versalita** de la primera línea, y la base e
 la **línea base** de la última. Nunca la caja de tinta.
 
 Si se midieran sobre la tinta, una pieza cuya primera línea lleva tilde caería
-0.27 em respecto de otra que no la lleva, y dos piezas del mismo mes no
+0.28 em respecto de otra que no la lleva, y dos piezas del mismo mes no
 cuadrarían. La tilde de la primera línea vive en el aire de encima: a 132 px son
-36 px, el anclaje alto empieza en 248 y el símbolo termina en 168 — entra con 44
+37 px, el anclaje alto empieza en 248 y el símbolo termina en 168 — entra con 43
 px de sobra.
 
 ### Y no la recortes
@@ -512,7 +544,7 @@ suelta no hay manera de verlo.
 ### La comprobación que no se puede saltar
 
 **Descarga la pieza y ponla al lado de su vista previa.** Si no son idénticas, el
-exportador está mal — y si está mal en una, está mal en todas. Las siete trampas
+exportador está mal — y si está mal en una, está mal en todas. Las nueve trampas
 que lo causan están en
 [`prompts/plataformas/meta-ai.md`](../plataformas/meta-ai.md).
 

@@ -28,6 +28,10 @@ botón para descargar cada pieza en PNG a 1080×1350.
 
 En este orden:
 
+0. [`operacion/publicado.md`](../../operacion/publicado.md) — **lo que ya salió,
+   para no repetirlo**. Se lee el primero y se actualiza el último. Sin este
+   paso el lote nuevo repite los titulares del anterior, y ese fallo ya se
+   produjo
 1. [`datos/precios.json`](../../datos/precios.json) — toda cifra que se vaya a decir
 2. [`datos/marca.json`](../../datos/marca.json) → `redesSociales` — retícula, escala, velo
 3. [`adn/02-voz-y-tono.md`](../../adn/02-voz-y-tono.md) — y en particular «La excepción de redes sociales»
@@ -98,6 +102,16 @@ publicaciones, esta mezcla funciona:
 | Frontera | 1 |
 | Trabajo enseñado | 1 |
 
+**Y a cada pieza se le asigna aquí su PUERTA DE ENTRADA**, que es un eje
+distinto del tipo: el tipo dice de qué habla, la puerta dice por dónde entra.
+Las ocho están en [`adn/07-redaccion.md`](../../adn/07-redaccion.md) §4 —
+`situación`, `cifra`, `límite`, `mecanismo`, `objeción`, `proceso`,
+`comparación`, `lo que pasa si no hace nada`—. En doce piezas, **ninguna puerta
+se usa más de dos veces y al menos cinco de las ocho aparecen**. Es lo que
+impide que dos calendarios de productos distintos suenen igual, y se comprueba
+contra [`operacion/publicado.md`](../../operacion/publicado.md): una puerta que
+se gastó en el lote anterior con este mismo público arranca ya usada.
+
 **El «trabajo enseñado» solo entra si hay un proyecto publicado y verificado que
 encaje.** Si no lo hay, se sustituye por otra cifra publicada y **se dice al
 entregar** — no se rellena con un caso inventado.
@@ -115,6 +129,11 @@ Por publicación, y en este orden:
    [`adn/06-claridad.md`](../../adn/06-claridad.md). Un titular que dice el
    precio o lo que no incluye está usando el sitio de otro.
 2. **La descripción**, con las tres articulaciones y su firma al cierre.
+   **Con tope, y se cuenta:** 100 caracteres la primera línea, 300 el cuerpo y
+   500 la descripción entera sin los hashtags —
+   [`adn/02-voz-y-tono.md`](../../adn/02-voz-y-tono.md) → «El largo tiene tope».
+   Lo que no cabe en 500 casi siempre son dos ideas: se parte en dos
+   publicaciones, no se aprieta.
 3. **Los hashtags**, seis como máximo.
 4. **La nota del límite**, si la pieza dice una cifra o un plazo. Obligatoria.
 
@@ -196,12 +215,12 @@ mes lleva carruseles, las reglas de continuidad.
 
 ━━ 3. EL CONTRATO DEL HTML ━━
 Las dos fuentes de Google Fonts. Lienzo de 1080×1350 exactos. LA VISTA
-PREVIA A 360 PX DE ANCHO —pieza construida a 1080 y escalada 0.3333, dentro
+PREVIA A 480 PX DE ANCHO —pieza construida a 1080 y escalada calc(480/1080), dentro
 de un marco de 360×450 con overflow:hidden— igual en todas las piezas, con
 sus cuatro trampas. Botón de descarga por pieza y botón de descargar todas.
 Descripción y hashtags en texto seleccionable debajo de cada pieza, con su
 botón de copiar las dos juntas —y sin el prompt del fondo, que no vuelve al
-documento—. Y las siete trampas del exportador de
+documento—. Y las nueve trampas del exportador de
 prompts/plataformas/meta-ai.md, literales.
 
 ━━ 4. EL BLOQUE DE ESTILO ━━
@@ -220,7 +239,14 @@ diapositivas y UN prompt de fondo, no como N piezas.
 La lista que Meta tiene que comprobar, con la prohibición repetida.
 ```
 
-### Paso 8 · Entregar
+### Paso 8 · Anotar lo publicado
+
+**Antes de entregar, no después.** Añade a
+[`operacion/publicado.md`](../../operacion/publicado.md) una fila por pieza con
+su fecha, su puerta, su titular y su escena. Si este paso se salta, el archivo
+miente en el siguiente lote y la regla de no repetir deja de valer.
+
+### Paso 9 · Entregar
 
 El prompt maestro completo, en un bloque, listo para pegar. Ver
 [`orquestador/protocolo-entrega.md`](../../orquestador/protocolo-entrega.md).
@@ -270,7 +296,7 @@ Antes de entregar, una a una:
 - [ ] ¿La prohibición de escribir aparece al principio **y** al final?
 - [ ] ¿Está el orden del bloque de texto escrito, y no solo la escala? Dar los
       tamaños sin el orden deja al modelo poniendo la cifra encima del titular
-- [ ] ¿Están las siete trampas del exportador dentro del prompt maestro?
+- [ ] ¿Están las nueve trampas del exportador dentro del prompt maestro?
 - [ ] ¿Pasa cada pieza la prueba del rótulo? Tapa la marca y la cifra: ¿se sabe
       qué se vende sin deducirlo? → [`adn/06-claridad.md`](../../adn/06-claridad.md) §9
 - [ ] ¿El antetítulo nombra la categoría en la que está el lector, y no el
@@ -278,6 +304,15 @@ Antes de entregar, una a una:
 - [ ] ¿Pasa la prueba del descarte? Si el titular valdría para otra agencia de
       Panamá, es un rótulo → [`adn/07-redaccion.md`](../../adn/07-redaccion.md) §4
 - [ ] ¿Cada afirmación fuerte lleva su prueba a menos de una frase? → `07` §3
+- [ ] ¿Está **cada titular** ausente de
+      [`operacion/publicado.md`](../../operacion/publicado.md)? Ninguno se repite
+      nunca, ni cambiando el mes
+- [ ] ¿Ninguna puerta de entrada se usa más de dos veces, y aparecen al menos
+      cinco de las ocho? Se cuentan, no se estiman
+- [ ] **Busca cada frase de la descripción en `adn/`.** Si alguna está literal,
+      es un guion copiado y se reescribe. La única excepción es la tagline
+- [ ] ¿Pasa cada descripción de 500 caracteres, o su primera línea de 100?
+      → recorta, y si no baja, es que lleva dos ideas
 - [ ] ¿Huecos sin resolver en el prompt maestro?
 
 **Y cuando vuelva el documento, antes de publicar nada:** descarga una pieza y

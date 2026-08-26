@@ -64,6 +64,7 @@ skills/         Procedimientos empaquetados para agentes.
 orquestador/    Reglas duras, enrutador y protocolo de entrega.
 herramientas/   verificar.mjs — comprueba que nada de esto se haya desincronizado.
 operacion/      Cómo se mantiene vivo este repositorio.
+  publicado.md    Índice en negativo: lo que ya salió y no vuelve a salir
 
 ── lo único que se publica ─────────────────────────────────────
 
@@ -117,6 +118,7 @@ según la petición:
 | Revisar por qué una pieza se entiende pero no mueve a nadie | `adn/07-redaccion.md` — las seis palancas, la prueba, el gancho y el ritmo |
 | Responder una objeción de un cliente | `adn/04-audiencia.md` (las objeciones están catalogadas ahí) |
 | Crear una skill nueva | `skills/README.md` + `skills/_plantilla/SKILL.md` |
+| **Saber qué se publicó ya, para no repetirlo** | `operacion/publicado.md` — se lee ANTES de escribir un calendario y se actualiza AL entregarlo |
 | Saber si el repo está al día | `operacion/sincronizacion.md` + `node herramientas/verificar.mjs` |
 | **Tocar el hub o el cotizador** | la sección 7 de aquí abajo + `cotizador/README.md` |
 
@@ -190,7 +192,10 @@ precio, y por qué el historial vive en el navegador— está en
   esperando a ser reutilizados. Hay estructuras: el copy se genera cada vez,
   contra el ADN, para el contexto concreto que pida el humano.
 - **No es un histórico.** Lo que deja de ser cierto se borra, no se archiva. El
-  historial de git ya guarda lo viejo.
+  historial de git ya guarda lo viejo. **La única excepción es
+  [`operacion/publicado.md`](operacion/publicado.md)**, y no la contradice: no
+  guarda copy para reutilizarlo, guarda titulares para prohibirlos. Sin él, cada
+  lote de contenido vuelve a caer en las frases del anterior.
 - **No es documentación del código del sitio.** Eso está en el otro repositorio,
   en `docs/`.
 - **No es el sitio.** El hub que se publica desde aquí es interno, para el

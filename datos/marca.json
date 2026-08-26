@@ -173,26 +173,31 @@
     },
 
     "interlinea": {
-      "$regla": "El avance entre dos líneas de titular NO es un número fijo. Es la base MÁS lo que la línea de abajo sube por encima de la altura de versalita, MÁS lo que la de arriba baja por debajo de su línea base. A interlínea fija, la tilde de una Á se mete dentro de las letras de la línea anterior.",
+      "$regla": "El avance entre dos líneas de titular NO es un número fijo. Es la base MÁS lo que la línea de abajo sube por encima de la altura de versalita, MÁS lo que la de arriba baja por debajo de su línea base, MÁS el hueco óptico que hace falta para que la tinta no se lea pegada. A interlínea fija, la tilde de una Á se mete dentro de las letras de la línea anterior.",
       "formula": "avance(n → n+1) = base + holguraSuperior(línea n+1) + holguraInferior(línea n)",
       "base": { "titular-xl": 0.88, "titular-l": 0.88, "titular-m": 0.90, "cifra": 0.88 },
       "holguraSuperior": {
-        "$que": "Lo que la línea de ABAJO sube por encima de la altura de versalita.",
-        "Á É Í Ó Ú": 0.27,
-        "Ñ Ü": 0.20,
+        "$que": "Lo que la línea de ABAJO sube por encima de la altura de versalita, más su hueco óptico.",
+        "Á É Í Ó Ú": 0.34,
+        "Ñ": 0.27,
+        "Ü": 0.25,
         "resto": 0
       },
       "holguraInferior": {
-        "$que": "Lo que la línea de ARRIBA baja por debajo de su línea base.",
-        "Q ¿ ¡ ,": 0.17,
+        "$que": "Lo que la línea de ARRIBA baja por debajo de su línea base, más su hueco óptico.",
+        "Q": 0.22,
+        ",": 0.24,
+        "¿": 0.20,
+        "¡": 0.18,
         "resto": 0
       },
       "$porQueAntonioLoNecesita": "Antonio no trae acentos rebajados para versalitas —no tiene la característica «case» de OpenType—, así que la tilde de una versalita ocupa toda su altura natural. No hay ajuste tipográfico que lo evite: o lo paga la interlínea, o las líneas se comen.",
-      "$medidoEn": "Antonio 700, 2048 unidades por em. Versalita 1760 = 0.8594 em. Tope de Á É Í Ó Ú 2313 = 1.1294 em. Tope de Ñ 2155 = 1.0522 em. Tope de Ü 2126 = 1.0381 em. Cola de Q −292 = −0.1426 em. Signo ¿ −283 = −0.1382 em. Signo ¡ −236 = −0.1152 em. Coma −338 = −0.1650 em.",
-      "$porQueEsosNumeros": "Cada holgura es exactamente lo que sobresale la tinta, ni un punto más. Por eso el hueco óptico que queda es el MISMO que ya hay entre dos líneas sin tilde: el bloque sigue viéndose igual de apretado y las tildes dejan de comerse la línea de encima. Una interlínea uniforme que despejara la tilde tendría que subir a 1.16, y eso sí afloja el bloque entero para arreglar dos líneas.",
-      "$comprobado": "Renderizado en Antonio 700 a 112 px, midiendo tinta contra tinta columna a columna. SIN holgura: la tilde aguda solapa 27 px la línea de encima, la eñe 19 px, y una tilde bajo la cola de una Q, 39 px. CON la holgura: esos mismos pares quedan entre 3 y 8 px limpios — el mismo hueco que deja un par sin tilde, que son 3 px.",
+      "$medidoEn": "Antonio 700 servida hoy por Google Fonts (v22), medida el 2026-08-26 con actualBoundingBox sobre lienzo a 1000 px = 1 em. Altura de versalita (N, H) 0.860 em. Tope de Á É Í Ó Ú 1.141 em. Tope de Ñ 1.063 em. Tope de Ü 1.047 em. Cola de Q −0.157 em. Coma −0.172 em. Signo ¿ −0.141 em. Signo ¡ −0.125 em.",
+      "$huecoObjetivo": "0.079 em de tinta limpia, que a 112 px son unos 9 px. Es el número del que sale toda la columna de holguras: holgura = (lo que sobresale la tinta) − (lo que ya sobra en la base, 0.020 em) + 0.079.",
+      "$porQueEsosNumeros": "Corregido el 2026-08-26 después de auditar el primer lote real montado con este sistema. La tabla anterior —0.27, 0.20 y 0.17— perseguía dejar el MISMO hueco óptico que hay entre dos líneas lisas, que son 0.020 em. Y esa premisa estaba mal por dos motivos. El primero es de medición: partía de una versalita de 0.8594 em y una tilde de 1.1294 que no son las de la fuente que Google sirve, así que la holgura salía 0.011 em corta antes de discutir nada. El segundo es de criterio, y es el que de verdad rompía las piezas: 0.020 em entre dos versalitas lisas se lee como separación porque los dos bordes son largos y planos, pero esos mismos 0.020 em entre una tilde puntiaguda y la línea base de arriba se leen como contacto — el ojo suelda una marca pequeña y aislada a la tinta más cercana. Una tilde no necesita el hueco de una versalita: necesita el suyo.",
+      "$comprobado": "Renderizado en Chromium con la Antonio 700 real, a 112 px, midiendo tinta contra tinta. Con la tabla vieja: la Á bajo versalita lisa dejaba 1.8 px y se leía pegada; la coma sobre versalita, y la cola de la Q sobre la línea siguiente, se tocaban. Con esta tabla los mismos pares quedan entre 8 y 10 px limpios y el bloque sigue leyéndose compacto. A partir de 0.40 en la tilde el bloque empieza a aflojarse y deja de ser el titular de esta marca.",
       "$soloElTitular": "Solo aplica al titular y a la cifra, que son lo único que va por debajo de interlínea 1. La bajada (1.45) y la nota (1.5) van en Archivo y con holgura de sobra: ahí no hay nada que corregir y no se toca.",
-      "$anclajes": "Los anclajes verticales se miden sobre la CAJA DE VERSALITAS —tope de versalita de la primera línea, línea base de la última—, nunca sobre la caja de tinta. Medidos sobre la tinta, una pieza cuya primera línea lleva tilde caería 0.27 em respecto de otra que no la lleva y dos piezas del mismo mes no cuadrarían. La tilde de la primera línea vive en el aire de encima: a 132 px son 36 px, el anclaje alto empieza en 248 y el símbolo termina en 168, así que entra con 44 px de sobra."
+      "$anclajes": "Los anclajes verticales se miden sobre la CAJA DE VERSALITAS —tope de versalita de la primera línea, línea base de la última—, nunca sobre la caja de tinta. Medidos sobre la tinta, una pieza cuya primera línea lleva tilde caería 0.28 em respecto de otra que no la lleva y dos piezas del mismo mes no cuadrarían. La tilde de la primera línea vive en el aire de encima: a 132 px son 37 px, el anclaje alto empieza en 248 y el símbolo termina en 168, así que entra con 43 px de sobra."
     },
 
     "escala": {

@@ -131,7 +131,16 @@ Tres cosas que no se negocian, y las tres van literales en el prompt maestro:
 ```
 
 Es el mismo bloque en las N piezas del documento: no se redibuja, no se
-aproxima, no se interpreta la descripción de arriba. Sale de
+aproxima, no se interpreta la descripción de arriba.
+
+> **Comprobado en producción el 2026-08-26.** El lote de agosto de 2026 salió
+> con las diecinueve piezas llevando el símbolo correcto —seis figuras
+> rellenas, `#FF5100` plano, sin deformar—, y es la única parte del contrato
+> que salió perfecta a la primera. La razón es exactamente que va como código
+> literal y no como descripción. **No conviertas este bloque en prosa, no lo
+> resumas y no lo sustituyas por una referencia a `marca.json`: se pega
+> entero, tal cual, en cada prompt maestro.** Es el patrón a copiar cuando
+> algo más de este contrato se rompa dos veces seguidas. Sale de
 [`datos/marca.json`](../../datos/marca.json) → `logo.pathSVG`, y es el mismo
 código que trae [`prompts/imagen/texto-en-imagen.md`](../imagen/texto-en-imagen.md)
 → «El rayo y el wordmark».
@@ -144,7 +153,45 @@ según [`prompts/imagen/texto-en-imagen.md`](../imagen/texto-en-imagen.md). Stor
 y reel, a **1080×1920**. Ese es el único maquetado que existe, y es el que se
 exporta.
 
-### La vista previa mide 360 de ancho, en todas
+### El documento es una lista de publicaciones, no una rejilla de piezas
+
+**Corregido el 2026-08-26, después del primer lote real.** El contrato anterior
+solo decía «las piezas se colocan en una rejilla de columnas», y Meta AI hizo lo
+único que se podía hacer con esa instrucción: metió cada publicación en una
+celda de la rejilla. Como un carrusel de tres ocupa cinco veces el alto de una
+pieza suelta, la rejilla salió dentada — columnas de alturas dispares, huecos de
+media pantalla y piezas de dos publicaciones distintas una al lado de la otra.
+El documento era ilegible para lo único que sirve, que es revisar un calendario.
+
+Va literal en el prompt maestro:
+
+```
+El documento es una LISTA VERTICAL de publicaciones, una debajo de otra. NO
+es una rejilla de piezas sueltas, y dos publicaciones distintas nunca
+comparten fila.
+
+Cada publicación es un bloque a todo el ancho, y dentro lleva, en este orden:
+
+  1. Una cabecera de una línea, en Archivo 500 de 14 px con tracking 0.14em y
+     color #BABABA, con el número, el formato y el tipo:
+     «PUBLICACIÓN 04 · PIEZA SUELTA · CIFRA PUBLICADA»
+     El nombre del tipo va escrito en la pieza; cópialo, no lo inventes.
+
+  2. Si es un carrusel, la TIRA. Si es una pieza suelta, nada.
+
+  3. Sus piezas en UNA fila horizontal: una sola si es suelta, las N
+     diapositivas en orden si es carrusel. La fila se desplaza en horizontal
+     dentro de su propio contenedor si no cabe (overflow-x: auto). No se
+     parten en dos filas.
+
+  4. Debajo, a todo el ancho del bloque y en una sola columna de texto de
+     como mucho 720 px: la descripción, los hashtags y los botones.
+
+Entre una publicación y la siguiente va una línea de 1 px en
+rgba(255,247,247,0.10) y 48 px de aire por arriba y por abajo.
+```
+
+### La vista previa mide 480 de ancho, en todas
 
 **Un tamaño de pantalla, escrito en píxeles, igual en las N piezas y en todos
 los meses.** Dejarlo en «se puede ver reducida» es pedirle a Meta AI un
@@ -152,10 +199,16 @@ criterio, y este archivo ya sabe cómo acaba eso: un mes las piezas salen
 enormes, al siguiente diminutas, y dentro del mismo documento no siempre
 miden lo mismo.
 
-La cuenta es 1080 ÷ 3. La pieza se construye a su tamaño real y **se encoge
+**480 y no 360.** El primer lote salió a 360 y el dueño de la marca no podía
+juzgar las piezas sin descargarlas: a un tercio, el titular se lee pero la
+nota y el wordmark no, que es justo donde se cuelan los fallos. 480 es 1080
+entre 2.25 exactos, deja el cuerpo de la nota por encima del umbral de lectura
+y sigue permitiendo dos piezas por pantalla en un portátil.
+
+La cuenta es 1080 ÷ 2.25. La pieza se construye a su tamaño real y **se encoge
 entera con `transform`**, sin tocar ni una medida del maquetado: así lo que se
-ve en pantalla es exactamente lo que va a salir en el PNG, solo que a un
-tercio. Va literal en el prompt maestro:
+ve en pantalla es exactamente lo que va a salir en el PNG, solo que a 4/9.
+Va literal en el prompt maestro:
 
 ```
 La pieza se construye SIEMPRE a su tamaño real en píxeles —1080×1350 en
@@ -166,21 +219,21 @@ servir para revisar nada.
 
 Para verla en pantalla se encoge entera, sin cambiar ni una medida:
 
-  :root { --escala-vista: calc(360 / 1080); }   /* 1080 → 360 exactos */
+  :root { --escala-vista: calc(480 / 1080); }   /* 1080 → 480 exactos */
 
   .marco        { box-sizing: border-box;
-                  width: 360px; height: 450px; overflow: hidden; }
-  .marco--story { height: 640px; }
+                  width: 480px; height: 600px; overflow: hidden; }
+  .marco--story { height: 853px; }
   .pieza        { width: 1080px; height: 1350px;
                   transform: scale(var(--escala-vista));
                   transform-origin: top left; }
   .pieza--story { height: 1920px; }
 
-La escala se escribe como esa división, no como 0.3333: redondeada a cuatro
-decimales la pieza mide 359.96 y deja una rendija de fondo contra el borde
+La escala se escribe como esa división, no como 0.4444: redondeada a cuatro
+decimales la pieza mide 479.95 y deja una rendija de fondo contra el borde
 derecho del marco.
 
-360 px de ancho es la vista previa de TODAS las piezas del documento, sea
+480 px de ancho es la vista previa de TODAS las piezas del documento, sea
 cual sea el mes, el tipo de pieza o cuántas haya. No lo ajustes «para que se
 vea mejor» y no lo cambies de una pieza a otra.
 
@@ -188,7 +241,7 @@ Cuatro cosas que fallan justo aquí:
 
 1. transform NO encoge el sitio que la pieza ocupa en la página: escalada
    sigue ocupando 1080×1350. Por eso el marco lleva su ancho y su alto
-   escritos —360×450, o 360×640 en story— y overflow:hidden. Sin marco, el
+   escritos —480×600, o 480×853 en story— y overflow:hidden. Sin marco, el
    documento se desplaza a lo ancho y deja huecos enormes entre piezas.
 
 2. transform-origin: top left. Con el valor por defecto (center) la pieza se
@@ -197,29 +250,36 @@ Cuatro cosas que fallan justo aquí:
 3. Nada de vw, %, clamp() ni «que se adapte a la pantalla» para el tamaño de
    la vista previa. Es un número fijo: la misma pieza tiene que verse igual
    en un portátil que en un monitor grande. Lo que se adapta es cuántas
-   columnas caben, nunca el tamaño de la pieza.
+   piezas caben a lo ancho, nunca el tamaño de la pieza.
 
 4. El borde y la sombra van en el MARCO, no en la pieza, y como outline o
    box-shadow, nunca como border. Dentro de la pieza, un borde de 1 px
-   escalado a un tercio se queda en un tercio de píxel y desaparece. Y un
+   escalado a 4/9 se queda en menos de medio píxel y desaparece. Y un
    border en el marco empuja la pieza 1 px hacia dentro y le rasura el
    borde derecho y el inferior: outline se dibuja por fuera y no mueve
    nada.
 
-Las piezas se colocan en una rejilla de columnas de 360 px, centrada, y el
-número de columnas es lo único que cambia con el ancho de la ventana:
-
-  .rejilla { display: grid; grid-template-columns: repeat(auto-fill, 360px);
-             gap: 24px; justify-content: center;
-             max-width: 1128px; margin: 0 auto; }
-
-Debajo de cada marco, dentro de esa misma columna de 360 px, van su
-descripción, sus hashtags, el botón de copiar y el botón de descargar.
+Las piezas de una misma publicación van en una fila de marcos de 480 px con
+24 px de separación, alineadas por arriba.
 ```
 
 **No hace falta un zoom ni un «ver a tamaño real».** El tamaño real se ve
 descargando el PNG, que es justo la comprobación que hay que hacer de todas
 formas.
+
+### Las dos coordenadas que hay que fijar, o las inventa
+
+El primer lote las inventó porque este archivo no las decía, y acertó de
+milagro. Van literales:
+
+```
+El wordmark se coloca por su LÍNEA BASE en y=1254, no por el borde superior
+ni por el inferior de su caja. En HTML eso NO es «bottom: 96px»: es colocar
+el elemento y comprobar que la línea base de las letras cae en 1254.
+
+El numerador se coloca con su borde superior en y=56 y su borde derecho en
+x=1008.
+```
 
 ### El titular se compone línea a línea, con su holgura
 
@@ -236,11 +296,16 @@ Cada línea del titular es su propio bloque. La interlínea base es la de su
 tamaño (0.88 en XL y L, 0.90 en M) y NO se aplica igual a todas las líneas:
 
   avance(n → n+1) = base
-                  + 0.27  si la línea n+1 lleva Á, É, Í, Ó o Ú
-                  + 0.20  si la línea n+1 lleva Ñ o Ü
-                  + 0.17  si la línea n   lleva Q, ¿, ¡ o coma
+                  + 0.34  si la línea n+1 lleva Á, É, Í, Ó o Ú
+                  + 0.27  si la línea n+1 lleva Ñ
+                  + 0.25  si la línea n+1 lleva Ü
+                  + 0.24  si la línea n   termina o lleva coma
+                  + 0.22  si la línea n   lleva Q
+                  + 0.20  si la línea n   lleva ¿
+                  + 0.18  si la línea n   lleva ¡
 
-Las tres se suman cuando coinciden. **Se calcula para CADA par de líneas
+De las de arriba manda una sola —la mayor— y de las de abajo también una
+sola, la mayor; pero una de arriba y una de abajo SÍ se suman entre sí. **Se calcula para CADA par de líneas
 consecutivas del titular, sin excepción — no solo para el primer par que se
 note.** Un titular de cuatro líneas con tilde en la línea 2 y eñe en la línea
 3 lleva DOS holguras distintas, una en cada par que la necesita. El error más
@@ -254,11 +319,15 @@ En HTML esa holgura es un margen superior en «em» sobre la línea que la
 necesita, con la interlínea base puesta en el bloque. En el lienzo de
 exportación es ese mismo valor sumado al avance vertical de esa línea.
 
-Antonio no rebaja los acentos en versalitas: la tilde de una Á sube 0.27 em
+Antonio no rebaja los acentos en versalitas: la tilde de una Á sube 0.281 em
 por encima de la letra. Sin esa holgura la tilde cae DENTRO de las letras de
-la línea de arriba — 27 píxeles a tamaño 112 — y la pieza sale con las
+la línea de arriba — 29 píxeles a tamaño 112 — y la pieza sale con las
 líneas comidas. No subas la interlínea de todas las líneas para arreglarlo:
 afloja el bloque entero y deja de ser el titular de esta marca.
+
+Estos números no son «lo que sobresale la tinta» a secas: llevan dentro
+0.079 em de hueco óptico, que a 112 px son unos 9 px. Una tilde que solo
+libra la tinta por 2 px se sigue leyendo pegada a la línea de encima.
 
 El bloque de texto no lleva recorte de ningún tipo. Con interlínea por
 debajo de 1, la tinta de la primera línea sale por encima de su caja de
@@ -274,11 +343,13 @@ están cargadas.
 
 Y un botón que las descargue todas de una.
 
-### Las siete trampas del exportador
+### Las nueve trampas del exportador
 
 **Aquí es donde falla, y falla en silencio: la vista previa se ve perfecta y el
-PNG sale roto.** Estas siete van literales en el prompt maestro, porque no son
-gustos — son fallos observados en un documento que por lo demás estaba bien.
+PNG sale roto.** Estas nueve van literales en el prompt maestro, porque no son
+gustos — son fallos observados en documentos que por lo demás estaban bien. La
+8 y la 9 salieron del lote de agosto de 2026, midiendo el PNG contra su vista
+previa píxel a píxel.
 
 ```
 1. ctx.letterSpacing NO se reinicia al cambiar ctx.font. Si lo usas para el
@@ -286,9 +357,23 @@ gustos — son fallos observados en un documento que por lo demás estaba bien.
    Si no, el tracking se filtra a la cifra, al antetítulo y al titular, y el
    titular se sale del lienzo.
 
-2. Fija ctx.textBaseline='top' antes de dibujar y usa la misma Y que el
-   maquetado. Con el valor por defecto ('alphabetic') el texto del PNG cae
-   más abajo que en la vista previa.
+2. NO uses ctx.textBaseline='top' para el titular con la Y del maquetado.
+   Es la trampa que más caro sale y la que parece resuelta. 'top' ancla en el
+   tope de la caja EM de la fuente; el navegador, con interlínea por debajo
+   de 1, ancla la línea con medio interlineado NEGATIVO. Los dos anclajes no
+   coinciden y el PNG entero sale unos 5 px por encima de la vista previa.
+
+   Dibuja por LÍNEA BASE. Para cada línea del titular:
+
+     ctx.textBaseline = 'alphabetic';
+     const m = ctx.measureText('N');                  // versalita de control
+     const medioInterlineado = (tamaño * base - (m.fontBoundingBoxAscent
+                                + m.fontBoundingBoxDescent)) / 2;
+     const lineaBase = topeDeLaCaja + medioInterlineado + m.fontBoundingBoxAscent;
+     ctx.fillText(linea, 72, lineaBase);
+
+   Y compruébalo: descarga una pieza, ponla sobre su vista previa y mira el
+   desplazamiento. Por encima de 3 px, el anclaje está mal.
 
 3. Mide el alto real del bloque de texto con getBoundingClientRect() del
    elemento ya maquetado. No lo estimes multiplicando líneas por interlínea:
@@ -310,6 +395,20 @@ gustos — son fallos observados en un documento que por lo demás estaba bien.
    imagen. Se dibuja la panorámica entera desplazada −1080·k, no una imagen
    por diapositiva. Si recortas y reescalas cada trozo por separado, los
    redondeos dejan una línea de costura de uno o dos píxeles en cada corte.
+
+8. La bajada y la nota SE PARTEN EN LÍNEAS en el lienzo, igual que en la
+   vista previa. La bajada tiene un ancho máximo de 52 caracteres y la nota
+   ocupa los 936 px útiles: en HTML el navegador las parte solo, y en el
+   lienzo no las parte nadie. Mide con ctx.measureText palabra a palabra y
+   corta donde cortaría el navegador. Si no lo haces, una nota larga sale
+   en una sola línea que se va por el borde derecho del PNG mientras la
+   vista previa se ve perfecta.
+
+9. El brillo del fondo se aplica igual en los dos sitios. En HTML es
+   filter: brightness(n) sobre el elemento del fondo; en el lienzo es
+   ctx.filter = `brightness(${n})` ANTES del drawImage y ctx.filter='none'
+   justo después. Si se queda puesto, el velo, el símbolo y el texto salen
+   también atenuados y el PNG entero se ve más apagado que la vista previa.
 ```
 
 **Y una comprobación que el humano hace, no el modelo:** descarga una pieza y
@@ -335,8 +434,9 @@ Un carrusel se muestra DOS veces en el documento:
    quepa entera: por debajo de ese tamaño las costuras dejan de verse, que
    es lo único para lo que sirve la tira.
 
-2. Debajo, cada diapositiva por separado, a la vista previa de 360 px como
-   cualquier otra pieza, y con su botón de descarga.
+2. Debajo, cada diapositiva por separado, a la vista previa de 480 px como
+   cualquier otra pieza, en una sola fila horizontal y con su botón de
+   descarga.
 
 El fondo del carrusel es UNA sola imagen panorámica que cubre 1080×N de
 ancho por 1350 de alto. La diapositiva k NO lleva su propia imagen: lleva la
@@ -444,7 +544,8 @@ Los cinco fallos, por frecuencia:
 | **Se comió una tilde** | «CODIGO TUYO» | «Faltan tildes en la pieza N. El texto correcto es: …» |
 | **Metió texto en la imagen** | Letras dentro del fondo generado | «El fondo de la pieza N tiene letras. Regenéralo sin ningún texto.» |
 | **El lienzo no mide 1080×1350** | El PNG descargado sale de otro tamaño | «El lienzo de exportación tiene que ser exactamente 1080×1350.» |
-| **Aplicó la interlínea igual a todas las líneas** | Una tilde o una eñe metida dentro de las letras de la línea de encima | «Falta la holgura del titular de la pieza N. La línea que lleva la tilde avanza 0.27 más; la que lleva eñe, 0.20; y la que va debajo de una Q o un signo de apertura, 0.17 más.» |
+| **Aplicó la interlínea igual a todas las líneas** | Una tilde o una eñe metida dentro de las letras de la línea de encima | «Falta la holgura del titular de la pieza N. La línea que lleva la tilde avanza 0.34 más; la que lleva eñe, 0.27; y la que va debajo de una coma, 0.24 más.» |
+| **Aplicó la tabla vieja** | La tilde no se solapa, pero se lee soldada a la línea de encima: menos de 3 px de aire | «Las holguras son 0.34 / 0.27 / 0.25 arriba y 0.24 / 0.22 / 0.20 / 0.18 abajo. Con 0.27 y 0.17 la tilde queda a 1.8 px y se lee pegada.» |
 | **Subió la interlínea de todas** | El bloque del titular se ve suelto y ya no compacto | «La interlínea base sigue siendo 0.88. La holgura va solo en las líneas que la necesitan.» |
 | **Calculó la holgura solo para un par de líneas** | Un titular de varias líneas donde una tilde o una eñe se come la línea de encima, pero solo en una de las transiciones — el resto del bloque sí quedó bien | «Recalcula la holgura de CADA par de líneas de la pieza N, no solo del primero. La línea X necesita su holgura igual que la línea Y — corre la fórmula línea por línea hasta la última.» |
 | **Redibujó el símbolo en vez de copiar el SVG/Path2D** | Trazos con `stroke`, blancos o de otro color, en vez de las seis figuras rellenas en `#FF5100` | «El símbolo de la pieza N no es el de PanaClaw. Reemplázalo por el bloque SVG/Path2D literal de la sección "El símbolo, literal" de este documento: fill, `fill-rule="evenodd"`, escala 0.88 en los dos ejes. No lo redibujes.» |
@@ -452,7 +553,9 @@ Los cinco fallos, por frecuencia:
 | **Cambió el brillo entre diapositivas** | Un escalón de luz en la costura | «El brillo de la imagen es el mismo número en las N diapositivas.» |
 | **Dejó el prompt del fondo debajo de la pieza** | Un párrafo con la receta de la imagen que ya está ahí arriba | «Quita el prompt del fondo del documento. Debajo de cada pieza van la descripción, los hashtags y el botón de copiar, nada más.» |
 | **El botón de copiar no copia** | Se pulsa, no confirma nada y el portapapeles sigue igual | «El botón de copiar tiene que caer a un `<textarea>` oculto con `execCommand('copy')` cuando `navigator.clipboard` no esté, y confirmar con «Copiado». El documento se abre desde el disco.» |
-| **La vista previa sale de otro tamaño** | Las piezas se ven enormes o diminutas, o no todas miden lo mismo | «La vista previa mide 360 px de ancho en todas las piezas: la pieza se construye a 1080 y se escala 0.3333. No la adaptes a la pantalla.» |
+| **La vista previa sale de otro tamaño** | Las piezas se ven enormes o diminutas, o no todas miden lo mismo | «La vista previa mide 480 px de ancho en todas las piezas: la pieza se construye a 1080 y se escala calc(480/1080). No la adaptes a la pantalla.» |
+| **Metió las publicaciones en una rejilla** | Columnas de alturas dispares, huecos de media pantalla, piezas de dos publicaciones en la misma fila | «El documento es una lista vertical de publicaciones. Cada una ocupa una fila entera con su cabecera, sus piezas en fila y su descripción debajo. Dos publicaciones nunca comparten fila.» |
+| **El PNG no coincide con la vista previa** | Al superponerlos, el texto del PNG cae unos píxeles más arriba | «Dibuja el titular por línea base, no con textBaseline='top': con interlínea por debajo de 1 los dos anclajes no coinciden. La cuenta está en la trampa 2.» |
 | **Escaló la pieza sin marco** | Huecos enormes entre piezas y la página se desplaza a lo ancho | «El marco lleva su ancho y su alto escritos (360×450) con overflow:hidden, y la pieza va con transform-origin: top left.» |
 
 **Cuenta los hashtags de cada pieza.** Es lo que más se le va: le das seis y

@@ -274,6 +274,36 @@ exacta: `eBot`, nunca `EBOT`.
 > publicación ya es la tagline, la descripción no la repite al abrir: abre por
 > otro lado y deja que la firma la cierre.
 
+### El largo tiene tope, y se cuenta
+
+**Decidido el 2026-08-26 por el dueño de la marca**, después de leer el primer
+lote de doce descripciones producidas con este sistema: salieron entre 426 y 808
+caracteres, con una mediana de 625. Demasiado largo, y el motivo no es estético.
+
+Instagram corta la descripción a unos **125 caracteres** y esconde el resto
+detrás de «… más». Todo lo que pase de ahí solo lo lee quien ya decidió que le
+interesa. Una descripción de 800 caracteres no dice más: dice lo mismo con 675
+caracteres que casi nadie abre.
+
+Los tres topes, y se cuentan, no se estiman:
+
+| | Tope | Por qué |
+|---|---|---|
+| **La primera línea** (la situación, con su emoji) | **100 caracteres** | Entra entera antes del corte, con sitio para el nombre de la cuenta |
+| **El cuerpo** (una sola articulación, la del medio) | **300 caracteres** | Es lo que se lee de un tirón sin desplazar |
+| **La descripción entera**, firma incluida, sin contar los hashtags | **500 caracteres** | |
+
+Si no cabe en 500, no sobra sitio: sobran ideas. Una publicación es una idea
+—[`prompts/texto/organico.md`](../prompts/texto/organico.md)—, y una descripción
+que necesita 800 caracteres casi siempre lleva dos dentro. Pártela en dos
+publicaciones o quita la segunda.
+
+**Esto no relaja nada de lo demás.** El límite se sigue diciendo, la cifra se
+sigue verificando y la firma sigue cerrando. Lo que se recorta es el desarrollo,
+no la precisión: es el paso 5 de
+[`07-redaccion.md`](07-redaccion.md) §7 —borrar lo que no hace trabajo— aplicado
+con un número delante en vez de a ojo.
+
 ### Hashtags: seis, todos concretos
 
 Antes eran tres. Ahora el tope son **seis**, y la regla de fondo no cambió: cada
