@@ -74,25 +74,38 @@ tipografía de titular: se mide con `medir-fuente.mjs` y se pega en la ficha.
 
 ---
 
-## Su relación con `skills/` de la raíz
+## Quién manda sobre qué
 
-Los dos sitios contienen procedimientos, y conviene saber cuál manda:
+Hay dos sitios con procedimientos y conviene no dudar nunca. **La línea no está entre
+«genérico» y «PanaClaw»: está entre quién los lee.**
 
-- **`skills/` de la raíz** es el catálogo de la marca — `contenido-instagram`,
-  `blog-seo`, `propuesta-comercial`, `anuncio-pagado`, `lote-visual`. Lo enruta
-  `CLAUDE.md` y es la fuente para cualquier agente, sea Claude o no.
-- **`.claude/skills/`** es lo que Claude Code carga solo.
+`CLAUDE.md` dice que este repositorio existe para que **cualquier agente** —Claude,
+Grok, Gemini, Pomelli, el que sea— entienda la marca en una lectura. Esa carpeta,
+`.claude/skills/`, solo la lee Claude Code. De ahí sale la regla:
 
-**`prompt-maestro` y `skills/contenido-instagram/` se solapan**: los dos producen
-el prompt maestro de un lote de Instagram. La diferencia es el alcance —
-`contenido-instagram` sabe de PanaClaw y da por hecho su repositorio;
-`prompt-maestro` no sabe de ninguna marca y exige una ficha.
+| | Quién lo lee | Qué contiene |
+|---|---|---|
+| **`skills/`, `prompts/`, `adn/`, `datos/`** | Cualquier agente | La verdad de PanaClaw. **Manda siempre** |
+| **`.claude/skills/`** | Solo Claude Code | Lo que el repositorio no puede tener: el procedimiento para **otras marcas** y los **tres scripts** |
 
-Mientras convivan, **manda `skills/contenido-instagram/` para un encargo de
-PanaClaw**: es el que conoce los cinco tipos de publicación, la mezcla del mes y el
-enrutador. `prompt-maestro` aporta lo que aquel no tiene — el contrato del HTML, las
-nueve trampas del exportador y los tres scripts.
+**Para un encargo de PanaClaw:**
 
-> Si la duplicación molesta, la salida limpia es dejar `contenido-instagram` como el
-> procedimiento de PanaClaw y que apunte a `prompt-maestro` para la parte del
-> documento HTML. Es una decisión del dueño del repositorio, no de quien produce.
+- El procedimiento es `skills/contenido-instagram/`. No lo sustituye nada.
+- El contrato del HTML es `prompts/plataformas/meta-ai.md` — 579 líneas, con el
+  símbolo literal, la tira del carrusel y la tabla de qué revisar. El
+  `contrato-html.md` de la skill es un resumen de 237 líneas para marcas que no
+  tienen el suyo escrito: **si los dos dicen algo distinto, manda el del repo.**
+- Las cifras salen de `datos/precios.json`, los tokens de `datos/marca.json` y la
+  interlínea de ahí también. La ficha de la skill es un espejo.
+
+**Lo que sí aportan estas skills, y el repositorio no tenía:** los tres scripts.
+`skills/contenido-instagram/` los llama en su paso 8, y `prompts/plataformas/meta-ai.md`
+llama al auditor cuando vuelve el documento. Eso es lo que había que conectar.
+
+**Para otro cliente:** `prompt-maestro` sola, más su ficha. Ahí no hay repositorio que
+mande y la skill es la única fuente.
+
+> **Por qué no se fusionan.** Fusionarlas obligaría a meter en el repositorio material
+> que solo sirve a Claude Code, o a sacar del repositorio material que otros agentes
+> necesitan leer. Las dos cosas rompen para qué existe cada carpeta. Lo que sí había
+> que arreglar era que no se conocieran, y eso ya está hecho.

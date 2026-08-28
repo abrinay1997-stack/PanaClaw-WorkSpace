@@ -1,5 +1,11 @@
 # El contrato del HTML
 
+> **Precedencia.** Si la marca ya tiene este contrato escrito —PanaClaw lo tiene en
+> `prompts/plataformas/meta-ai.md`, y con más detalle que aquí—, **manda el suyo**.
+> Este archivo existe para las marcas que no lo tienen, y para no perder lo
+> aprendido cuando se empieza con un cliente nuevo. Dos copias de la misma verdad
+> es exactamente el fallo que produjo la tabla de interlínea equivocada.
+
 **Esta es la parte que no cambia de una marca a otra.** Se copia casi entera en la
 sección 3 del prompt maestro; lo único que se sustituye son las medidas del lienzo y
 los colores de la interfaz del documento.

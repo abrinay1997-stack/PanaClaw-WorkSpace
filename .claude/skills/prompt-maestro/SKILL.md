@@ -10,6 +10,12 @@ multimodal devuelva un documento HTML autocontenido con el lote entero: cada pie
 compuesta con su texto, la descripción de cada publicación con sus hashtags y un
 botón para copiarlas, y cada lienzo descargable en PNG a tamaño real.
 
+> **Si la marca tiene su propio repositorio, ese manda.** Esta skill no lo sustituye:
+> aporta el contrato del HTML para marcas que no lo tienen escrito, y los tres
+> scripts. Para un encargo de PanaClaw, el procedimiento es
+> `skills/contenido-instagram/` y el contrato del HTML es
+> `prompts/plataformas/meta-ai.md`, que está más completo que el de aquí.
+
 **El reparto del trabajo es la idea entera**, y no es negociable:
 
 ```

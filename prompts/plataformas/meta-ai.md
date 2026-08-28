@@ -415,6 +415,14 @@ previa píxel a píxel.
 ponla al lado de su vista previa. Si no son idénticas, el exportador está mal y
 lo están todas las del lote.
 
+**Hazla a máquina.** El desfase que produce la trampa 2 son unos 5 px, y a ojo no se
+ve — se encontró superponiendo las diecinueve piezas del lote de agosto:
+
+```bash
+node .claude/skills/prompt-maestro/scripts/auditar-documento.mjs documento.html \
+  --prompt prompt.txt --png ./auditoria
+```
+
 ### Un carrusel se monta como una tira
 
 Un carrusel **no son N piezas seguidas en el documento**: es una pieza larga

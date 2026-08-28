@@ -5,9 +5,18 @@ description: La ficha de marca de PanaClaw para producir lotes de piezas de rede
 
 # PanaClaw · la ficha de marca
 
-**Esto son los datos. El procedimiento está en la skill `prompt-maestro`** — cárgala
-también, porque aquí no se repite: si el método viviera en dos sitios, el día que se
-mejore uno el otro se queda viejo y nadie se entera.
+**Esto son los datos.** El procedimiento no se repite aquí: si el método viviera en
+dos sitios, el día que se mejore uno el otro se queda viejo y nadie se entera.
+
+**Dónde está el procedimiento, en este orden:**
+
+1. **`skills/contenido-instagram/` del repositorio**, si lo tienes delante. Es el que
+   manda: conoce los cinco tipos de publicación, la mezcla del mes, el enrutador y la
+   lista de verificación de la marca. Y el contrato del HTML es
+   `prompts/plataformas/meta-ai.md`.
+2. **La skill `prompt-maestro`**, para lo que el repositorio no tiene: los tres
+   scripts. Y como respaldo del contrato del HTML si trabajas sin el repositorio
+   delante.
 
 Esta skill aporta cuatro cosas que `prompt-maestro` pide y que solo PanaClaw puede
 dar: **el logo**, la ficha rellena, el mapa del repositorio y las reglas duras.

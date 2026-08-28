@@ -239,14 +239,42 @@ diapositivas y UN prompt de fondo, no como N piezas.
 La lista que Meta tiene que comprobar, con la prohibición repetida.
 ```
 
-### Paso 8 · Anotar lo publicado
+### Paso 8 · Pasar el verificador
+
+La lista de la sección 5 es larga y se comprueba a mano. **Buena parte se comprueba
+sola**, contra la ficha de la marca, y encuentra lo que el ojo no ve:
+
+```bash
+node .claude/skills/prompt-maestro/scripts/verificar-lote.mjs prompt.txt \
+  --marca .claude/skills/prompt-maestro-panaclaw/assets/ficha-panaclaw.json \
+  --adn adn --indice operacion/publicado.md
+```
+
+Cada línea de titular dentro de su rango de caracteres, cada tabla de interlínea
+recalculada par a par, un solo tramo naranja y contiguo, cada importe existente en
+`precios.json`, los topes de las descripciones, la jerga, los huecos sin resolver,
+los titulares que ya salieron y las frases del ADN copiadas literales.
+
+**Y las siete reglas duras que antes solo vivían en prosa:** la nota de límite
+obligatoria con cifra, el ember en un rol de texto, un rango citado por su mínimo a
+secas, las afirmaciones prohibidas, el número que no se imprime, las fronteras entre
+productos y la suma de un pago único con una mensualidad.
+
+Lo que no comprueba, y sigue siendo de quien entrega: si un titular es una
+adivinanza, si el acento cae en la afirmación, si el lote le habla a un solo
+público, y si dos titulares distintos dicen lo mismo con otras palabras.
+
+**Córrelo ANTES del paso 9.** Si lo corres después de anotar el índice, los titulares
+del lote ya están dentro y el aviso de repetición pierde sentido.
+
+### Paso 9 · Anotar lo publicado
 
 **Antes de entregar, no después.** Añade a
 [`operacion/publicado.md`](../../operacion/publicado.md) una fila por pieza con
 su fecha, su puerta, su titular y su escena. Si este paso se salta, el archivo
 miente en el siguiente lote y la regla de no repetir deja de valer.
 
-### Paso 9 · Entregar
+### Paso 10 · Entregar
 
 El prompt maestro completo, en un bloque, listo para pegar. Ver
 [`orquestador/protocolo-entrega.md`](../../orquestador/protocolo-entrega.md).
@@ -318,6 +346,17 @@ Antes de entregar, una a una:
 **Y cuando vuelva el documento, antes de publicar nada:** descarga una pieza y
 ponla al lado de su vista previa. Si no son idénticas, el exportador está mal y
 lo están todas las del mes.
+
+Eso se hace a máquina, que encuentra desfases de píxeles que el ojo no ve:
+
+```bash
+node .claude/skills/prompt-maestro/scripts/auditar-documento.mjs documento.html \
+  --prompt prompt.txt --png ./auditoria
+```
+
+Compara cada cadena del prompt contra el documento carácter a carácter —es la que
+dice si el modelo inventó o alteró algo—, pulsa los botones de descarga y superpone
+cada PNG a su vista previa. Por encima de 6 px de desfase, el exportador está mal.
 
 ---
 
