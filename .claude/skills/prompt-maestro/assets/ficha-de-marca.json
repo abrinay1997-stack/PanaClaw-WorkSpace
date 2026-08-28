@@ -1,0 +1,283 @@
+{
+ "$comentario": "Ficha en blanco del contrato de marca. Rellénala una vez por marca y guárdala junto al ADN. Los scripts la leen: verificar-lote.mjs comprueba el prompt maestro contra ella. Lo que quede en null es lo que hay que preguntar antes de producir — no lo inventes. El detalle de cada campo está en references/contrato-de-marca.md.",
+ "marca": null,
+ "$ejemploMarca": "PanaClaw",
+ "cifras": {
+  "$que": "Punto 1 del contrato. De dónde sale TODO importe que la marca puede decir en voz alta.",
+  "fuente": null,
+  "$ejemploFuente": "datos/precios.json",
+  "importesPermitidos": [],
+  "$ejemploImportes": [
+   "$295",
+   "$450",
+   "$850",
+   "$1,200",
+   "$40",
+   "$35/mes",
+   "$15"
+  ],
+  "formatoDeRango": null,
+  "$ejemploRango": "$80–$150 se cita entero, o «desde $80». Nunca $80 a secas.",
+  "nuncaSeSuman": null,
+  "$ejemploSuma": "Un pago único y una mensualidad se dan como dos totales separados, siempre.",
+  "rangos": [],
+  "$ejemploRangos": [
+   {
+    "desde": "$80",
+    "hasta": "$150",
+    "producto": "Auditoría de Seguridad"
+   }
+  ],
+  "$notaRangos": "El verificador marca un mínimo citado a secas: si «$80» aparece sin «desde» y sin su rango entero, es error.",
+  "pagoUnico": [],
+  "mensual": [],
+  "$notaSuma": "Con las dos listas rellenas, el verificador caza un importe que sea la suma de uno de cada lista — el número creíble y falso que produce sumar un pago único con una mensualidad."
+ },
+ "logo": {
+  "$que": "Punto 2. Lo más importante de la ficha. Va como código, nunca descrito en prosa.",
+  "pathSVG": null,
+  "viewBox": null,
+  "fillRule": "evenodd",
+  "color": null,
+  "proporcion": null,
+  "$ejemploProporcion": "100 de ancho por 81.56 de alto. NO es cuadrado.",
+  "tamanoEnPieza": {
+   "ancho": null,
+   "alto": null
+  },
+  "posicion": null,
+  "$ejemploPosicion": "centrado horizontal, borde superior en y=96",
+  "usosProhibidos": []
+ },
+ "tipografia": {
+  "$que": "Puntos 3 y 5. La de titular hace falta para MEDIRLA, no solo para nombrarla.",
+  "titular": {
+   "familia": null,
+   "peso": null,
+   "fuente": null,
+   "$ejemploFuente": "Google Fonts, o ruta a un .woff2 si es de pago",
+   "roles": [
+    "titular",
+    "cifra"
+   ]
+  },
+  "apoyo": {
+   "familia": null,
+   "pesos": [],
+   "roles": [
+    "antetítulo",
+    "bajada",
+    "nota",
+    "wordmark",
+    "numerador"
+   ]
+  },
+  "noSeCruzan": true,
+  "prohibidas": [],
+  "$ejemploProhibidas": "Las que un editor sugiere por defecto para este aspecto: Montserrat, Inter, Poppins, Bebas Neue, Impact…"
+ },
+ "interlinea": {
+  "$que": "SALE DE medir-fuente.mjs. No la copies de otra marca: depende de la tipografía.",
+  "$comando": "node scripts/medir-fuente.mjs --familia \"<familia>\" --peso <peso>",
+  "medidoEl": null,
+  "base": {},
+  "$ejemploBase": {
+   "titular-xl": 0.88,
+   "titular-l": 0.88,
+   "titular-m": 0.9
+  },
+  "huecoOptico": null,
+  "$ejemploHueco": 0.079,
+  "holguraSuperior": {},
+  "$ejemploSuperior": {
+   "Á É Í Ó Ú": 0.34,
+   "Ñ": 0.27,
+   "Ü": 0.25
+  },
+  "holguraInferior": {},
+  "$ejemploInferior": {
+   ",": 0.24,
+   "Q": 0.22,
+   "¿": 0.2,
+   "¡": 0.18
+  }
+ },
+ "color": {
+  "$que": "Punto 4. Cada color con su rol, no una lista de hex sueltos.",
+  "fondo": null,
+  "textoPrincipal": null,
+  "textoSecundario": null,
+  "acento": null,
+  "soloFondo": [],
+  "$ejemploSoloFondo": "Colores que la marca usa pero que NUNCA pueden tocar una letra.",
+  "prohibidos": [],
+  "$ejemploProhibidos": [
+   "azul de cualquier tono",
+   "blanco puro #FFFFFF",
+   "negro puro #000000"
+  ]
+ },
+ "lienzo": {
+  "$que": "Punto 6. En píxeles exactos, por canal.",
+  "feed": {
+   "ancho": 1080,
+   "alto": 1350
+  },
+  "story": {
+   "ancho": 1080,
+   "alto": 1920
+  },
+  "cuadrado": {
+   "ancho": 1080,
+   "alto": 1080
+  }
+ },
+ "reticula": {
+  "$que": "Punto 7. Casi nunca existe en un manual: se decide la primera vez y no se vuelve a decidir.",
+  "margenLateral": null,
+  "anchoUtil": null,
+  "wordmarkLineaBase": null,
+  "$ejemploWordmark": "y=1254 — se coloca por la LÍNEA BASE, no por el borde de la caja",
+  "numerador": null,
+  "$ejemploNumerador": "borde superior y=56, borde derecho x=1008",
+  "anclajes": {},
+  "$ejemploAnclajes": {
+   "alto": {
+    "topeBloque": 248,
+    "para": "titulares de 6 a 8 líneas"
+   },
+   "medio": {
+    "centroOptico": 594,
+    "para": "titulares de 3 a 5 líneas"
+   },
+   "bajo": {
+    "baseBloque": 1112,
+    "para": "piezas donde la imagen manda arriba"
+   }
+  }
+ },
+ "escala": {
+  "$que": "Punto 8. El tamaño del titular lo decide un criterio MECÁNICO, no el gusto.",
+  "criterioDeTamano": null,
+  "$ejemploCriterio": "El número de líneas propone el tamaño; el carácter más largo dispone: si una línea se pasa de su rango, baja un escalón.",
+  "roles": {},
+  "$ejemploRol": {
+   "titular-l": {
+    "familia": "Antonio",
+    "peso": 700,
+    "size": 112,
+    "lineHeightBase": 0.88,
+    "letterSpacing": "-0.01em",
+    "transform": "uppercase",
+    "caracteresPorLinea": "17–20",
+    "lineas": "4–5",
+    "color": "#FFF7F7"
+   }
+  }
+ },
+ "ordenDelBloque": [],
+ "$ejemploOrden": [
+  "ANTETÍTULO",
+  "TITULAR",
+  "bajada",
+  "CIFRA",
+  "NOTA"
+ ],
+ "$notaOrden": "Punto 9. Dar la escala sin el orden deja al modelo poniendo la cifra encima del titular.",
+ "acento": {
+  "$que": "Punto 10.",
+  "tramosPorTitular": 1,
+  "topeDeCaracteres": null,
+  "$ejemploTope": "nunca más de la mitad de los caracteres del titular",
+  "queVaEnAcento": null,
+  "$ejemploQueVa": "La afirmación, la consecuencia o la cifra. En «no hacemos X, hacemos Y», la Y.",
+  "queNuncaVa": null,
+  "$ejemploNunca": "La negación, la bajada, la nota, ni el titular entero."
+ },
+ "imagen": {
+  "$que": "Punto 11.",
+  "brillo": null,
+  "$ejemploBrillo": "0.55–0.75",
+  "velo": null,
+  "$ejemploVelo": "lineal desde el borde del anclaje hacia el opuesto, rgba(…,0.92) → rgba(…,0.10)",
+  "prohibido": null,
+  "$ejemploProhibidoImagen": "Caja, tarjeta, franja o rectángulo semitransparente detrás del texto.",
+  "bloqueDeEstilo": null,
+  "$notaEstilo": "El párrafo literal que hace que una imagen se vea de esta marca. Se copia entero, nunca se parafrasea.",
+  "negativos": null,
+  "$notaNegativos": "La frase de negativos en prosa, para motores sin campo separado."
+ },
+ "voz": {
+  "$que": "Punto 12. Lo mínimo para que el texto no lo revise un humano frase a frase.",
+  "persona": null,
+  "$ejemploPersona": "Segunda persona, tuteo. Español panameño neutro.",
+  "jergaProhibida": [],
+  "rellenoProhibido": [],
+  "emojis": null,
+  "$ejemploEmojis": "Solo en la descripción de una publicación, y solo en sus tres articulaciones.",
+  "exclamaciones": false,
+  "firma": null,
+  "topeDescripcion": {
+   "primeraLinea": 100,
+   "cuerpo": 300,
+   "total": 500
+  },
+  "$notaTope": "Las redes cortan sobre los 125 caracteres. Sin un tope escrito, las descripciones crecen hasta el doble de lo que alguien lee.",
+  "topeHashtags": 6,
+  "hashtagsConcretos": true,
+  "notaObligatoriaConCifra": true,
+  "$notaNota": "Si la pieza dice una cifra o un plazo, lleva su nota de límite. Sin ella, la pieza promete sin condición y prepara una discusión."
+ },
+ "antirrepeticion": {
+  "$que": "Ver references/antirrepeticion.md.",
+  "indice": null,
+  "$ejemploIndice": "operacion/publicado.md",
+  "archivosDeAdn": [],
+  "$notaAdn": "Rutas donde viven las frases modelo. El verificador busca ahí los fragmentos copiados literales."
+ },
+ "prohibido": {
+  "$que": "Lo que la marca NUNCA dice ni imprime. El verificador los busca literales, así que se escriben como aparecerían en el texto.",
+  "afirmar": [],
+  "$ejemploAfirmar": [
+   "clientes satisfechos",
+   "años de experiencia",
+   "primeros en Google",
+   "posicionamiento garantizado",
+   "más de 100 proyectos",
+   "aumenta tus ventas un"
+  ],
+  "$notaAfirmar": "Métricas sin medir, testimonios, casos, premios y promesas de resultado. Es la regla de «nada de datos inventados» escrita en una lista que se puede buscar.",
+  "imprimir": [],
+  "$ejemploImprimir": [
+   "+507 6531-0721",
+   "6531",
+   "50765310721"
+  ],
+  "$notaImprimir": "Cadenas que no pueden aparecer nunca en una pieza: un teléfono que la marca decide no publicar, una URL interna, un correo personal."
+ },
+ "fronteras": [],
+ "$ejemploFronteras": [
+  {
+   "productos": [
+    "Care",
+    "Seguridad"
+   ],
+   "seConfundenPorque": "los dos suenan a «que no le pase nada al sitio»",
+   "fraseOficial": "Care mantiene la infraestructura —dominio, copias, actualizaciones y los cambios del mes—. Esto es ciberseguridad: quién entra, por dónde y qué se hace para impedirlo."
+  }
+ ],
+ "$notaFronteras": "Productos que el cliente confunde. Si una pieza nombra dos de ellos, la frase oficial va dentro. Confundirlos no produce un texto feo: produce una venta que después no se puede cumplir.",
+ "alturas": {
+  "$que": "Por dónde ABRE cada pieza. Es un eje distinto del tipo y del tema, y es el que decide si el lote vende o solo informa.",
+  "consecuencia": "¿Qué le cambia a mi negocio?",
+  "hecho": "¿Qué es y cuánto cuesta?",
+  "condicion": "¿Qué no entra y desde cuándo cuenta?",
+  "proporcionPorCadaOcho": {
+   "consecuencia": 4,
+   "hecho": 3,
+   "condicion": 1
+  },
+  "$notaProporcion": "Una pieza baja de altura, nunca sube. Se abre en consecuencia, se aterriza en el hecho y se cierra en la condición. Una pieza que abre en condición contesta en voz alta algo que nadie ha preguntado en silencio.",
+  "topeDeCondicionPorLote": "una de cada tres como mucho"
+ }
+}

@@ -77,8 +77,18 @@ function lineas(ruta) {
   });
 }
 
-/** Archivos que no se verifican: son plantillas con marcadores a propósito. */
-const NO_VERIFICAR = [/^skills\/_plantilla\//];
+/**
+ * Archivos que no se verifican.
+ *
+ * `skills/_plantilla/` son plantillas con marcadores a propósito.
+ *
+ * `.claude/` es herramienta de agente, no prosa de marca: lleva listas de lo
+ * PROHIBIDO —tipografías que no se pueden usar, importes de ejemplo, colores
+ * que ilustran un error— y este verificador las leería como usos. Un cepo que
+ * marca contenido legítimo acaba desactivado, que es peor que no tenerlo.
+ * Lo que hay ahí dentro se comprueba con sus propios scripts.
+ */
+const NO_VERIFICAR = [/^skills\/_plantilla\//, /^\.claude\//];
 const saltar = (ruta) => NO_VERIFICAR.some((re) => re.test(rel(ruta)));
 
 /* ------------------------------------------------------------------ *
