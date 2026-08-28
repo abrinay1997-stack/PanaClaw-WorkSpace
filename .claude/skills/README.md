@@ -15,6 +15,85 @@ uno el otro se queda viejo y nadie se entera.
 
 ---
 
+## Cómo se instala
+
+**No hay ningún botón que diga «guardar skill».** Un `.skill` es un zip, y
+instalarlo es descomprimirlo en la carpeta correcta. Hay tres sitios donde puede
+aterrizar, y cuál te toca depende de dónde vayas a trabajar.
+
+### 1 · Si tienes este repositorio: no instalas nada
+
+Ya están dentro, en `.claude/skills/`. Claude Code lee esa carpeta al abrir la
+sesión.
+
+```bash
+git pull
+```
+
+Y ya. Compruébalo con `/skills`: tienen que salir `prompt-maestro` y
+`prompt-maestro-panaclaw`. **Esta es la vía recomendada para todo lo de
+PanaClaw**, porque la skill y el repositorio que la alimenta van juntos y no se
+pueden desincronizar.
+
+Las sesiones en la nube de Claude Code también leen `.claude/skills/` del
+repositorio clonado, así que ahí tampoco hay que hacer nada.
+
+### 2 · Si NO tienes el repositorio: descomprimir en la carpeta personal
+
+Es la vía para un compañero que solo quiere el método, o para llevarse
+`prompt-maestro` a otro cliente. La carpeta personal es `~/.claude/skills/` y
+vale para todos tus proyectos.
+
+En macOS o Linux:
+
+```bash
+mkdir -p ~/.claude/skills
+unzip prompt-maestro.zip -d ~/.claude/skills/
+unzip prompt-maestro-panaclaw.zip -d ~/.claude/skills/
+```
+
+En Windows, PowerShell:
+
+```powershell
+mkdir -Force "$HOME\.claude\skills"
+Expand-Archive prompt-maestro.zip -DestinationPath "$HOME\.claude\skills\"
+Expand-Archive prompt-maestro-panaclaw.zip -DestinationPath "$HOME\.claude\skills\"
+```
+
+Tiene que quedar así, con el `SKILL.md` un nivel dentro:
+
+```
+~/.claude/skills/prompt-maestro/SKILL.md
+~/.claude/skills/prompt-maestro-panaclaw/SKILL.md
+```
+
+Si el archivo te llegó con extensión `.skill` y tu descompresor no lo reconoce,
+renómbralo a `.zip`. Es el mismo archivo: la extensión es lo único que cambia.
+
+**Si la carpeta `~/.claude/skills/` no existía antes de abrir la sesión**, cierra
+Claude Code y vuelve a abrirlo. Si ya existía, las coge al vuelo sin reiniciar.
+
+### 3 · Para claude.ai en el navegador o la app de escritorio
+
+Ahí no valen ni el repositorio ni la carpeta del disco: hay que subir la skill a
+la cuenta. Se gestiona desde **Customize**, en la barra lateral de la app de
+escritorio, o desde los ajustes de skills de claude.ai — **no desde el chat.**
+Sube el `.zip`.
+
+**Lo que pierdes por esta vía:** los tres scripts. Necesitan Node y Playwright, y
+en el navegador no hay ni lo uno ni lo otro. Te llevas el método, el contrato del
+HTML y el logo; no te llevas las comprobaciones a máquina.
+
+### Cuál elegir
+
+| Dónde trabajas | Vía |
+|---|---|
+| Claude Code, con el repositorio clonado | 1 — `git pull` y nada más |
+| Claude Code, sin el repositorio | 2 — descomprimir en `~/.claude/skills/` |
+| claude.ai en el navegador, o la app de escritorio | 3 — subir el zip desde **Customize** |
+
+---
+
 ## Cómo se usa
 
 Pide lo que quieras en lenguaje normal y se cargan solas:
