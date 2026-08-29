@@ -10,10 +10,11 @@
 # Hacen falta uno o dos secretos, que se ponen una sola vez en GitHub
 # (Settings → Secrets and variables → Actions):
 #
-#   CLOUDFLARE_API_TOKEN   obligatorio. Se crea en Cloudflare, My Profile →
-#                          API Tokens → Create Custom Token, con un solo
-#                          permiso: Account → D1 → Edit, sobre la cuenta donde
-#                          vive `panaclaw-propuestas`. Nada más.
+#   CLOUDFLARE_API_TOKEN   obligatorio. Es el MISMO secreto que usa el flujo de
+#                          publicar: se crea una vez con la plantilla «Edit
+#                          Cloudflare Workers» y hay que sumarle el permiso
+#                          Account → D1 → Edit, porque aplicar migraciones toca
+#                          la base y publicar no.
 #
 #   CLOUDFLARE_ACCOUNT_ID  solo si ese token ve más de una cuenta. Entonces
 #                          wrangler pregunta cuál, y un token acotado a D1 no
@@ -40,25 +41,46 @@ jobs:
   migrar:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Comprobar que está la llave
+      # Sin llave no se puede aplicar nada, y qué hacer entonces depende de
+      # quién llamó:
+      #
+      #   · Lo lanzó una persona → se para y se dice qué falta. Quien pulsa el
+      #     botón espera que pase algo, y un verde que no hizo nada engaña.
+      #   · Lo disparó un empuje → se avisa y se sigue en verde. Un repositorio
+      #     que todavía no está conectado a Cloudflare es un estado legítimo, y
+      #     una cruz roja en cada empuje enseña al equipo a no mirar las cruces
+      #     rojas, que es justo lo que no puede pasar el día que una sea de
+      #     verdad.
+      - name: ¿Está la llave?
+        id: llave
         run: |
-          if [ -z "${{ secrets.CLOUDFLARE_API_TOKEN }}" ]; then
+          if [ -n "${{ secrets.CLOUDFLARE_API_TOKEN }}" ]; then
+            echo "hay=si" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "Falta el secreto CLOUDFLARE_API_TOKEN."
-            echo "Se crea en Cloudflare → My Profile → API Tokens, con el permiso Account → D1 → Edit,"
-            echo "y se guarda en GitHub → Settings → Secrets and variables → Actions."
+            echo "Se crea en Cloudflare → Manage Account → API Tokens, con la plantilla"
+            echo "«Edit Cloudflare Workers» más el permiso Account → D1 → Edit, y se guarda"
+            echo "en GitHub → Settings → Secrets and variables → Actions."
             exit 1
+          else
+            echo "hay=no" >> "$GITHUB_OUTPUT"
+            echo "::warning::No se aplicó ninguna migración: falta el secreto CLOUDFLARE_API_TOKEN.             Mientras no esté, las migraciones nuevas hay que aplicarlas a mano con 'npm run migrar'."
           fi
 
+      - uses: actions/checkout@v4
+        if: steps.llave.outputs.hay == 'si'
+
       - uses: actions/setup-node@v4
+        if: steps.llave.outputs.hay == 'si'
         with:
           node-version: 22
           cache: npm
 
       - run: npm install --no-audit --no-fund
+        if: steps.llave.outputs.hay == 'si'
 
       - name: Aplicar lo que falte
+        if: steps.llave.outputs.hay == 'si'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           # Vacío cuando el token ve una sola cuenta, que es el caso corriente.
