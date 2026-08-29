@@ -293,7 +293,9 @@ equipo (`algo.cloudflareaccess.com`) van en `wrangler.jsonc`, en `ACCESO_AUD` y
 - **Desde la web, sin terminal** —
   [`.github/workflows/desplegar.yml`](.github/workflows/desplegar.yml)—: se
   guarda una vez el secreto `CLOUDFLARE_API_TOKEN` (Cloudflare → Manage
-  Account → API Tokens → plantilla «Edit Cloudflare Workers») y se dispara desde
+  Account → API Tokens → plantilla «Edit Cloudflare Workers», sumándole el
+  permiso Account → D1 → Edit para que la misma llave sirva para las
+  migraciones) y se dispara desde
   la pestaña **Actions → Desplegar el hub → Run workflow**, eligiendo la rama.
   Es la misma convención del repositorio del CRM.
 - **Desde el repositorio:**
@@ -313,10 +315,17 @@ El identificador de la cuenta se copia de la barra lateral del panel de Workers.
 No se escribe en `wrangler.jsonc` a propósito: es un dato de quién despliega, no
 del proyecto, y es la misma convención que usa el repositorio del CRM.
 
-**3 · El flujo de migraciones.** Para que las migraciones futuras se apliquen
-solas ([`.github/workflows/migrar.yml`](.github/workflows/migrar.yml)), un
-secreto en GitHub: `CLOUDFLARE_API_TOKEN`, con un solo permiso —Account → D1 →
-Edit—. Y `CLOUDFLARE_ACCOUNT_ID` si ese token ve más de una cuenta.
+**3 · El flujo de migraciones.** Las futuras se aplican solas
+([`.github/workflows/migrar.yml`](.github/workflows/migrar.yml)) con el mismo
+secreto `CLOUDFLARE_API_TOKEN` del paso anterior, siempre que lleve el permiso
+Account → D1 → Edit. Y `CLOUDFLARE_ACCOUNT_ID` si ese token ve más de una
+cuenta.
+
+Mientras ese secreto no exista, ese flujo **no falla**: avisa en amarillo de que
+no aplicó nada y termina en verde. Una cruz roja en cada empuje enseña al equipo
+a no mirar las cruces rojas, que es justo lo que no puede pasar el día que una
+sea de verdad. Lanzado a mano sí se para y dice qué falta: quien pulsa el botón
+espera que pase algo.
 
 **4 · Y una vez publicado**, apagar la vista previa de Netlify y, si se conecta
 un dominio propio, poner `workers_dev` en `false`: la dirección de `workers.dev`

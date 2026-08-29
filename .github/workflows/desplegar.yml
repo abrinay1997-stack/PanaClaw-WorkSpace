@@ -9,8 +9,11 @@
 #
 #   CLOUDFLARE_API_TOKEN  · dash.cloudflare.com → Manage Account → API Tokens →
 #                           Create Token → plantilla «Edit Cloudflare Workers».
-#                           Se guarda en GitHub: Settings → Secrets and
-#                           variables → Actions → New repository secret.
+#                           Antes de crearlo, súmale el permiso Account → D1 →
+#                           Edit: con eso la misma llave sirve también para
+#                           `migrar.yml`, que sí toca la base. Se guarda en
+#                           GitHub: Settings → Secrets and variables → Actions
+#                           → New repository secret.
 #   CLOUDFLARE_ACCOUNT_ID · opcional; solo si ese token ve más de una cuenta.
 #                           Se copia de la barra lateral del panel de Workers.
 #
@@ -59,8 +62,8 @@ jobs:
           if [ -z "${{ secrets.CLOUDFLARE_API_TOKEN }}" ]; then
             echo "Falta el secreto CLOUDFLARE_API_TOKEN."
             echo "Se crea en Cloudflare → Manage Account → API Tokens, con la plantilla"
-            echo "«Edit Cloudflare Workers», y se guarda en GitHub → Settings → Secrets and"
-            echo "variables → Actions → New repository secret."
+            echo "«Edit Cloudflare Workers» más el permiso Account → D1 → Edit, y se guarda"
+            echo "en GitHub → Settings → Secrets and variables → Actions → New repository secret."
             exit 1
           fi
 
