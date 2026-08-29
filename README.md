@@ -288,27 +288,30 @@ equipo (`algo.cloudflareaccess.com`) van en `wrangler.jsonc`, en `ACCESO_AUD` y
 > Añadir a alguien al equipo es añadir su correo a esa política. Aquí dentro no
 > hay usuarios ni contraseñas que gestionar.
 
-**2 · Desplegar.**
+**2 · Desplegar.** Hay tres formas y todas hacen lo mismo; se elige una.
 
-```bash
-npm run desplegar
-```
+- **Desde la web, sin terminal** —
+  [`.github/workflows/desplegar.yml`](.github/workflows/desplegar.yml)—: se
+  guarda una vez el secreto `CLOUDFLARE_API_TOKEN` (Cloudflare → Manage
+  Account → API Tokens → plantilla «Edit Cloudflare Workers») y se dispara desde
+  la pestaña **Actions → Desplegar el hub → Run workflow**, eligiendo la rama.
+  Es la misma convención del repositorio del CRM.
+- **Desde el repositorio:**
 
-Si la sesión de wrangler ve más de una cuenta —es el caso: el hub de B&S vive en
-otra— hay que decirle cuál:
+  ```bash
+  npm run desplegar
+  ```
 
-```bash
-CLOUDFLARE_ACCOUNT_ID=… npm run desplegar
-```
+  Con la sesión de wrangler iniciada. Si esa sesión ve más de una cuenta —es el
+  caso: el hub de B&S vive en otra— hay que decirle cuál:
+  `CLOUDFLARE_ACCOUNT_ID=… npm run desplegar`.
+- **En cada empuje**, conectando el repositorio a Cloudflare Workers Builds con
+  `npm run instalar && npm run build` como orden de construcción. El proyecto se
+  llama **hub-panaclaw**, igual que el `name` de `wrangler.jsonc`.
 
-El identificador se copia de la barra lateral del panel de Workers. No se
-escribe en `wrangler.jsonc` a propósito: es un dato de quién despliega, no del
-proyecto, y es la misma convención que usa el repositorio del CRM.
-
-También se puede conectar el repositorio a Cloudflare Workers Builds, con
-`npm run instalar && npm run build` como orden de construcción, para que cada
-empuje a `main` publique solo. El proyecto se llama **hub-panaclaw**, igual que
-el `name` de `wrangler.jsonc`.
+El identificador de la cuenta se copia de la barra lateral del panel de Workers.
+No se escribe en `wrangler.jsonc` a propósito: es un dato de quién despliega, no
+del proyecto, y es la misma convención que usa el repositorio del CRM.
 
 **3 · El flujo de migraciones.** Para que las migraciones futuras se apliquen
 solas ([`.github/workflows/migrar.yml`](.github/workflows/migrar.yml)), un
