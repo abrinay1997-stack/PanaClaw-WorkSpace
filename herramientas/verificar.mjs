@@ -392,8 +392,15 @@ function huecos() {
 
 const ESCAPE_CODIGO = /(?:\/\*|\/\/)\s*v:\s*\S[^\n]*?(?:\*\/)?\s*$/;
 
-/** Lo que se publica: la portada y el código del cotizador. */
-const RUTAS_DEL_HUB = ['index.html', 'cotizador/src'];
+/**
+ * Lo que se publica: la portada, el código del cotizador, el contrato con el
+ * servidor y el Worker que lo atiende.
+ *
+ * `worker/` y `compartido/` no pintan nada en pantalla y por eso no deberían
+ * traer ni un hex —pero el día que alguien escriba ahí un color para un correo,
+ * una tarjeta o un aviso, entrará por la misma puerta que el resto—.
+ */
+const RUTAS_DEL_HUB = ['index.html', 'cotizador/src', 'compartido', 'worker'];
 
 function archivosDelHub() {
   const encontrados = [];

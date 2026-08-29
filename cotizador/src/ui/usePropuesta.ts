@@ -25,6 +25,14 @@ export type Accion =
   | { tipo: 'quitar'; lineaId: string }
   | { tipo: 'editarLinea'; lineaId: string; cambios: Partial<Linea> }
   | { tipo: 'cliente'; cambios: Partial<Propuesta['cliente']> }
+  /**
+   * La ficha elegida en el buscador de la libreta, o soltada.
+   *
+   * Llena los campos del cliente con lo que la ficha tenga hoy y guarda el
+   * enlace. Lo que se imprime siguen siendo estos campos —el PDF dice lo que
+   * decía el día que salió— y la ficha no se toca desde aquí nunca.
+   */
+  | { tipo: 'ficha'; codigo?: string; cliente?: Partial<Propuesta['cliente']> }
   | { tipo: 'necesita'; texto: string }
   | { tipo: 'asesor'; nombre: string }
   | { tipo: 'condiciones'; cambios: Partial<Propuesta['condiciones']> }
@@ -77,6 +85,13 @@ function reducir(propuesta: Propuesta, accion: Accion): Propuesta {
 
     case 'cliente':
       return { ...propuesta, cliente: { ...propuesta.cliente, ...accion.cambios } };
+
+    case 'ficha':
+      return {
+        ...propuesta,
+        clienteCodigo: accion.codigo,
+        cliente: { ...propuesta.cliente, ...accion.cliente },
+      };
 
     case 'necesita':
       return { ...propuesta, necesita: accion.texto };

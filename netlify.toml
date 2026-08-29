@@ -1,9 +1,25 @@
-# Configuración de Netlify para el hub de herramientas de PanaClaw.
+# Configuración de Netlify para la VISTA PREVIA del hub.
 #
 # Este repositorio es sobre todo el cerebro de la marca —`datos/`, `adn/`,
 # `catalogo/`, `prompts/`— y nada de eso se publica. Lo único que sale a la web
 # es lo que `scripts/construir.mjs` deja en `publico/`: la portada y el
 # cotizador ya construido.
+#
+# ---------------------------------------------------------------------------
+# EL HUB DE VERDAD YA NO SE PUBLICA AQUÍ
+#
+# Desde que el historial y el panel de clientes son compartidos, el hub vive en
+# Cloudflare: la base (D1) y la puerta única (Cloudflare Access) están ahí, y
+# Netlify no puede dar ninguna de las dos. Ver el README.
+#
+# Lo que queda aquí es la vista previa, con `VITE_DEMO=1`. Esa marca cambia dos
+# cosas: el historial se guarda en el navegador de quien mira —con números
+# `PROP-DEMO-0001`, para que ningún PDF de éstos se confunda con uno de verdad—
+# y el panel de clientes dice que necesita el servidor en vez de enseñar una
+# libreta de mentira.
+#
+# Cuando Cloudflare esté en pie, esto se apaga: dos copias del hub en pie es
+# como alguien acaba cotizando en la que no era.
 
 [build]
   # El `npm install` de raíz no toca `cotizador/`, que es un paquete aparte.
@@ -14,6 +30,8 @@
 
 [build.environment]
   NODE_VERSION = "22"
+  # Sin servidor detrás. Ver la cabecera.
+  VITE_DEMO = "1"
 
 # ---------- CABECERAS ----------
 # El hub es interno. Va sin caché agresiva para que un despliegue se vea al

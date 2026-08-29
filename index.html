@@ -6,7 +6,7 @@
     <title>Herramientas · PanaClaw</title>
     <meta
       name="description"
-      content="Punto de entrada a las herramientas de PanaClaw: la página web, el cotizador y el CRM."
+      content="Punto de entrada a las herramientas de PanaClaw: la página web, el cotizador, los clientes y el CRM."
     />
     <!-- Interna. No la busca nadie desde fuera y no debería encontrarse. -->
     <meta name="robots" content="noindex, nofollow" />
@@ -491,8 +491,8 @@
         <p class="antetitulo">Uso interno</p>
         <h1>Todo lo de <em>PanaClaw</em>, en una puerta.</h1>
         <p>
-          La página que ve el cliente, el cotizador que arma su propuesta y el panel donde caen sus
-          mensajes. Elige y te lleva directo.
+          La página que ve el cliente, el cotizador que arma su propuesta, la libreta de a quién
+          se le propuso y el panel donde caen sus mensajes. Elige y te lleva directo.
         </p>
       </div>
 
@@ -508,8 +508,11 @@
            `href` de interno a externo —o al revés—, cámbiale también la
            etiqueta, el `target` y el texto para lectores de pantalla.
 
-           El cotizador es el único SIN enlace externo: vive en este mismo
-           repositorio y se sirve desde este mismo dominio, en `/cotizador/`.
+           El cotizador y los clientes son los únicos SIN enlace externo:
+           viven en este mismo repositorio y se sirven desde este mismo
+           dominio, en `/cotizador/`. Son la misma aplicación —los clientes
+           son otra pantalla suya, en `/cotizador/#clientes`— porque cotizar y
+           saber a quién se cotiza son el mismo trabajo.
            ==================================================================== -->
       <ul class="herramientas">
         <li>
@@ -614,6 +617,67 @@
             <span class="ir">
               Abrir
               <span class="solo-lectores">el cotizador</span>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M5 12h14" />
+                <path d="m12 5 7 7-7 7" />
+              </svg>
+            </span>
+          </a>
+        </li>
+
+        <li>
+          <a class="tarjeta" href="./cotizador/#clientes">
+            <span class="tarjeta-top">
+              <span class="icono" aria-hidden="true">
+                <!-- Libreta de contactos -->
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.75"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M7 3h11a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7Z" />
+                  <path d="M4 7h3" />
+                  <path d="M4 12h3" />
+                  <path d="M4 17h3" />
+                  <circle cx="13.5" cy="10" r="2" />
+                  <path d="M10 16a3.5 3.5 0 0 1 7 0" />
+                </svg>
+              </span>
+              <span class="etiqueta">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.25"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M3 10.5 12 4l9 6.5" />
+                  <path d="M5 10v9h14v-9" />
+                </svg>
+                En el hub
+              </span>
+            </span>
+            <h2>Clientes</h2>
+            <p>
+              La libreta del equipo: quién es cada cliente, cómo se le escribe y qué se le ha
+              propuesto. Se llena sola al emitir.
+            </p>
+            <span class="ir">
+              Abrir
+              <span class="solo-lectores">el panel de clientes</span>
               <svg
                 viewBox="0 0 24 24"
                 fill="none"

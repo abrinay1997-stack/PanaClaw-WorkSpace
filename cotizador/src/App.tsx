@@ -1,14 +1,17 @@
 /**
- * Las dos pantallas: armar una propuesta y consultar las emitidas.
+ * Las cuatro pantallas: armar una propuesta, el historial, la libreta de
+ * clientes y la ficha de uno.
  *
  * En escritorio, armar son dos columnas a la vez: el catálogo a la izquierda y
  * la propuesta a la derecha. En móvil no caben, y apilarlas obligaría a bajar
  * una pantalla entera de catálogo antes de ver el formulario, así que ahí se
  * alternan con un conmutador y las cifras bajan a una barra fija.
  *
- * Todo ocurre en el navegador: el catálogo sale de `datos/precios.json`, el PDF
- * se genera aquí y el historial se guarda aquí. No hay servidor, y por eso el
- * cotizador funciona igual con mala conexión.
+ * **Casi todo ocurre en el navegador**: el catálogo sale de
+ * `datos/precios.json`, el PDF se genera aquí y la vista previa del documento
+ * no toca la red. Lo único que necesita servidor es EMITIR —porque el número lo
+ * da la base, que es lo que impide que dos personas manden la misma
+ * «PROP-2026-0007» a dos clientes distintos— y el panel de clientes.
  */
 
 import { useState } from 'react';
@@ -17,8 +20,10 @@ import { EMPRESA } from './datos/empresa';
 import { esCero, formato, formatoMensual } from './dominio/dinero';
 import { hayGraves } from './dominio/revision';
 import type { Item, Propuesta } from './dominio/tipos';
-import { almacenLocal } from './historial/almacenLocal';
-import { FalloHistorial } from './historial/contrato';
+import { mensajeDe } from './api/fallo';
+import { FichaCliente } from './clientes/FichaCliente';
+import { PantallaClientes } from './clientes/PantallaClientes';
+import { almacen } from './historial/almacen';
 import { PantallaHistorial } from './historial/PantallaHistorial';
 import { abrirWhatsapp, copiarMensaje, descargarPdf, verPdf } from './ui/acciones';
 import { Simbolo } from './ui/componentes';
@@ -41,25 +46,72 @@ export default function App() {
   const estado = usePropuesta();
   const [ruta, ir] = useRuta();
 
-  return ruta === 'historial' ? (
-    <PantallaHistorial
-      alVolver={() => ir('cotizador')}
-      alReabrir={(propuesta) => {
-        estado.despachar({ tipo: 'cargar', propuesta });
-        ir('cotizador');
-      }}
-    />
-  ) : (
-    <Cotizador estado={estado} alHistorial={() => ir('historial')} />
-  );
+  switch (ruta.pantalla) {
+    case 'historial':
+      return (
+        <PantallaHistorial
+          alVolver={() => ir({ pantalla: 'cotizador' })}
+          alReabrir={(propuesta) => {
+            estado.despachar({ tipo: 'cargar', propuesta });
+            ir({ pantalla: 'cotizador' });
+          }}
+          alAbrirCliente={(codigo) => ir({ pantalla: 'cliente', codigo })}
+        />
+      );
+
+    case 'clientes':
+      return (
+        <PantallaClientes
+          alVolver={() => ir({ pantalla: 'cotizador' })}
+          alAbrir={(codigo) => ir({ pantalla: 'cliente', codigo })}
+          alNuevo={() => ir({ pantalla: 'cliente', codigo: null })}
+        />
+      );
+
+    case 'cliente':
+      return (
+        <FichaCliente
+          codigo={ruta.codigo}
+          alVolver={() => ir({ pantalla: 'clientes' })}
+          alCotizar={(cliente) => {
+            // Se llena el destinatario y se deja el enlace puesto. Lo que se
+            // imprime son estos campos, congelados como estén al emitir; la
+            // ficha no se toca desde el cotizador.
+            estado.despachar({
+              tipo: 'ficha',
+              codigo: cliente.codigo,
+              cliente: {
+                negocio: cliente.negocio,
+                contacto: cliente.contacto,
+                whatsapp: cliente.whatsapp,
+                correo: cliente.correo,
+                ciudad: cliente.ciudad,
+              },
+            });
+            ir({ pantalla: 'cotizador' });
+          }}
+        />
+      );
+
+    default:
+      return (
+        <Cotizador
+          estado={estado}
+          alHistorial={() => ir({ pantalla: 'historial' })}
+          alClientes={() => ir({ pantalla: 'clientes' })}
+        />
+      );
+  }
 }
 
 function Cotizador({
   estado,
   alHistorial,
+  alClientes,
 }: {
   estado: ReturnType<typeof usePropuesta>;
   alHistorial: () => void;
+  alClientes: () => void;
 }) {
   const { propuesta, despachar, totales, alertas, plan, itemsEnUso } = estado;
   const [panel, setPanel] = useState<Panel>('catalogo');
@@ -89,15 +141,20 @@ function Cotizador({
     if (emitiendo || bloqueada) return;
     setEmitiendo(true);
     try {
-      const { numero } = await almacenLocal.registrar(propuesta);
+      const { numero, enlace } = await almacen.registrar(propuesta);
       if (numero !== propuesta.numero) despachar({ tipo: 'numeroAsignado', numero });
-      await accion({ ...propuesta, numero });
+      // Emitir puede haber creado o reconocido la ficha del cliente. Se guarda
+      // el enlace para que reemitir la misma propuesta no cree una segunda.
+      if (enlace.codigo && enlace.codigo !== propuesta.clienteCodigo) {
+        despachar({ tipo: 'ficha', codigo: enlace.codigo });
+      }
+      await accion({ ...propuesta, numero, clienteCodigo: enlace.codigo ?? undefined });
+      // El aviso del enlace se enseña después de que el documento haya salido:
+      // lo urgente es la propuesta, y lo de la ficha se arregla luego.
+      if (enlace.aviso) anunciar(enlace.aviso, 7000);
     } catch (error) {
       console.error(error);
-      anunciar(
-        error instanceof FalloHistorial ? error.mensaje : 'No se pudo generar el documento.',
-        6000,
-      );
+      anunciar(mensajeDe(error, 'No se pudo emitir la propuesta.'), 6000);
     } finally {
       setEmitiendo(false);
     }
@@ -136,6 +193,10 @@ function Cotizador({
               {propuesta.numero || 'El número se asigna al emitir'}
             </p>
           </div>
+
+          <button type="button" className="boton boton-secundario" onClick={alClientes}>
+            Clientes
+          </button>
 
           <button type="button" className="boton boton-secundario" onClick={alHistorial}>
             Historial

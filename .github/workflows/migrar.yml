@@ -1,0 +1,68 @@
+# Aplica las migraciones de la base cuando llega una nueva.
+#
+# El despliegue no lo hace. Cada empuje a `main` publica el código solo
+# —Cloudflare Workers Builds— pero la base no se toca: Cloudflare no sabe qué
+# hay en `migraciones/`. Si el código nuevo llega a una base sin migrar, el
+# historial responde «La operación falló» a todo, porque sus consultas nombran
+# columnas que ahí no existen. Armar la propuesta y bajar el PDF siguen
+# funcionando; lo que se cae es guardarla.
+#
+# Hacen falta uno o dos secretos, que se ponen una sola vez en GitHub
+# (Settings → Secrets and variables → Actions):
+#
+#   CLOUDFLARE_API_TOKEN   obligatorio. Se crea en Cloudflare, My Profile →
+#                          API Tokens → Create Custom Token, con un solo
+#                          permiso: Account → D1 → Edit, sobre la cuenta donde
+#                          vive `panaclaw-propuestas`. Nada más.
+#
+#   CLOUDFLARE_ACCOUNT_ID  solo si ese token ve más de una cuenta. Entonces
+#                          wrangler pregunta cuál, y un token acotado a D1 no
+#                          tiene permiso para leer la lista de cuentas: falla
+#                          antes de tocar nada, con un error sobre permisos que
+#                          no es lo que pasa. Se copia de la barra lateral del
+#                          panel de Workers.
+#
+# Es la misma convención que el repositorio del CRM, que se despliega a la
+# misma cuenta: el identificador es un dato de quién despliega, no del
+# proyecto, así que va por variable y no escrito en `wrangler.jsonc`.
+
+name: Migrar la base
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'migraciones/**'
+      - '.github/workflows/migrar.yml'
+  workflow_dispatch:
+
+jobs:
+  migrar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Comprobar que está la llave
+        run: |
+          if [ -z "${{ secrets.CLOUDFLARE_API_TOKEN }}" ]; then
+            echo "Falta el secreto CLOUDFLARE_API_TOKEN."
+            echo "Se crea en Cloudflare → My Profile → API Tokens, con el permiso Account → D1 → Edit,"
+            echo "y se guarda en GitHub → Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm install --no-audit --no-fund
+
+      - name: Aplicar lo que falte
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          # Vacío cuando el token ve una sola cuenta, que es el caso corriente.
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        # No repite lo ya aplicado: aplica solo las migraciones nuevas. Las dos
+        # primeras ya están puestas, así que hoy no haría nada.
+        run: npm run migrar

@@ -1,0 +1,78 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "hub-panaclaw",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-08-01",
+
+  // NO HAY `account_id` AQUÍ, Y ES UNA DECISIÓN:
+  //
+  // Cuando el token ve una sola cuenta, wrangler la usa y no pregunta. Cuando
+  // ve varias —y este dueño tiene al menos dos, porque el hub de B&S vive en
+  // otra— hay que decirle cuál, y se dice con la variable de entorno
+  // `CLOUDFLARE_ACCOUNT_ID`: en la terminal al desplegar, o como secreto del
+  // repositorio para el flujo que aplica las migraciones.
+  //
+  // Va por variable y no escrito aquí por la misma razón que en el repositorio
+  // del CRM, que se despliega a la misma cuenta: es un dato de QUIÉN despliega,
+  // no del proyecto, y escribirlo en el repositorio obliga a cambiarlo el día
+  // que el hub se mueva de cuenta.
+  //
+  // Se copia de la barra lateral del panel de Workers. No es un secreto —sale
+  // en la propia dirección del panel— pero tampoco hace falta que esté aquí.
+
+  // Encendido mientras no haya un dominio propio conectado a Cloudflare. La
+  // dirección `hub-panaclaw.<cuenta>.workers.dev` es la entrada real, y la
+  // protección de Cloudflare Access se configura sobre el Worker mismo
+  // (pestaña «Access» del Worker en el panel), así que cubre esa dirección
+  // igual que cubriría un dominio propio.
+  //
+  // El día que se conecte un dominio, esto pasa a `false`: una dirección de
+  // `workers.dev` que no pase por Access sería una puerta lateral al historial
+  // y a la libreta de clientes saltándose la lista de correos.
+  "workers_dev": true,
+
+  // La portada del hub y el cotizador ya construido.
+  //
+  // `run_worker_first` está encendido a propósito, y cuesta una invocación del
+  // Worker por archivo servido. Sin él, Cloudflare entrega los estáticos desde
+  // el borde SIN ejecutar el Worker, y entonces el guardia que se niega a
+  // servir el hub mientras falte Access (ver `worker/index.ts`) no llegaría a
+  // correr: la API rechazaría, pero la portada y el cotizador quedarían a la
+  // vista de cualquiera que diera con la dirección desde el momento del
+  // despliegue hasta que alguien se acordara de configurar la puerta.
+  //
+  // Para un hub interno de unas pocas personas, esa invocación de más no se
+  // nota. La protección de verdad la pone Access, que va delante de todo; esto
+  // es lo que cubre el rato en que Access todavía no está.
+  "assets": {
+    "directory": "./publico",
+    "binding": "ASSETS",
+    "run_worker_first": true
+  },
+
+  "d1_databases": [
+    {
+      "binding": "BASE",
+      "database_name": "panaclaw-propuestas",
+      // Creada el 2026-08-29, con sus dos migraciones ya aplicadas.
+      "database_id": "d2c52690-f042-4b8a-a855-5f440a493214",
+      "migrations_dir": "migraciones"
+    }
+  ],
+
+  "vars": {
+    // Los dos datos de la aplicación en Cloudflare Access, tomados de la
+    // pestaña «Access» del Worker en el panel de Cloudflare. `ACCESO_DOMINIO`
+    // es el dominio del equipo (`algo.cloudflareaccess.com`) y `ACCESO_AUD`, la
+    // etiqueta «Application Audience (AUD) Tag».
+    //
+    // Hasta que estén puestos, la API rechaza todo con «sin acceso», que es lo
+    // correcto: sin Access configurado no hay forma de saber quién entra.
+    "ACCESO_DOMINIO": "PENDIENTE",
+    "ACCESO_AUD": "PENDIENTE"
+  },
+
+  "observability": {
+    "enabled": true
+  }
+}

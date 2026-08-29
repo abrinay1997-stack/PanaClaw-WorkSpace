@@ -8,10 +8,11 @@ lectura y devuelva un entregable que suene, se vea y cobre exactamente como
 PanaClaw.
 
 Y desde agosto de 2026 es también **el hub de herramientas del equipo**: una
-portada con acceso a la página web, al cotizador y al CRM, publicada en Netlify.
-El cotizador vive aquí y no en el repositorio del sitio por una razón concreta
-—lee `datos/precios.json` directamente, así que no puede cotizar un precio que
-la marca no publique—. Está explicado abajo.
+portada con acceso a la página web, al cotizador, a la libreta de clientes y al
+CRM, publicada en Cloudflare detrás de una sola puerta. El cotizador vive aquí y
+no en el repositorio del sitio por una razón concreta —lee `datos/precios.json`
+directamente, así que no puede cotizar un precio que la marca no publique—. Está
+explicado abajo.
 
 > **Si eres un agente, empieza por [`CLAUDE.md`](CLAUDE.md).** Trae las reglas
 > duras y la tabla que te manda al resto según lo que te hayan pedido.
@@ -139,9 +140,13 @@ operacion/        Sincronización con el sitio y deuda conocida
 
 index.html        La portada del hub. Sin construir, sin dependencias.
 hub/assets/       Su icono y la tipografía de la marca
-cotizador/        La herramienta. Lee datos/precios.json de aquí arriba.
+cotizador/        El cotizador y el panel de clientes. Leen datos/precios.json.
+compartido/       El contrato entre la pantalla y el servidor: qué viaja
+worker/           La API: historial, clientes y la puerta de Access
+migraciones/      El esquema de la base, en SQL
 scripts/          construir.mjs — arma publico/
-netlify.toml      Cómo lo publica Netlify
+wrangler.jsonc    Cómo lo publica Cloudflare
+netlify.toml      Cómo se publica la vista previa
 ```
 
 ---
@@ -152,16 +157,21 @@ Lo único de este repositorio que sale a la web. Todo lo demás —`datos/`, `ad
 `catalogo/`, `prompts/`— se queda dentro.
 
 ```
-/                 la portada, con las tres tarjetas
-/cotizador/       el cotizador y su historial
+/                      la portada, con las cuatro tarjetas
+/cotizador/            el cotizador
+/cotizador/#historial  lo emitido, con su estado y su papelera
+/cotizador/#clientes   la libreta, con la ficha de cada cliente
+/api/                  el historial y los clientes por dentro
 ```
 
 | Herramienta | Dónde vive |
 | --- | --- |
 | **Portada** | Aquí: `index.html` |
 | **Cotizador** | Aquí: [`cotizador/`](cotizador/) |
+| **Historial** | Aquí: [`worker/`](worker/) + la base de Cloudflare |
+| **Clientes** | Aquí: `cotizador/src/clientes/` + [`worker/clientes.ts`](worker/clientes.ts) |
 | **Página web** | Fuera: `abrinay1997-stack/PanaClaw` → panaclaw.com |
-| **CRM · eBot** | Fuera: su propio servidor |
+| **CRM · eBot** | Fuera: `abrinay1997-stack/CRM-PANACLAW`, su propio Worker |
 
 ### Por qué el cotizador está aquí
 
@@ -170,17 +180,81 @@ generado. La regla 1 de la marca —ninguna cifra que no esté en `precios.json`
 deja de depender de que alguien se acuerde: un precio que cambia allí cambia en
 la pantalla, en el PDF y en el mensaje de WhatsApp a la vez.
 
-Lo demás que hace, y las dos reglas de marca que lleva escritas en el sistema de
-tipos, está en [`cotizador/README.md`](cotizador/README.md).
+Es también la razón por la que el panel de clientes se hizo aquí dentro y no en
+un repositorio nuevo: un repositorio aparte necesitaría **una copia** de
+`precios.json`, y una copia es exactamente lo que esa regla prohíbe.
+
+### Por qué en Cloudflare y no en Netlify
+
+Por dos cosas que Netlify no puede dar y que el panel necesita:
+
+1. **Una base que todos vean.** El historial vivía en el navegador de cada
+   quien: con una persona cotizando funcionaba, y con dos, dos clientes
+   distintos podían recibir la misma «PROP-2026-0007» sin que nadie se enterara
+   hasta cruzar los dos PDF. Ahora el número lo da la base, en una sola
+   sentencia que dos personas emitiendo a la vez no pueden desordenar.
+2. **Una sola puerta.** Cloudflare Access pone delante del sitio entero una
+   pantalla de correo con la lista del equipo: la portada, el cotizador, los
+   clientes y lo que se añada mañana. Y el servidor **comprueba la firma** de
+   ese token en cada petición, así que quién emitió una propuesta no es un campo
+   que rellene quien llama.
+
+Netlify se queda con la **vista previa** ([`netlify.toml`](netlify.toml)), que
+se construye sin servidor: ahí el historial vuelve al navegador —con números
+`PROP-DEMO-0001`, para que ningún PDF de ésos se confunda con uno de verdad— y
+el panel de clientes dice que le falta el servidor en vez de enseñar una libreta
+de mentira. Cuando Cloudflare esté en pie, se apaga: dos copias del hub en pie
+es como alguien acaba cotizando en la que no era.
+
+### La libreta de clientes
+
+Hasta ahora los datos de un cliente vivían dentro de cada propuesta, y solo ahí.
+Ahora el cliente existe por su cuenta: quién es, cómo se le escribe, en qué punto
+está la relación, y qué se le ha propuesto.
+
+Tres cosas que conviene saber antes de tocarla:
+
+- **La ficha manda, la propuesta toma prestado.** Emitir puede CREAR una ficha
+  que no existía —no hay nada que perder al llenar un hueco— pero nunca cambia
+  una que ya está escrita. Corregir un teléfono es un acto deliberado y se hace
+  en el panel.
+- **Se reconoce por el WhatsApp y por el correo, no por el nombre.** Dos
+  propuestas al mismo número son del mismo cliente aunque el nombre esté escrito
+  de dos formas. Dos negocios que se llaman igual **no** se unen solos: la
+  propuesta queda sin enlazar, se dice en pantalla y alguien lo decide.
+- **Borrar un cliente no borra sus propuestas.** Y se borra en dos tiempos:
+  papelera primero —reversible, con constancia de quién retiró— y borrado de
+  verdad después, desde dentro de la papelera.
+
+Lo demás está en [`cotizador/README.md`](cotizador/README.md).
 
 ### Ponerlo en marcha
 
 ```bash
-npm run instalar    # dependencias del cotizador
-npm test            # las reglas de precio, el PDF y el mensaje
-npm run pantalla    # la pantalla con recarga en caliente, en :5173
+npm run instalar    # dependencias del hub y del cotizador
+npm test            # las reglas de precio, el PDF, el mensaje y el contrato
+npm run tipos       # comprueba los tipos del Worker y de la pantalla
 npm run build       # verifica, prueba y deja el sitio en publico/
 ```
+
+Para trabajar, dos terminales:
+
+```bash
+npm run dev         # el Worker, el historial y los clientes, en :8787
+npm run pantalla    # la pantalla con recarga en caliente, en :5173
+```
+
+La segunda manda las llamadas de `/api` a la primera. Para que respondan en
+local hace falta un archivo `.dev.vars` —que no se versiona— con:
+
+```
+MODO=desarrollo
+CORREO_DESARROLLO=tu@panaclaw.com
+```
+
+`MODO=desarrollo` salta la comprobación de Cloudflare Access, que en local no
+existe. **Nunca en producción**: sin esa comprobación, el historial y la libreta
+quedan abiertos a quien dé con la dirección.
 
 La portada **no se construye**: es un `index.html` con los estilos dentro y sin
 dependencias. Abrirla con doble clic y verla igual que publicada vale más que
@@ -188,16 +262,65 @@ meterla en un empaquetador para no ganar nada.
 
 ### Publicar
 
-Netlify, con [`netlify.toml`](netlify.toml) ya escrito. Al conectar el
-repositorio, la única decisión que queda por tomar a mano es la puerta: el hub
-es interno, así que hay que encender la protección por contraseña de Netlify
-(Site configuration → Access control → Password protection). Sin eso, el
-historial de propuestas —con nombres y teléfonos de clientes— queda a la vista
-de quien dé con la dirección.
+**Lo que ya está hecho** (2026-08-29, contra la cuenta de Cloudflare donde
+viven `panaclaw-oficial` y `bys-logistics`):
 
-El sitio se sirve en su propio subdominio de `panaclaw.com`, no en la raíz: ahí
-vive la página pública. La portada lleva `noindex` en el HTML y en las cabeceras
-del servidor.
+- La base **`panaclaw-propuestas`** está creada, con sus dos migraciones
+  aplicadas y anotadas en `d1_migrations`, que es donde wrangler lleva la
+  cuenta. `npm run migrar` no volverá a tocarlas.
+- Su `database_id` ya está escrito en [`wrangler.jsonc`](wrangler.jsonc).
+
+**Lo que falta**, y pide la sesión del panel de Cloudflare:
+
+**1 · Poner la puerta: Cloudflare Access.** En el panel, Zero Trust → Access →
+Applications → Add an application → Self-hosted, sobre este Worker. La política
+es `Allow` con la regla *Emails* y los correos de quien deba entrar. Al crearla,
+Access muestra su **Application Audience (AUD) Tag**: ese valor y el dominio del
+equipo (`algo.cloudflareaccess.com`) van en `wrangler.jsonc`, en `ACCESO_AUD` y
+`ACCESO_DOMINIO`.
+
+> **Mientras esos dos digan `PENDIENTE`, el hub no se sirve.** No es que la API
+> rechace y la pantalla no: el Worker devuelve un 503 a todo —portada, cotizador
+> y API— diciendo qué falta. Es deliberado. Sin ese cierre, entre desplegar y
+> acordarse de configurar Access hay un rato en que la herramienta está en pie y
+> abierta, y ese rato no se cierra nunca solo.
+
+> Añadir a alguien al equipo es añadir su correo a esa política. Aquí dentro no
+> hay usuarios ni contraseñas que gestionar.
+
+**2 · Desplegar.** Hay tres formas y todas hacen lo mismo; se elige una.
+
+- **Desde la web, sin terminal** —
+  [`.github/workflows/desplegar.yml`](.github/workflows/desplegar.yml)—: se
+  guarda una vez el secreto `CLOUDFLARE_API_TOKEN` (Cloudflare → Manage
+  Account → API Tokens → plantilla «Edit Cloudflare Workers») y se dispara desde
+  la pestaña **Actions → Desplegar el hub → Run workflow**, eligiendo la rama.
+  Es la misma convención del repositorio del CRM.
+- **Desde el repositorio:**
+
+  ```bash
+  npm run desplegar
+  ```
+
+  Con la sesión de wrangler iniciada. Si esa sesión ve más de una cuenta —es el
+  caso: el hub de B&S vive en otra— hay que decirle cuál:
+  `CLOUDFLARE_ACCOUNT_ID=… npm run desplegar`.
+- **En cada empuje**, conectando el repositorio a Cloudflare Workers Builds con
+  `npm run instalar && npm run build` como orden de construcción. El proyecto se
+  llama **hub-panaclaw**, igual que el `name` de `wrangler.jsonc`.
+
+El identificador de la cuenta se copia de la barra lateral del panel de Workers.
+No se escribe en `wrangler.jsonc` a propósito: es un dato de quién despliega, no
+del proyecto, y es la misma convención que usa el repositorio del CRM.
+
+**3 · El flujo de migraciones.** Para que las migraciones futuras se apliquen
+solas ([`.github/workflows/migrar.yml`](.github/workflows/migrar.yml)), un
+secreto en GitHub: `CLOUDFLARE_API_TOKEN`, con un solo permiso —Account → D1 →
+Edit—. Y `CLOUDFLARE_ACCOUNT_ID` si ese token ve más de una cuenta.
+
+**4 · Y una vez publicado**, apagar la vista previa de Netlify y, si se conecta
+un dominio propio, poner `workers_dev` en `false`: la dirección de `workers.dev`
+no pasa por Access y sería una puerta lateral a la libreta de clientes.
 
 ---
 

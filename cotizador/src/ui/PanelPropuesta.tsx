@@ -8,6 +8,7 @@ import { fechaLarga, sumarDias } from '../dominio/formato';
 import { importeDeLinea, noIncluyeDe, plazosDe, rondasDe } from '../dominio/propuesta';
 import type { Linea, Propuesta, Totales } from '../dominio/tipos';
 import type { Alerta } from '../dominio/revision';
+import { BuscadorCliente } from '../clientes/BuscadorCliente';
 import { Campo, CampoLargo, Pastilla, Punto, Seccion } from './componentes';
 import type { Accion } from './usePropuesta';
 
@@ -51,6 +52,29 @@ export function DatosCliente({ propuesta, despachar }: { propuesta: Propuesta; d
 
   return (
     <Seccion titulo="Para quién">
+      {/*
+        Primero la libreta y después los campos. Elegir una ficha llena los seis
+        de abajo con lo que sepa de ese cliente hoy; escribirlos a mano sigue
+        funcionando igual, y al emitir la ficha se crea sola.
+      */}
+      <BuscadorCliente
+        codigoEnlazado={propuesta.clienteCodigo}
+        alElegir={(ficha) =>
+          despachar({
+            tipo: 'ficha',
+            codigo: ficha.codigo,
+            cliente: {
+              negocio: ficha.negocio,
+              contacto: ficha.contacto,
+              whatsapp: ficha.whatsapp,
+              correo: ficha.correo,
+              ciudad: ficha.ciudad,
+            },
+          })
+        }
+        alSoltar={() => despachar({ tipo: 'ficha', codigo: undefined })}
+      />
+
       <div className="grid gap-4 sm:grid-cols-2">
         <Campo etiqueta="Negocio" valor={cliente.negocio} alCambiar={(v) => cambiar({ negocio: v })} marcador="Repuestos El Chorrillo" />
         <Campo etiqueta="Contacto" valor={cliente.contacto} alCambiar={(v) => cambiar({ contacto: v })} marcador="Luis Ortega" />

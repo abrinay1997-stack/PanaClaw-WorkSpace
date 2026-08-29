@@ -5,3 +5,9 @@ muestras/
 .DS_Store
 *.log
 .netlify/
+
+# El Worker: lo que wrangler deja al construir y los secretos de desarrollo.
+# `.dev.vars` lleva MODO=desarrollo y el correo con el que se firma en local, y
+# no se versiona nunca: en producción quien firma sale del token de Access.
+.wrangler/
+.dev.vars
