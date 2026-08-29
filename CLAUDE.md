@@ -166,8 +166,8 @@ realidad está mal en el sitio. Si encuentras una contradicción, la reportas.
 ## 7. Si vas a tocar el hub
 
 El hub es la portada, el cotizador, el panel de clientes y el servidor que los
-atiende, y son la única parte de este repositorio que se ejecuta. Seis cosas que
-hay que saber antes:
+atiende, y son la única parte de este repositorio que se ejecuta. Siete cosas
+que hay que saber antes:
 
 1. **El cotizador no contiene ni una cifra.** Importa
    [`datos/precios.json`](datos/precios.json) de la raíz y compone el catálogo
@@ -191,7 +191,14 @@ hay que saber antes:
 5. **La identidad no se pide, se comprueba.** Quién emitió una propuesta sale
    del token firmado de Cloudflare Access —`worker/acceso.ts` verifica la firma,
    no se limita a leer la cabecera— y jamás de un campo del cuerpo.
-6. **`node herramientas/verificar.mjs` también vigila el código del hub**:
+6. **Sin Access configurado, el hub no se sirve.** Si `ACCESO_DOMINIO` o
+   `ACCESO_AUD` siguen en `PENDIENTE`, el Worker responde 503 a todo —portada,
+   cotizador y API— diciendo qué falta. Y por eso `assets.run_worker_first`
+   está encendido en `wrangler.jsonc`: sin él, Cloudflare entregaría los
+   archivos desde el borde sin llegar a ejecutar ese cierre. No quites ninguna
+   de las dos cosas: juntas son lo que impide que el hub quede en pie y abierto
+   entre el despliegue y el momento en que alguien se acuerda de la puerta.
+7. **`node herramientas/verificar.mjs` también vigila el código del hub**:
    ningún hex fuera de `datos/marca.json` —en el cotizador, en `compartido/` y
    en `worker/`— y el trazado del logo de `index.html` igual al de `marca.json`.
    Y `npm test` comprueba que todo importe que el cotizador puede imprimir esté

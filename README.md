@@ -262,57 +262,60 @@ meterla en un empaquetador para no ganar nada.
 
 ### Publicar
 
-Cinco cosas a mano, una sola vez cada una. Todas piden la sesión de Cloudflare y
-por eso no las puede hacer el repositorio por su cuenta.
+**Lo que ya está hecho** (2026-08-29, contra la cuenta de Cloudflare donde
+viven `panaclaw-oficial` y `bys-logistics`):
 
-**1 · Crear la base.**
+- La base **`panaclaw-propuestas`** está creada, con sus dos migraciones
+  aplicadas y anotadas en `d1_migrations`, que es donde wrangler lleva la
+  cuenta. `npm run migrar` no volverá a tocarlas.
+- Su `database_id` ya está escrito en [`wrangler.jsonc`](wrangler.jsonc).
 
-```bash
-npx wrangler d1 create panaclaw-propuestas
-```
+**Lo que falta**, y pide la sesión del panel de Cloudflare:
 
-Imprime un `database_id`. Se pega en [`wrangler.jsonc`](wrangler.jsonc), donde
-ahora dice `PENDIENTE`. Ahí mismo hay que escribir el `account_id` de la cuenta
-—es el identificador que sale en la dirección del panel de Cloudflare, y no es
-un secreto—: sin él, wrangler empieza pidiendo la lista de cuentas y un token
-acotado no tiene permiso para leerla.
-
-**2 · Crear las tablas.**
-
-```bash
-npm run migrar          # en la base de verdad
-npm run migrar:local    # y en la de pruebas, para `npm run dev`
-```
-
-Se vuelven a correr cada vez que aparece un archivo nuevo en `migraciones/`:
-aplican solo lo que falte. El despliegue **no** lo hace, así que hay un flujo
-aparte ([`.github/workflows/migrar.yml`](.github/workflows/migrar.yml)) que lo
-corre cuando un empuje a `main` trae una migración nueva. Necesita un secreto
-`CLOUDFLARE_API_TOKEN` con un solo permiso: Account → D1 → Edit.
-
-**3 · Poner la puerta: Cloudflare Access.** En el panel, Zero Trust → Access →
-Applications → Add an application → Self-hosted, sobre el Worker. La política es
-`Allow` con la regla *Emails* y los correos de quien deba entrar. Al crearla,
+**1 · Poner la puerta: Cloudflare Access.** En el panel, Zero Trust → Access →
+Applications → Add an application → Self-hosted, sobre este Worker. La política
+es `Allow` con la regla *Emails* y los correos de quien deba entrar. Al crearla,
 Access muestra su **Application Audience (AUD) Tag**: ese valor y el dominio del
 equipo (`algo.cloudflareaccess.com`) van en `wrangler.jsonc`, en `ACCESO_AUD` y
-`ACCESO_DOMINIO`. Hasta que estén, la API rechaza todo con «sin acceso», que es
-lo correcto: sin Access no hay forma de saber quién entra.
+`ACCESO_DOMINIO`.
+
+> **Mientras esos dos digan `PENDIENTE`, el hub no se sirve.** No es que la API
+> rechace y la pantalla no: el Worker devuelve un 503 a todo —portada, cotizador
+> y API— diciendo qué falta. Es deliberado. Sin ese cierre, entre desplegar y
+> acordarse de configurar Access hay un rato en que la herramienta está en pie y
+> abierta, y ese rato no se cierra nunca solo.
 
 > Añadir a alguien al equipo es añadir su correo a esa política. Aquí dentro no
 > hay usuarios ni contraseñas que gestionar.
 
-**4 · Desplegar.**
+**2 · Desplegar.**
 
 ```bash
 npm run desplegar
 ```
 
-O conectar el repositorio a Cloudflare Workers Builds, con
+Si la sesión de wrangler ve más de una cuenta —es el caso: el hub de B&S vive en
+otra— hay que decirle cuál:
+
+```bash
+CLOUDFLARE_ACCOUNT_ID=… npm run desplegar
+```
+
+El identificador se copia de la barra lateral del panel de Workers. No se
+escribe en `wrangler.jsonc` a propósito: es un dato de quién despliega, no del
+proyecto, y es la misma convención que usa el repositorio del CRM.
+
+También se puede conectar el repositorio a Cloudflare Workers Builds, con
 `npm run instalar && npm run build` como orden de construcción, para que cada
 empuje a `main` publique solo. El proyecto se llama **hub-panaclaw**, igual que
 el `name` de `wrangler.jsonc`.
 
-**5 · Y una vez publicado**, apagar la vista previa de Netlify y, si se conecta
+**3 · El flujo de migraciones.** Para que las migraciones futuras se apliquen
+solas ([`.github/workflows/migrar.yml`](.github/workflows/migrar.yml)), un
+secreto en GitHub: `CLOUDFLARE_API_TOKEN`, con un solo permiso —Account → D1 →
+Edit—. Y `CLOUDFLARE_ACCOUNT_ID` si ese token ve más de una cuenta.
+
+**4 · Y una vez publicado**, apagar la vista previa de Netlify y, si se conecta
 un dominio propio, poner `workers_dev` en `false`: la dirección de `workers.dev`
 no pasa por Access y sería una puerta lateral a la libreta de clientes.
 

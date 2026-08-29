@@ -7,18 +7,24 @@
 # columnas que ahí no existen. Armar la propuesta y bajar el PDF siguen
 # funcionando; lo que se cae es guardarla.
 #
-# Hace falta un secreto, que se pone una sola vez:
+# Hacen falta uno o dos secretos, que se ponen una sola vez en GitHub
+# (Settings → Secrets and variables → Actions):
 #
-#   1. En Cloudflare, My Profile → API Tokens → Create Token → Create Custom
-#      Token. Un solo permiso: Account → D1 → Edit, sobre la cuenta donde vive
-#      `panaclaw-propuestas`. Nada más.
-#   2. En GitHub, Settings → Secrets and variables → Actions → New repository
-#      secret, con nombre `CLOUDFLARE_API_TOKEN`.
+#   CLOUDFLARE_API_TOKEN   obligatorio. Se crea en Cloudflare, My Profile →
+#                          API Tokens → Create Custom Token, con un solo
+#                          permiso: Account → D1 → Edit, sobre la cuenta donde
+#                          vive `panaclaw-propuestas`. Nada más.
 #
-# A qué cuenta pertenece no se pregunta: sale del `account_id` de
-# `wrangler.jsonc`. Sin él, wrangler empieza pidiendo la lista de cuentas del
-# usuario y un token acotado a D1 no tiene permiso para leerla: falla antes de
-# tocar nada, con un error sobre permisos que no es lo que pasa.
+#   CLOUDFLARE_ACCOUNT_ID  solo si ese token ve más de una cuenta. Entonces
+#                          wrangler pregunta cuál, y un token acotado a D1 no
+#                          tiene permiso para leer la lista de cuentas: falla
+#                          antes de tocar nada, con un error sobre permisos que
+#                          no es lo que pasa. Se copia de la barra lateral del
+#                          panel de Workers.
+#
+# Es la misma convención que el repositorio del CRM, que se despliega a la
+# misma cuenta: el identificador es un dato de quién despliega, no del
+# proyecto, así que va por variable y no escrito en `wrangler.jsonc`.
 
 name: Migrar la base
 
@@ -36,7 +42,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Comprobar que están los dos datos
+      - name: Comprobar que está la llave
         run: |
           if [ -z "${{ secrets.CLOUDFLARE_API_TOKEN }}" ]; then
             echo "Falta el secreto CLOUDFLARE_API_TOKEN."
@@ -44,18 +50,6 @@ jobs:
             echo "y se guarda en GitHub → Settings → Secrets and variables → Actions."
             exit 1
           fi
-          # El `account_id` se lee del propio wrangler.jsonc para no acabar con
-          # el mismo dato escrito en dos sitios que se desincronizan. El
-          # subcomando `d1 migrations list` pide la autenticación con una
-          # configuración vacía, así que no llega a mirar el archivo y solo le
-          # queda esta variable.
-          CUENTA=$(grep -oP '"account_id"\s*:\s*"\K[^"]+' wrangler.jsonc || true)
-          if [ -z "$CUENTA" ]; then
-            echo "Falta \"account_id\" en wrangler.jsonc. Es el identificador de la cuenta de"
-            echo "Cloudflare —el mismo que sale en la dirección del panel— y no es un secreto."
-            exit 1
-          fi
-          echo "CLOUDFLARE_ACCOUNT_ID=$CUENTA" >> "$GITHUB_ENV"
 
       - uses: actions/setup-node@v4
         with:
@@ -67,5 +61,8 @@ jobs:
       - name: Aplicar lo que falte
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        # No repite lo ya aplicado: aplica solo las migraciones nuevas.
+          # Vacío cuando el token ve una sola cuenta, que es el caso corriente.
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        # No repite lo ya aplicado: aplica solo las migraciones nuevas. Las dos
+        # primeras ya están puestas, así que hoy no haría nada.
         run: npm run migrar

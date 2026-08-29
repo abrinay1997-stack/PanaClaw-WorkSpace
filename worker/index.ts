@@ -16,9 +16,54 @@ import { ErrorPeticion, cuerpoJson, fallo, json } from './http';
 import type { Env } from './entorno';
 import { identificar, SinAcceso } from './acceso';
 
+/**
+ * Si la puerta está puesta.
+ *
+ * `wrangler.jsonc` nace con `ACCESO_DOMINIO` y `ACCESO_AUD` en `PENDIENTE`
+ * porque esos dos datos solo existen después de crear la aplicación en
+ * Cloudflare Access, y eso se hace a mano en el panel.
+ *
+ * Mientras no estén, el hub NO se sirve. Es la diferencia entre fallar cerrado
+ * y fallar a medias: la API ya rechazaría igual —sin Access no hay forma de
+ * saber quién entra— pero la portada y el cotizador son archivos y se
+ * servirían tan campantes a cualquiera que diera con la dirección. Ese hueco
+ * dura desde que se despliega hasta que alguien se acuerda de configurar
+ * Access, y es justo la clase de plazo que no se cierra nunca.
+ */
+function puertaPuesta(env: Env): boolean {
+  const sinPoner = (valor: string | undefined) => !valor || valor === 'PENDIENTE';
+  return !sinPoner(env.ACCESO_DOMINIO) && !sinPoner(env.ACCESO_AUD);
+}
+
+/** Lo que se ve mientras falte la puerta. Dice qué falta y dónde se pone. */
+function sinPuerta(): Response {
+  return new Response(
+    `<!doctype html><meta charset="utf-8">` +
+      `<title>El hub todavía no está protegido</title>` +
+      `<p>Este hub no se sirve todavía porque le falta la puerta.</p>` +
+      `<p>En el panel de Cloudflare: Zero Trust &rarr; Access &rarr; Applications, ` +
+      `sobre este Worker. Al crearla, copie el dominio del equipo y la etiqueta ` +
+      `AUD en <code>ACCESO_DOMINIO</code> y <code>ACCESO_AUD</code> de ` +
+      `<code>wrangler.jsonc</code>, y vuelva a desplegar.</p>`,
+    {
+      status: 503,
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'no-store',
+        // Que no lo indexe nadie mientras está en este estado.
+        'X-Robots-Tag': 'noindex, nofollow',
+      },
+    },
+  );
+}
+
 export default {
   async fetch(peticion: Request, env: Env): Promise<Response> {
     const url = new URL(peticion.url);
+
+    // Antes que nada, y para todo: sin Access configurado no se sirve ni la
+    // portada. En desarrollo no aplica, que ahí no hay Access que valga.
+    if (env.MODO !== 'desarrollo' && !puertaPuesta(env)) return sinPuerta();
 
     if (!url.pathname.startsWith('/api/')) {
       // La portada y el cotizador. `assets` los sirve directamente desde el
