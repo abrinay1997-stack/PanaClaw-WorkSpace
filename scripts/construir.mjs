@@ -1,9 +1,14 @@
 /**
- * Arma `publico/`, que es lo que Netlify sirve.
+ * Arma `publico/`, que es lo que se publica.
  *
  *   publico/index.html      la portada del hub, copiada tal cual
  *   publico/hub/assets/     su icono
- *   publico/cotizador/      el cotizador ya construido
+ *   publico/cotizador/      el cotizador y el panel de clientes, ya construidos
+ *
+ * Es la carpeta que Cloudflare sirve desde el borde (`assets` en
+ * `wrangler.jsonc`); el Worker solo se ejecuta para `/api/*`. La misma carpeta
+ * vale para la vista previa de Netlify, que se construye con `VITE_DEMO=1` y no
+ * tiene servidor detrás.
  *
  * La portada no se construye: es un `index.html` con los estilos dentro y sin
  * dependencias, y esa propiedad —abrirla con doble clic y verla igual que
@@ -11,7 +16,7 @@
  *
  * El orden importa. Primero se verifica el repositorio, después se prueban las
  * reglas de precio, y solo entonces se construye. Si algo de eso falla,
- * `publico/` se queda vacío en vez de quedarse a medias, y Netlify no publica.
+ * `publico/` se queda vacío en vez de quedarse a medias, y no se publica nada.
  * Es deliberado: una herramienta que cotiza mal es peor que una herramienta
  * caída, porque la caída se nota.
  */
@@ -53,4 +58,4 @@ for (const archivo of ['index.html', 'hub']) {
   await cp(join(raiz, archivo), join(destino, archivo), { recursive: true });
 }
 
-console.log('Listo. `publico/` preparado para Netlify.');
+console.log('Listo. `publico/` preparado para `wrangler deploy`.');

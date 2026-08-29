@@ -6,9 +6,10 @@ entender la marca en una sola lectura y devolver un entregable que suene, se vea
 y cobre exactamente como PanaClaw.
 
 Desde agosto de 2026 publica además **el hub de herramientas del equipo**: la
-portada (`index.html`) y el cotizador (`cotizador/`). Es la única parte que se
-compila y se despliega; el resto sigue siendo conocimiento y no se toca al
-construir. Si vas a tocar el hub, lee antes la sección 7.
+portada (`index.html`), el cotizador y el panel de clientes (`cotizador/`), y el
+servidor que los atiende (`worker/`). Es la única parte que se compila y se
+despliega; el resto sigue siendo conocimiento y no se toca al construir. Si vas
+a tocar el hub, lee antes la sección 7.
 
 **Si eres un agente y solo vas a leer un archivo, lee este.** Al final hay una
 tabla que te manda al resto según lo que te haya pedido el humano.
@@ -70,9 +71,13 @@ operacion/      Cómo se mantiene vivo este repositorio.
 
 index.html      Portada del hub. Sin construir y sin dependencias.
 hub/assets/     Su icono y la tipografía de la marca.
-cotizador/      La herramienta. IMPORTA datos/precios.json de aquí arriba.
+cotizador/      El cotizador y el panel de clientes. IMPORTAN datos/precios.json.
+compartido/     El contrato con el servidor: qué viaja por el cable.
+worker/         La API en Cloudflare: historial, clientes y la puerta de Access.
+migraciones/    El esquema de la base, en SQL.
 scripts/        construir.mjs — verifica, prueba y arma publico/.
-netlify.toml    Cómo lo publica Netlify.
+wrangler.jsonc  Cómo lo publica Cloudflare.
+netlify.toml    Cómo se publica la vista previa, sin servidor.
 ```
 
 **La jerarquía de autoridad, cuando dos archivos se contradigan:**
@@ -120,7 +125,7 @@ según la petición:
 | Crear una skill nueva | `skills/README.md` + `skills/_plantilla/SKILL.md` |
 | **Saber qué se publicó ya, para no repetirlo** | `operacion/publicado.md` — se lee ANTES de escribir un calendario y se actualiza AL entregarlo |
 | Saber si el repo está al día | `operacion/sincronizacion.md` + `node herramientas/verificar.mjs` |
-| **Tocar el hub o el cotizador** | la sección 7 de aquí abajo + `cotizador/README.md` |
+| **Tocar el hub, el cotizador o el panel de clientes** | la sección 7 de aquí abajo + `cotizador/README.md` |
 
 ---
 
@@ -160,8 +165,9 @@ realidad está mal en el sitio. Si encuentras una contradicción, la reportas.
 
 ## 7. Si vas a tocar el hub
 
-El hub es la portada más el cotizador, y son la única parte de este repositorio
-que se ejecuta. Cuatro cosas que hay que saber antes:
+El hub es la portada, el cotizador, el panel de clientes y el servidor que los
+atiende, y son la única parte de este repositorio que se ejecuta. Seis cosas que
+hay que saber antes:
 
 1. **El cotizador no contiene ni una cifra.** Importa
    [`datos/precios.json`](datos/precios.json) de la raíz y compone el catálogo
@@ -170,19 +176,30 @@ que se ejecuta. Cuatro cosas que hay que saber antes:
 2. **`Totales` no tiene un campo `total`, y es a propósito.** Es la regla 2
    escrita en el sistema de tipos: mientras no exista dónde guardar la suma de
    un pago único y uno mensual, ninguna pantalla puede enseñarla por descuido.
-   No lo añadas.
+   **La misma ausencia baja hasta la base de datos**: la tabla `propuestas`
+   tiene cuatro columnas de dinero —el mínimo y el máximo de lo único y de lo
+   mensual— y ninguna es la suma de otras dos. No lo añadas en ningún nivel.
 3. **La prosa del documento son citas literales de `catalogo/`**, recogidas en
    `cotizador/src/datos/textos.ts` con el archivo de origen anotado encima. No
    se redacta ahí: si el texto tiene que cambiar, cambia en `catalogo/` y se
    copia.
-4. **`node herramientas/verificar.mjs` también vigila el código del hub**:
-   ningún hex fuera de `datos/marca.json` y el trazado del logo de `index.html`
-   igual al de `marca.json`. Y `npm test` comprueba que todo importe que el
-   cotizador puede imprimir esté literal en `precios.json`.
+4. **La ficha del cliente manda; la propuesta toma prestado.** Emitir puede
+   crear una ficha que no existía, pero nunca cambia una que ya está escrita, y
+   dos negocios que se llaman igual no se unen solos. Enlazar mal es peor que no
+   enlazar: la ficha equivocada se atribuye un dinero que no es suyo y nadie
+   vuelve a mirarlo.
+5. **La identidad no se pide, se comprueba.** Quién emitió una propuesta sale
+   del token firmado de Cloudflare Access —`worker/acceso.ts` verifica la firma,
+   no se limita a leer la cabecera— y jamás de un campo del cuerpo.
+6. **`node herramientas/verificar.mjs` también vigila el código del hub**:
+   ningún hex fuera de `datos/marca.json` —en el cotizador, en `compartido/` y
+   en `worker/`— y el trazado del logo de `index.html` igual al de `marca.json`.
+   Y `npm test` comprueba que todo importe que el cotizador puede imprimir esté
+   literal en `precios.json`.
 
 El resto —qué revisa antes de emitir, por qué el «qué NO incluye» va antes del
-precio, y por qué el historial vive en el navegador— está en
-[`cotizador/README.md`](cotizador/README.md).
+precio, cómo se reconoce a un cliente y por qué el número lo da el servidor—
+está en [`cotizador/README.md`](cotizador/README.md).
 
 ---
 
@@ -199,5 +216,9 @@ precio, y por qué el historial vive en el navegador— está en
 - **No es documentación del código del sitio.** Eso está en el otro repositorio,
   en `docs/`.
 - **No es el sitio.** El hub que se publica desde aquí es interno, para el
-  equipo y con contraseña. Lo que ve un cliente vive en
+  equipo y detrás de Cloudflare Access. Lo que ve un cliente vive en
   `abrinay1997-stack/PanaClaw` y desde aquí no se edita.
+- **No es el CRM.** Las conversaciones de eBot y los datos que deja quien
+  escribe por WhatsApp o Instagram viven en `abrinay1997-stack/CRM-PANACLAW`,
+  con su propio servidor. La libreta del hub es otra cosa: a quién le hemos
+  propuesto qué, y en qué acabó.

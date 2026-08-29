@@ -3,13 +3,22 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "El cerebro de la marca PanaClaw y el hub de herramientas: la portada y el cotizador.",
+  "description": "El cerebro de la marca PanaClaw y el hub de herramientas: la portada, el cotizador y el panel de clientes.",
   "scripts": {
-    "instalar": "npm --prefix cotizador install",
-    "build": "node scripts/construir.mjs",
+    "instalar": "npm install && npm --prefix cotizador install",
+    "dev": "wrangler dev",
     "pantalla": "npm --prefix cotizador run dev",
+    "build": "node scripts/construir.mjs",
     "test": "npm --prefix cotizador run test",
-    "tipos": "npm --prefix cotizador run tipos",
-    "verificar": "node herramientas/verificar.mjs"
+    "tipos": "tsc --noEmit -p tsconfig.worker.json && npm --prefix cotizador run tipos",
+    "verificar": "node herramientas/verificar.mjs",
+    "desplegar": "npm run build && wrangler deploy",
+    "migrar": "wrangler d1 migrations apply panaclaw-propuestas --remote",
+    "migrar:local": "wrangler d1 migrations apply panaclaw-propuestas --local"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260811.1",
+    "typescript": "^5.9.3",
+    "wrangler": "^4.42.0"
   }
 }

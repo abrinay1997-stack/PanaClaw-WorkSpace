@@ -1,0 +1,63 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "hub-panaclaw",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-08-01",
+
+  // FALTA UN DATO, Y ES A PROPÓSITO QUE ESTÉ ESCRITO AQUÍ ARRIBA:
+  //
+  //   "account_id": "…"
+  //
+  // Es el identificador de la cuenta de Cloudflare donde vive esto —el mismo
+  // que sale en la dirección del panel— y no es un secreto. Se añade a mano al
+  // publicar, junto al `database_id` de abajo. Sin él, wrangler empieza
+  // preguntando a qué cuenta pertenece el token, y un token acotado a lo suyo
+  // (D1, o solo desplegar) no tiene permiso para leer esa lista: falla antes de
+  // hacer nada, con un error sobre permisos que no es lo que pasa. Le ocurrió
+  // al flujo que aplica las migraciones en el hub de B&S, que es de donde sale
+  // esta advertencia.
+
+  // Encendido mientras no haya un dominio propio conectado a Cloudflare. La
+  // dirección `hub-panaclaw.<cuenta>.workers.dev` es la entrada real, y la
+  // protección de Cloudflare Access se configura sobre el Worker mismo
+  // (pestaña «Access» del Worker en el panel), así que cubre esa dirección
+  // igual que cubriría un dominio propio.
+  //
+  // El día que se conecte un dominio, esto pasa a `false`: una dirección de
+  // `workers.dev` que no pase por Access sería una puerta lateral al historial
+  // y a la libreta de clientes saltándose la lista de correos.
+  "workers_dev": true,
+
+  // La portada del hub y el cotizador ya construido. Cloudflare los sirve
+  // directamente desde el borde; el Worker solo se ejecuta para `/api/*`.
+  "assets": {
+    "directory": "./publico",
+    "binding": "ASSETS"
+  },
+
+  "d1_databases": [
+    {
+      "binding": "BASE",
+      "database_name": "panaclaw-propuestas",
+      // Lo imprime `npx wrangler d1 create panaclaw-propuestas`. Ver el README.
+      "database_id": "PENDIENTE",
+      "migrations_dir": "migraciones"
+    }
+  ],
+
+  "vars": {
+    // Los dos datos de la aplicación en Cloudflare Access, tomados de la
+    // pestaña «Access» del Worker en el panel de Cloudflare. `ACCESO_DOMINIO`
+    // es el dominio del equipo (`algo.cloudflareaccess.com`) y `ACCESO_AUD`, la
+    // etiqueta «Application Audience (AUD) Tag».
+    //
+    // Hasta que estén puestos, la API rechaza todo con «sin acceso», que es lo
+    // correcto: sin Access configurado no hay forma de saber quién entra.
+    "ACCESO_DOMINIO": "PENDIENTE",
+    "ACCESO_AUD": "PENDIENTE"
+  },
+
+  "observability": {
+    "enabled": true
+  }
+}

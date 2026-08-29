@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "types": ["@cloudflare/workers-types"]
+  },
+  // El Worker importa el dominio del cotizador —`totalesDe`, el catálogo— para
+  // calcular las columnas del listado con las mismas funciones que la pantalla.
+  // Por eso `cotizador/src/dominio` entra aquí: es la garantía de que el total
+  // del historial no puede discrepar del total del PDF.
+  "include": ["worker", "compartido", "cotizador/src/dominio", "cotizador/src/datos"],
+  // Las pruebas del cotizador se comprueban con SU tsconfig, que sí tiene el
+  // DOM y los tipos de Node. Aquí solo entra lo que se ejecuta en el Worker.
+  "exclude": ["**/*.test.ts", "**/*.test.tsx"]
+}

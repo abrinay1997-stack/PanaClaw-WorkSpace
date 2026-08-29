@@ -130,6 +130,20 @@ export interface Propuesta {
   /** ISO `yyyy-mm-dd`. */
   fecha: string;
   asesor: string;
+  /**
+   * La ficha del cliente a la que pertenece, cuando quien cotiza la eligió.
+   *
+   * **No se imprime.** Es un enlace, no un dato del documento: lo que sale en
+   * el PDF son los datos de `cliente`, congelados como estaban al emitir,
+   * porque el PDF que el cliente tiene en la mano dice lo que decía ese día.
+   * Esto solo sirve para la pregunta contraria —«¿qué le hemos propuesto a
+   * éste?»— y para que corregir un nombre en la ficha no desconecte su
+   * historia.
+   *
+   * Opcional porque el cotizador funciona sin panel de clientes delante: sin
+   * servidor, o con la ficha sin elegir, la propuesta se arma igual.
+   */
+  clienteCodigo?: string;
   /** La situación del cliente, en sus palabras. Encabeza el documento. */
   necesita: string;
   /**
