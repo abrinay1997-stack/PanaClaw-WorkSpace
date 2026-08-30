@@ -1,11 +1,11 @@
 # Aplica las migraciones de la base cuando llega una nueva.
 #
-# El despliegue no lo hace. Cada empuje a `main` publica el código solo
-# —Cloudflare Workers Builds— pero la base no se toca: Cloudflare no sabe qué
-# hay en `migraciones/`. Si el código nuevo llega a una base sin migrar, el
-# historial responde «La operación falló» a todo, porque sus consultas nombran
-# columnas que ahí no existen. Armar la propuesta y bajar el PDF siguen
-# funcionando; lo que se cae es guardarla.
+# El despliegue no lo hace, y son dos botones distintos a propósito:
+# `desplegar.yml` publica el código y la base no se toca, porque Cloudflare no
+# sabe qué hay en `migraciones/`. Si el código nuevo llega a una base sin
+# migrar, el historial responde «La operación falló» a todo, porque sus
+# consultas nombran columnas que ahí no existen. Armar la propuesta y bajar el
+# PDF siguen funcionando; lo que se cae es guardarla.
 #
 # Hacen falta uno o dos secretos, que se ponen una sola vez en GitHub
 # (Settings → Secrets and variables → Actions):

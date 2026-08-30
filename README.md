@@ -297,7 +297,7 @@ equipo (`algo.cloudflareaccess.com`) van en `wrangler.jsonc`, en `ACCESO_AUD` y
 > Añadir a alguien al equipo es añadir su correo a esa política. Aquí dentro no
 > hay usuarios ni contraseñas que gestionar.
 
-**2 · Desplegar.** Hay tres formas y todas hacen lo mismo; se elige una.
+**2 · Desplegar.** Hay dos formas y las dos hacen lo mismo; se elige una.
 
 - **Desde la web, sin terminal** —
   [`.github/workflows/desplegar.yml`](.github/workflows/desplegar.yml)—: se
@@ -316,9 +316,25 @@ equipo (`algo.cloudflareaccess.com`) van en `wrangler.jsonc`, en `ACCESO_AUD` y
   Con la sesión de wrangler iniciada. Si esa sesión ve más de una cuenta —es el
   caso: el hub de B&S vive en otra— hay que decirle cuál:
   `CLOUDFLARE_ACCOUNT_ID=… npm run desplegar`.
-- **En cada empuje**, conectando el repositorio a Cloudflare Workers Builds con
-  `npm run instalar && npm run build` como orden de construcción. El proyecto se
-  llama **hub-panaclaw**, igual que el `name` de `wrangler.jsonc`.
+
+> **Hubo una tercera y está apagada: Cloudflare Workers Builds.** Se conectó el
+> repositorio para publicar en cada empuje, y se desconectó el 2026-08-30
+> (panel: Workers & Pages → hub-panaclaw → Settings → Builds → Disconnect).
+>
+> Dos razones, y la segunda pesa más que la primera. Estuvo fallando sin que
+> nadie lo mirara: su orden de construcción en el panel decía `npm run build` a
+> secas, y Cloudflare instala solo la raíz, así que las pruebas del cotizador
+> morían con `vitest: not found`. Eso ya no puede pasar —`construir.mjs`
+> instala lo que falte— pero lo otro sigue en pie: **su orden de construcción
+> vive en un campo del panel, no en este repositorio.** Nadie la revisa, no
+> aparece en ningún diff, y era el único camino a producción capaz de saltarse
+> las comprobaciones sin dejar rastro. El flujo de Actions lleva las suyas
+> escritas en [`desplegar.yml`](.github/workflows/desplegar.yml), donde se leen.
+>
+> Si algún día se quiere volver al despliegue automático, **no se reconecta
+> aquélla**: se le añaden dos líneas al flujo de Actions, debajo de
+> `workflow_dispatch:` —están escritas en su propio comentario—. Se gana lo
+> mismo sin devolver la configuración a un sitio que nadie mira.
 
 El identificador de la cuenta se copia de la barra lateral del panel de Workers.
 No se escribe en `wrangler.jsonc` a propósito: es un dato de quién despliega, no
