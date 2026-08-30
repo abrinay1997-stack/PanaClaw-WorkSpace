@@ -68,8 +68,8 @@
     //
     // Hasta que estén puestos, la API rechaza todo con «sin acceso», que es lo
     // correcto: sin Access configurado no hay forma de saber quién entra.
-    "ACCESO_DOMINIO": "PENDIENTE",
-    "ACCESO_AUD": "PENDIENTE"
+    "ACCESO_DOMINIO": "orange-brook-5740.cloudflareaccess.com",
+    "ACCESO_AUD": "4cf1b4f84fa08211f2e5d363f5f439f5"
   },
 
   "observability": {
