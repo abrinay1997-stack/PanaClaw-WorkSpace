@@ -11,6 +11,12 @@ export interface ErrorApi {
    * Para la pantalla: decide qué ofrecer.
    *
    * - `sin-acceso`        la sesión de Access caducó; recargar vuelve a entrar.
+   * - `puerta-mal-puesta` la puerta de Access está mal configurada o no está
+   *                       delante. **Recargar no arregla esto**, y por eso no
+   *                       comparte código con `sin-acceso`: los dos se
+   *                       contestaban igual, y una pantalla que manda a
+   *                       recargar ante un dato mal copiado deja a quien vende
+   *                       repitiendo lo único que no puede funcionar.
    * - `numero-ocupado`    ese número de propuesta ya es de otro cliente.
    * - `cliente-duplicado` ese documento ya es de otra ficha.
    * - `no-encontrada`     no existe.
@@ -19,6 +25,7 @@ export interface ErrorApi {
    */
   codigo:
     | 'sin-acceso'
+    | 'puerta-mal-puesta'
     | 'numero-ocupado'
     | 'cliente-duplicado'
     | 'no-encontrada'

@@ -42,7 +42,94 @@ export interface ConfigAcceso {
   aud: string;
 }
 
-export class SinAcceso extends Error {}
+/**
+ * La forma que tienen los dos datos de Access, y la única declaración de esa
+ * forma en todo el repositorio.
+ *
+ * Existen porque un valor con la forma equivocada NO se nota al desplegar: el
+ * Worker arranca, la portada se sirve, Access deja pasar a la persona —su
+ * sesión está perfectamente bien— y solo entonces, al comparar, el token se
+ * rechaza. Lo que se ve es «la sesión caducó» en bucle, que manda a recargar,
+ * que es justo lo que no puede arreglarlo. Un dato mal copiado se convierte
+ * así en una avería sin síntoma legible.
+ *
+ * `herramientas/verificar.mjs` LEE ESTAS DOS EXPRESIONES de este archivo y las
+ * aplica a `wrangler.jsonc` antes de construir, para que el valor equivocado
+ * no llegue nunca a desplegarse. No las dupliques allí: si cambian aquí,
+ * cambian en los dos sitios a la vez.
+ */
+export const FORMA_DOMINIO = /^[a-z0-9][a-z0-9-]*\.cloudflareaccess\.com$/;
+
+/**
+ * La etiqueta AUD son 64 caracteres hexadecimales —Cloudflare la genera como
+ * un SHA-256—. Los identificadores de 32 que salen en el panel (el de la
+ * cuenta, el de la zona, el del Worker) NO son ésta, y son los que se copian
+ * por error: están a un clic de distancia y se parecen lo suficiente.
+ */
+export const FORMA_AUD = /^[0-9a-f]{64}$/;
+
+/**
+ * Qué le falta a la puerta, en una lista vacía cuando no le falta nada.
+ *
+ * Devuelve texto ya redactado y sin ningún valor configurado dentro: esto se
+ * pinta en una página que se sirve antes de saber quién mira.
+ */
+export function revisarPuerta(config: { dominio?: string; aud?: string }): string[] {
+  const problemas: string[] = [];
+
+  const revisar = (nombre: string, valor: string | undefined, forma: RegExp, esperado: string) => {
+    if (!valor || valor === 'PENDIENTE') {
+      problemas.push(`Falta ${nombre}: sigue sin poner.`);
+    } else if (!forma.test(valor)) {
+      problemas.push(
+        `${nombre} no tiene la forma de ${esperado} ` +
+          `(el valor puesto tiene ${valor.length} caracteres).`,
+      );
+    }
+  };
+
+  revisar(
+    'ACCESO_DOMINIO',
+    config.dominio,
+    FORMA_DOMINIO,
+    'un dominio de equipo, «algo.cloudflareaccess.com»',
+  );
+  revisar('ACCESO_AUD', config.aud, FORMA_AUD, 'una etiqueta AUD, 64 caracteres hexadecimales');
+
+  return problemas;
+}
+
+/**
+ * Por qué no se dejó pasar, y —lo que importa— qué puede hacer quien llama.
+ *
+ * Las dos mitades piden cosas distintas y durante un tiempo se contestaron
+ * igual, que es como se pierde una tarde:
+ *
+ *   · `sesion` — el token llegó pero ya no sirve. Recargar vuelve a entrar.
+ *   · `puerta` — la puerta está mal puesta o no está delante. Recargar no
+ *     arregla nada, por muchas veces que se pulse; hay que tocar la
+ *     configuración.
+ */
+export type MotivoSinAcceso = 'sesion' | 'puerta';
+
+export class SinAcceso extends Error {
+  constructor(
+    readonly motivo: MotivoSinAcceso,
+    mensaje: string,
+    /**
+     * Si el motivo se le puede enseñar a quien llama.
+     *
+     * Solo donde llegar hasta ahí exigió traer un token con la forma completa,
+     * y donde el texto no nombra ningún valor configurado. Lo de antes —que la
+     * petición llegó sin token— se calla: eso solo pasa cuando Access no está
+     * delante de esta dirección, y es precisamente lo que no se le cuenta a
+     * quien acaba de encontrarla abierta.
+     */
+    readonly decible = false,
+  ) {
+    super(mensaje);
+  }
+}
 
 /**
  * Devuelve el correo de quien hace la petición, o lanza `SinAcceso`.
@@ -58,14 +145,16 @@ export async function identificar(
   const token =
     peticion.headers.get('Cf-Access-Jwt-Assertion') ?? cookie(peticion, 'CF_Authorization');
 
-  if (!token) throw new SinAcceso('La petición no trae token de Access.');
+  if (!token) throw new SinAcceso('puerta', 'La petición no trae token de Access.');
 
   const [cabecera, cuerpo, firma] = token.split('.');
-  if (!cabecera || !cuerpo || !firma) throw new SinAcceso('El token no tiene tres partes.');
+  if (!cabecera || !cuerpo || !firma) {
+    throw new SinAcceso('sesion', 'El token no tiene tres partes.');
+  }
 
   const { kid, alg } = leerJson<{ kid?: string; alg?: string }>(cabecera);
-  if (alg !== 'RS256') throw new SinAcceso(`Algoritmo inesperado: ${alg}`);
-  if (!kid) throw new SinAcceso('El token no dice con qué clave se firmó.');
+  if (alg !== 'RS256') throw new SinAcceso('sesion', `Algoritmo inesperado: ${alg}`);
+  if (!kid) throw new SinAcceso('sesion', 'El token no dice con qué clave se firmó.');
 
   const clave = await claveDe(kid, config.dominio);
   const valida = await crypto.subtle.verify(
@@ -74,7 +163,7 @@ export async function identificar(
     base64url(firma),
     new TextEncoder().encode(`${cabecera}.${cuerpo}`),
   );
-  if (!valida) throw new SinAcceso('La firma del token no cuadra.');
+  if (!valida) throw new SinAcceso('sesion', 'La firma del token no cuadra.');
 
   const datos = leerJson<{
     aud?: string | string[];
@@ -88,18 +177,27 @@ export async function identificar(
     // Un token válido de otra aplicación del mismo equipo. Firma correcta,
     // aplicación equivocada: sin esta comprobación, quien tenga acceso a
     // cualquier otra herramienta protegida entraría también aquí.
-    throw new SinAcceso('El token es de otra aplicación.');
+    throw new SinAcceso(
+      'puerta',
+      'El token es de otra aplicación: el AUD que trae no es el que tiene puesto el hub.',
+      true,
+    );
   }
 
   if (datos.iss !== `https://${config.dominio}`) {
-    throw new SinAcceso('El token lo emitió otro equipo de Access.');
+    throw new SinAcceso(
+      'puerta',
+      'El token lo emitió otro equipo de Access: el dominio que tiene puesto el hub no es ' +
+        'el que firmó.',
+      true,
+    );
   }
 
   if (typeof datos.exp !== 'number' || datos.exp * 1000 <= Date.now()) {
-    throw new SinAcceso('El token está vencido.');
+    throw new SinAcceso('sesion', 'El token está vencido.');
   }
 
-  if (!datos.email) throw new SinAcceso('El token no trae correo.');
+  if (!datos.email) throw new SinAcceso('sesion', 'El token no trae correo.');
 
   return datos.email.toLowerCase();
 }
@@ -115,14 +213,23 @@ async function claveDe(kid: string, dominio: string): Promise<CryptoKey> {
   cache = { expiraEn: Date.now() + TTL_CLAVES, claves };
 
   const clave = claves.get(kid);
-  if (!clave) throw new SinAcceso('El token se firmó con una clave desconocida.');
+  if (!clave) {
+    throw new SinAcceso(
+      'puerta',
+      'El token se firmó con una clave que este equipo de Access no publica.',
+      true,
+    );
+  }
   return clave;
 }
 
 async function descargarClaves(dominio: string): Promise<Map<string, CryptoKey>> {
   const respuesta = await fetch(`https://${dominio}/cdn-cgi/access/certs`);
   if (!respuesta.ok) {
-    throw new SinAcceso(`No se pudieron leer las claves de Access (${respuesta.status}).`);
+    throw new SinAcceso(
+      'puerta',
+      `No se pudieron leer las claves de Access (${respuesta.status}).`,
+    );
   }
 
   const { keys } = (await respuesta.json()) as Jwks;
@@ -142,7 +249,7 @@ async function descargarClaves(dominio: string): Promise<Map<string, CryptoKey>>
     );
   }
 
-  if (claves.size === 0) throw new SinAcceso('Access no devolvió ninguna clave.');
+  if (claves.size === 0) throw new SinAcceso('puerta', 'Access no devolvió ninguna clave.');
   return claves;
 }
 
@@ -162,7 +269,7 @@ function leerJson<T>(parte: string): T {
   try {
     return JSON.parse(new TextDecoder().decode(base64url(parte))) as T;
   } catch {
-    throw new SinAcceso('El token no es JSON válido.');
+    throw new SinAcceso('sesion', 'El token no es JSON válido.');
   }
 }
 

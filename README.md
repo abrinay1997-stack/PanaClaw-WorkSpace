@@ -279,11 +279,20 @@ Access muestra su **Application Audience (AUD) Tag**: ese valor y el dominio del
 equipo (`algo.cloudflareaccess.com`) van en `wrangler.jsonc`, en `ACCESO_AUD` y
 `ACCESO_DOMINIO`.
 
-> **Mientras esos dos digan `PENDIENTE`, el hub no se sirve.** No es que la API
-> rechace y la pantalla no: el Worker devuelve un 503 a todo —portada, cotizador
-> y API— diciendo qué falta. Es deliberado. Sin ese cierre, entre desplegar y
-> acordarse de configurar Access hay un rato en que la herramienta está en pie y
-> abierta, y ese rato no se cierra nunca solo.
+> **Cuidado con cuál de los dos identificadores se copia.** La etiqueta AUD son
+> **64 caracteres** y está en la aplicación de Access, pestaña *Overview*. El
+> identificador que sale en la barra lateral del panel de Workers tiene **32** y
+> es el de la cuenta: se parecen, están a un clic el uno del otro, y pegar el
+> equivocado deja el hub en pie contestando «la sesión caducó» a cada llamada
+> —sin sesión que caducar, porque el token está bien y es la comparación la que
+> no puede cuadrar—. `node herramientas/verificar.mjs` lo detecta antes de
+> construir, así que ese valor ya no llega a desplegarse.
+
+> **Mientras esos dos falten, digan `PENDIENTE` o estén mal copiados, el hub no
+> se sirve.** No es que la API rechace y la pantalla no: el Worker devuelve un
+> 503 a todo —portada, cotizador y API— diciendo qué falta. Es deliberado. Sin
+> ese cierre, entre desplegar y acordarse de configurar Access hay un rato en
+> que la herramienta está en pie y abierta, y ese rato no se cierra nunca solo.
 
 > Añadir a alguien al equipo es añadir su correo a esa política. Aquí dentro no
 > hay usuarios ni contraseñas que gestionar.

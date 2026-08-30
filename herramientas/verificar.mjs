@@ -12,7 +12,8 @@
  *   8. Los rangos se citan enteros
  *   9. Ninguna tipografía fuera de las declaradas en datos/marca.json
  *
- * Y además: que no queden enlaces internos rotos ni huecos sin resolver.
+ * Y además: que no queden enlaces internos rotos, ni huecos sin resolver, ni
+ * los dos datos de Cloudflare Access mal copiados en `wrangler.jsonc`.
  *
  * Las demás reglas son de criterio y las revisa quien entrega
  * (orquestador/protocolo-entrega.md).
@@ -446,6 +447,103 @@ function reglaHub() {
 }
 
 /* ------------------------------------------------------------------ *
+ * La puerta — los dos datos de Cloudflare Access
+ *
+ * Se vigilan aquí porque es el único sitio donde el error se ve ANTES de
+ * costar algo. Un valor mal copiado en `wrangler.jsonc` no rompe nada al
+ * desplegar: el Worker arranca, la portada se sirve, Access deja pasar a la
+ * persona —su sesión está perfectamente bien— y solo al comparar el token se
+ * rechaza. Lo que se ve entonces es «la sesión caducó» en cada llamada, que
+ * manda a recargar, que es exactamente lo que no puede arreglarlo. Pasó: el
+ * identificador de la cuenta acabó pegado donde va la etiqueta AUD, y los dos
+ * están a un clic el uno del otro en el mismo panel.
+ *
+ * LA FORMA NO SE ESCRIBE AQUÍ. Se lee de `worker/acceso.ts`, que es quien la
+ * comprueba en marcha, para que no puedan divergir: dos copias de una regla
+ * son dos reglas en cuanto alguien toca una. Si la extracción falla, esto es
+ * un error y no un aviso — un cepo que ya no encuentra lo que vigila no
+ * vigila nada, y callándose lo parecería.
+ *
+ * `PENDIENTE` no se castiga: es el estado con el que nace el repositorio y el
+ * Worker ya se cierra solo mientras dure. Lo que se castiga es un valor
+ * escrito Y equivocado, que es el que se cuela.
+ * ------------------------------------------------------------------ */
+
+function formaDeAcceso(nombre, fuente) {
+  const trozo = new RegExp(`export const ${nombre} = /(.+)/;`).exec(fuente);
+  if (!trozo) return null;
+  try {
+    return new RegExp(trozo[1]);
+  } catch {
+    return null;
+  }
+}
+
+function reglaPuerta() {
+  const rutaAcceso = join(RAIZ, 'worker/acceso.ts');
+  const rutaConfig = join(RAIZ, 'wrangler.jsonc');
+  if (!existsSync(rutaAcceso) || !existsSync(rutaConfig)) return;
+
+  const fuente = readFileSync(rutaAcceso, 'utf8');
+  const config = readFileSync(rutaConfig, 'utf8');
+
+  const campos = [
+    {
+      variable: 'ACCESO_DOMINIO',
+      forma: 'FORMA_DOMINIO',
+      esperado: 'un dominio de equipo, «algo.cloudflareaccess.com»',
+      donde: 'Zero Trust → Access → Applications, en el dominio del equipo',
+    },
+    {
+      variable: 'ACCESO_AUD',
+      forma: 'FORMA_AUD',
+      esperado: 'una etiqueta AUD de 64 caracteres hexadecimales',
+      donde:
+        'la aplicación de Access, pestaña Overview, «Application Audience (AUD) Tag». ' +
+        'El identificador de 32 de la barra lateral de Workers es el de la CUENTA y no sirve',
+    },
+  ];
+
+  for (const { variable, forma, esperado, donde } of campos) {
+    const expresion = formaDeAcceso(forma, fuente);
+    if (!expresion) {
+      error(
+        'worker/acceso.ts',
+        0,
+        `No encontré la expresión ${forma}. Esta comprobación la lee de ahí: ` +
+          'si se renombró o se movió, actualiza `reglaPuerta` en verificar.mjs.',
+      );
+      continue;
+    }
+
+    const puesto = new RegExp(`"${variable}"\\s*:\\s*"([^"]*)"`).exec(config);
+    if (!puesto) {
+      error('wrangler.jsonc', 0, `Falta la variable ${variable} en «vars».`);
+      continue;
+    }
+
+    const valor = puesto[1];
+    if (valor === 'PENDIENTE') {
+      aviso(
+        'wrangler.jsonc',
+        0,
+        `${variable} sigue en PENDIENTE: el hub se despliega cerrado y responderá 503 a todo.`,
+      );
+      continue;
+    }
+
+    if (!expresion.test(valor)) {
+      error(
+        'wrangler.jsonc',
+        0,
+        `${variable} no tiene la forma de ${esperado} — lo puesto tiene ` +
+          `${valor.length} caracteres. Se copia de ${donde}.`,
+      );
+    }
+  }
+}
+
+/* ------------------------------------------------------------------ *
  * Ejecución
  * ------------------------------------------------------------------ */
 
@@ -455,6 +553,7 @@ reglaJerga();
 reglaColor();
 reglaTipografia();
 const archivosDeCodigo = reglaHub();
+reglaPuerta();
 enlaces();
 huecos();
 

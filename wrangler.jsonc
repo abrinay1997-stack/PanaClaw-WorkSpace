@@ -66,8 +66,18 @@
     // es el dominio del equipo (`algo.cloudflareaccess.com`) y `ACCESO_AUD`, la
     // etiqueta «Application Audience (AUD) Tag».
     //
-    // Hasta que estén puestos, la API rechaza todo con «sin acceso», que es lo
+    // Hasta que estén puestos, el Worker responde 503 a todo, que es lo
     // correcto: sin Access configurado no hay forma de saber quién entra.
+    //
+    // OJO CON CUÁL DE LOS DOS IDENTIFICADORES SE PEGA AQUÍ. La etiqueta AUD
+    // son 64 caracteres y sale en la aplicación de Access, pestaña Overview.
+    // El identificador que enseña la barra lateral del panel de Workers tiene
+    // 32 y es el de la CUENTA —el de `CLOUDFLARE_ACCOUNT_ID`, ahí arriba—. Se
+    // parecen, están a un clic el uno del otro, y con el equivocado puesto el
+    // hub queda EN PIE contestando «la sesión caducó» a cada llamada, sin
+    // sesión que caducar: el token está bien y es la comparación la que no
+    // puede cuadrar. `node herramientas/verificar.mjs` lo para antes de
+    // construir, así que un valor mal copiado ya no llega a desplegarse.
     "ACCESO_DOMINIO": "orange-brook-5740.cloudflareaccess.com",
     "ACCESO_AUD": "4cf1b4f84fa08211f2e5d363f5f439f5"
   },

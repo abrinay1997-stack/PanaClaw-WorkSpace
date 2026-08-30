@@ -35,8 +35,8 @@
 #
 # ── Después del primer despliegue ───────────────────────────────────────────
 #
-# El hub queda EN PIE Y CERRADO: mientras `ACCESO_DOMINIO` y `ACCESO_AUD` sigan
-# en `PENDIENTE` dentro de `wrangler.jsonc`, el Worker responde 503 a todo. Eso
+# El hub queda EN PIE Y CERRADO: mientras `ACCESO_DOMINIO` y `ACCESO_AUD` falten,
+# sigan en `PENDIENTE` o estén mal copiados, el Worker responde 503 a todo. Eso
 # es lo correcto y es deliberado —ver `worker/index.ts`—. Para abrirlo hay que
 # crear la aplicación en Cloudflare Access sobre este Worker, copiar aquí sus
 # dos datos y volver a desplegar. Está explicado en el README.
@@ -93,3 +93,7 @@ jobs:
           echo "Publicado. Si ACCESO_DOMINIO y ACCESO_AUD siguen en PENDIENTE,"
           echo "el hub responde 503 a todo hasta que se cree la aplicación en"
           echo "Cloudflare Access sobre este Worker y se copien aquí sus dos datos."
+          echo "La etiqueta AUD son 64 caracteres y sale en la aplicación de Access"
+          echo "(pestaña Overview). El identificador de 32 de la barra lateral de"
+          echo "Workers es el de la CUENTA: con ése puesto, el hub queda en pie"
+          echo "diciendo «la sesión caducó» sin que recargar arregle nada."

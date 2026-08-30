@@ -14,10 +14,10 @@ import * as clientes from './clientes';
 import * as propuestas from './propuestas';
 import { ErrorPeticion, cuerpoJson, fallo, json } from './http';
 import type { Env } from './entorno';
-import { identificar, SinAcceso } from './acceso';
+import { identificar, revisarPuerta, SinAcceso } from './acceso';
 
 /**
- * Si la puerta está puesta.
+ * Qué le falta a la puerta. Vacío cuando está bien puesta.
  *
  * `wrangler.jsonc` nace con `ACCESO_DOMINIO` y `ACCESO_AUD` en `PENDIENTE`
  * porque esos dos datos solo existen después de crear la aplicación en
@@ -29,22 +29,34 @@ import { identificar, SinAcceso } from './acceso';
  * servirían tan campantes a cualquiera que diera con la dirección. Ese hueco
  * dura desde que se despliega hasta que alguien se acuerda de configurar
  * Access, y es justo la clase de plazo que no se cierra nunca.
+ *
+ * NO BASTA CON QUE ESTÉN ESCRITOS, Y ESO COSTÓ UNA TARDE: un valor con la
+ * forma equivocada —el identificador de la cuenta pegado donde va la etiqueta
+ * AUD, que están a un clic el uno del otro en el mismo panel— dejaba el hub en
+ * pie, servía la portada, y contestaba «la sesión caducó» a cada llamada. Sin
+ * sesión que caducar: el token estaba perfecto y era la comparación la que no
+ * podía cuadrar nunca. Por eso se mira la FORMA y no la presencia; ver
+ * `revisarPuerta` en `acceso.ts`.
  */
-function puertaPuesta(env: Env): boolean {
-  const sinPoner = (valor: string | undefined) => !valor || valor === 'PENDIENTE';
-  return !sinPoner(env.ACCESO_DOMINIO) && !sinPoner(env.ACCESO_AUD);
+function faltaEnLaPuerta(env: Env): string[] {
+  return revisarPuerta({ dominio: env.ACCESO_DOMINIO, aud: env.ACCESO_AUD });
 }
 
 /** Lo que se ve mientras falte la puerta. Dice qué falta y dónde se pone. */
-function sinPuerta(): Response {
+function sinPuerta(problemas: string[]): Response {
   return new Response(
     `<!doctype html><meta charset="utf-8">` +
       `<title>El hub todavía no está protegido</title>` +
       `<p>Este hub no se sirve todavía porque le falta la puerta.</p>` +
+      `<ul>${problemas.map((p) => `<li>${p}</li>`).join('')}</ul>` +
       `<p>En el panel de Cloudflare: Zero Trust &rarr; Access &rarr; Applications, ` +
       `sobre este Worker. Al crearla, copie el dominio del equipo y la etiqueta ` +
       `AUD en <code>ACCESO_DOMINIO</code> y <code>ACCESO_AUD</code> de ` +
-      `<code>wrangler.jsonc</code>, y vuelva a desplegar.</p>`,
+      `<code>wrangler.jsonc</code>, y vuelva a desplegar.</p>` +
+      `<p>La etiqueta AUD est&aacute; en la propia aplicaci&oacute;n de Access, ` +
+      `pesta&ntilde;a <em>Overview</em>, como &laquo;Application Audience (AUD) Tag&raquo;: ` +
+      `son 64 caracteres. El identificador que sale en la barra lateral del panel ` +
+      `de Workers es el de la CUENTA, tiene 32 y no sirve aqu&iacute;.</p>`,
     {
       status: 503,
       headers: {
@@ -63,7 +75,10 @@ export default {
 
     // Antes que nada, y para todo: sin Access configurado no se sirve ni la
     // portada. En desarrollo no aplica, que ahí no hay Access que valga.
-    if (env.MODO !== 'desarrollo' && !puertaPuesta(env)) return sinPuerta();
+    if (env.MODO !== 'desarrollo') {
+      const falta = faltaEnLaPuerta(env);
+      if (falta.length) return sinPuerta(falta);
+    }
 
     if (!url.pathname.startsWith('/api/')) {
       // La portada y el cotizador. `assets` los sirve directamente desde el
@@ -76,12 +91,30 @@ export default {
       return await enrutar(peticion, url, env, correo);
     } catch (error) {
       if (error instanceof SinAcceso) {
-        // 401 y no 403: quien llega sin token válido tiene que volver a pasar
-        // por Access, y eso es lo que el navegador hace al recargar.
+        // 401 y no 403: quien llega con un token que ya no sirve tiene que
+        // volver a pasar por Access, y eso es lo que el navegador hace al
+        // recargar. Solo se contesta esto cuando recargar PUEDE arreglarlo.
+        if (error.motivo === 'sesion') {
+          return fallo(
+            401,
+            'sin-acceso',
+            'La sesión caducó. Recarga la página para volver a entrar.',
+          );
+        }
+
+        // La otra mitad: la puerta está mal puesta, o no está delante de esta
+        // dirección. Mandar a recargar aquí es mandar a repetir lo único que
+        // no puede funcionar, y quien vende se queda dándole a F5 sin saber
+        // que el fallo no es suyo. 503 y no 401 porque el que falla es el
+        // servidor: no hay nada que quien llama pueda presentar para entrar.
+        console.error('Puerta mal puesta:', error.message);
         return fallo(
-          401,
-          'sin-acceso',
-          'La sesión caducó. Recarga la página para volver a entrar.',
+          503,
+          'puerta-mal-puesta',
+          'El hub no puede comprobar quién entra: la puerta está mal puesta. ' +
+            'Recargar no lo arregla. Hay que revisar la aplicación de Cloudflare ' +
+            'Access y los valores de ACCESO_DOMINIO y ACCESO_AUD.' +
+            (error.decible ? ` Lo que no cuadra: ${error.message}` : ''),
         );
       }
       if (error instanceof ErrorPeticion) {

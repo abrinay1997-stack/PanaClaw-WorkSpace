@@ -191,9 +191,14 @@ que hay que saber antes:
 5. **La identidad no se pide, se comprueba.** Quién emitió una propuesta sale
    del token firmado de Cloudflare Access —`worker/acceso.ts` verifica la firma,
    no se limita a leer la cabecera— y jamás de un campo del cuerpo.
-6. **Sin Access configurado, el hub no se sirve.** Si `ACCESO_DOMINIO` o
-   `ACCESO_AUD` siguen en `PENDIENTE`, el Worker responde 503 a todo —portada,
-   cotizador y API— diciendo qué falta. Y por eso `assets.run_worker_first`
+6. **Sin Access bien configurado, el hub no se sirve.** Si `ACCESO_DOMINIO` o
+   `ACCESO_AUD` faltan, siguen en `PENDIENTE` **o no tienen la forma que les
+   toca**, el Worker responde 503 a todo —portada, cotizador y API— diciendo
+   qué falta. Lo de la forma no es celo: la etiqueta AUD son 64 caracteres y el
+   identificador de la cuenta 32, están a un clic el uno del otro en el mismo
+   panel, y con el equivocado el hub queda en pie contestando «la sesión
+   caducó» a cada llamada —sin sesión que caducar—. Un fallo que manda a
+   recargar es un fallo que nadie puede arreglar recargando. Y por eso `assets.run_worker_first`
    está encendido en `wrangler.jsonc`: sin él, Cloudflare entregaría los
    archivos desde el borde sin llegar a ejecutar ese cierre. No quites ninguna
    de las dos cosas: juntas son lo que impide que el hub quede en pie y abierto
