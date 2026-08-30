@@ -79,7 +79,7 @@
     // puede cuadrar. `node herramientas/verificar.mjs` lo para antes de
     // construir, así que un valor mal copiado ya no llega a desplegarse.
     "ACCESO_DOMINIO": "orange-brook-5740.cloudflareaccess.com",
-    "ACCESO_AUD": "4cf1b4f84fa08211f2e5d363f5f439f5"
+    "ACCESO_AUD": "78207669795fd37a6293570930c17f3acbd87cb921cd4f26abcc78eb2291f94d"
   },
 
   "observability": {
