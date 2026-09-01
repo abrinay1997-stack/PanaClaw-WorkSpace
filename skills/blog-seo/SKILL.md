@@ -126,6 +126,16 @@ del enum cerrado, `keywords` de 1 a 6, `readingTime` entero de 2 a 30, fecha de
 hoy salvo que el humano pida otra. **Cuenta los caracteres, no los estimes** —
 es lo primero que revienta el `build` del sitio si se falla.
 
+**`date` se confirma justo antes de fusionar, no se da por buena la del
+momento de redactar.** Esta conversación es asíncrona: entre que se redacta el
+post y el humano aprueba y fusiona el PR puede pasar tiempo real —a veces
+minutos, a veces varios días—, y `date` es la fecha de publicación, no la de
+escritura. Ya pasó: un post quedó fechado seis días antes de su fusión real
+porque nadie volvió a mirar el campo. Antes de decir que un PR está listo para
+fusionar, comprueba la fecha de ese momento (`date -u +%Y-%m-%d`, ajustada a
+hora de Panamá si cruza medianoche UTC) contra la que quedó escrita en el
+archivo, y corrígela si ya no coincide.
+
 ### Paso 5 · Escribir el cuerpo
 
 Con la anatomía de [`prompts/texto/blog.md`](../../prompts/texto/blog.md) →
@@ -176,6 +186,7 @@ Además, específico de esta skill:
 - [ ] ¿Huecos sin resolver — `[completa aquí]`, corchetes vacíos? <!-- v: contraejemplos de huecos sin resolver -->
 - [ ] ¿Se dice qué NO incluye, si el post habla de un producto?
 - [ ] ¿Cada campo del frontmatter cumple su rango de caracteres, contado y no estimado?
+- [ ] ¿`date` sigue siendo la de hoy en el momento de fusionar, o pasó tiempo real desde que se redactó y quedó desfasada?
 
 ---
 
