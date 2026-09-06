@@ -198,7 +198,7 @@ La voz no cambia. El registro sí.
 | Cuerpo web | Explicativo, con el desastre concreto | 2–4 frases por bloque |
 | WhatsApp | Directo y sin formalismo, como escribe una persona | 1–3 líneas |
 | Correo | Igual que WhatsApp pero con saludo | ≤120 palabras |
-| Instagram orgánico | El pilar contado en una historia concreta | 1 idea · hasta 6 hashtags concretos · emojis solo en las tres articulaciones |
+| Instagram orgánico | El pilar contado en una historia concreta | 1 idea · hasta 6 hashtags concretos · emojis de ritmo, un grupo de sentido cada uno |
 | Anuncio pagado | El dolor en la primera línea, la cifra en la segunda | ≤2 líneas antes del «ver más» |
 | Respuesta de bot | Corta y honesta. Si no sabe, lo dice y pasa a un humano | 1–3 frases |
 
@@ -235,22 +235,70 @@ descripción** de una publicación de Instagram o Facebook. No aplica a nada má
 | | Anuncios pagados |
 | | Respuestas del eBot |
 
-### Los emojis hacen estructura, no decoración
+### Los emojis marcan el ritmo
 
-No se espolvorean. Marcan las tres articulaciones de la descripción, siempre las
-mismas, y por eso se reconocen sin leer:
+**Corregido el 2026-09-06 por el dueño de la marca**, después de comparar el lote
+de septiembre con la publicidad que de verdad funciona en el feed panameño. La
+regla anterior permitía tres emojis y solo al final de cada articulación. Salían
+descripciones correctas y planas: en un feed que se recorre con el pulgar, un
+bloque de cuatro líneas sin un solo corte visual no se empieza a leer.
+
+La estructura de cuatro líneas se queda —es lo que hace que la descripción se
+reconozca sin leerla—, pero el emoji deja de ser un punto final y pasa a ser un
+separador dentro de la línea:
 
 ```
-[la situación del lector]                    ← un emoji al final, y solo aquí
-[el cuerpo: qué pasa de verdad, qué hacemos] ← ninguno
-[la cifra]                                   ← ⚡ detrás
-PanaClaw — sitios rápidos, código tuyo.      ← 🌋 detrás
+[el gancho, una línea]                  ← 1 o 2 emojis, al final
+[el cuerpo: qué pasa, qué hacemos]      ← emojis intercalados, uno por idea
+[la cifra y su condición]               ← normalmente ninguno
+PanaClaw — sitios rápidos, código tuyo. ← 🌋 detrás
 [hashtags]
 ```
 
-Nunca dos emojis seguidos, nunca uno a mitad de frase, nunca uno sustituyendo a
-una palabra. Y **jamás al lado de una cifra que no sea la cifra**: un emoji
-detrás de un plazo o de un porcentaje lo convierte en promesa.
+```
+✓  ¿Sigues anotando pedidos a mano? 📝 Pasa a una tienda que cobra sola con
+   Yappy, tarjeta y PayPal 💳 Catálogo + carrito + panel de pedidos 📦
+
+✗  Si vendes por mensaje directo y apuntas los pedidos a mano, una tienda en
+   línea cobra sola y lleva el control de existencias. 📦
+```
+
+Lo que no cambia, y es lo que separa esto de espolvorear:
+
+- **Un emoji por idea, no por palabra.** Cierra un grupo de sentido y deja
+  respirar al siguiente. Nunca dos seguidos, salvo el par del gancho.
+- **Ninguno sustituye a una palabra.** Se lee igual con los emojis tapados.
+- **Jamás al lado de una cifra que no sea la cifra.** Un emoji detrás de un
+  plazo o de un porcentaje lo convierte en promesa. Por eso la línea de la
+  cifra normalmente va limpia.
+- **Dentro de la imagen no entra ninguno.** Esa regla no se movió.
+
+### La pregunta que el lector ya se hace
+
+La misma decisión abrió una segunda puerta, y conviene entender dónde está el
+marco. La característica 5 de esta voz es adelantarse a la objeción; hasta ahora
+esa objeción se escribía siempre en afirmativo, y **se puede escribir tal cual la
+piensa quien lee**:
+
+```
+✓  ¿Y si me quedo corto con el plan más barato? 🤔
+✓  ¿Miedo a firmar otra mensualidad para siempre? 🔁
+✓  ¿Sigues anotando pedidos a mano? 📝
+
+✗  ¿Cansado de que tu web sea lenta?
+✗  ¿Te gustaría vender más este año?
+✗  ¿Sabías que el 70 % de los usuarios…?
+```
+
+La diferencia no es el signo de interrogación: es de quién es la pregunta. Las
+tres de arriba son las que esa persona ya se hace en silencio, y verlas escritas
+es lo que hace que siga leyendo. Las tres de abajo se las hace la marca a ella
+para venderle, y esas siguen prohibidas.
+
+**Y solo en la descripción de una publicación.** El titular de la pieza, la web,
+el correo, WhatsApp y los anuncios pagados siguen afirmando —
+[`prompts/texto/anuncios.md`](../prompts/texto/anuncios.md) y
+[`07-redaccion.md`](07-redaccion.md) §4 no se relajan.
 
 **La firma es fija dentro de un mes, y la manda la tagline del producto del
 mes.** Repetida diez o doce veces seguidas es como una frase se pega; alternada
@@ -317,6 +365,19 @@ uno tiene que nombrar algo real —la marca, el país, el servicio, el producto�
 En minúscula, sin acentos raros, y ninguno inventado para rellenar hasta seis.
 Cuatro buenos valen más que seis con dos de paja.
 
+**Y desde el 2026-09-06 cuentan dos formas más**, que nombran algo tan real como
+el país o el servicio: **el precio** y **el nombre del plan**. Son las que usa
+quien busca por precio, que en esta categoría es casi todo el mundo.
+
+```
+✓  #desde295 #desde450 #desde850 #desde1200 #start #launch #corporate #commerce
+```
+
+El hashtag de precio se escribe con la cifra sin puntuación —`#desde1200`, no
+`#desde1,200`— y **tiene que coincidir con el importe que dice la pieza**. Un
+`#desde295` en una publicación de Corporate es una cifra equivocada con formato
+de etiqueta, y cuenta como cualquier otra cifra equivocada.
+
 ### Lo que la excepción NO relaja
 
 Ni un ápice de lo demás. Sigue prohibido, también en una descripción de redes:
@@ -367,8 +428,8 @@ Estructuras, no frases hechas. Rellénalas contra el contexto real.
 4. ¿Alguna promesa que no puedas señalar en `datos/precios.json` o en el
    catálogo? → fuera.
 5. ¿Dice en algún sitio qué **no** incluye? → si no, falta.
-6. ¿Una exclamación o una urgencia inventada? → fuera. ¿Un emoji fuera de la
-   descripción de una publicación de redes, o en una de sus articulaciones
-   equivocadas? → fuera también.
+6. ¿Una exclamación o una urgencia inventada? → fuera. ¿Un emoji dentro de una
+   imagen, dos seguidos a mitad de línea, o uno pegado a una cifra que no es la
+   cifra? → fuera también.
 7. Léelo en voz alta. ¿Suena a una persona explicándole algo a otra, o a un
    folleto? Si es folleto, empieza otra vez por el dolor.

@@ -128,7 +128,8 @@ Por publicación, y en este orden:
    escalera y el traductor están en
    [`adn/06-claridad.md`](../../adn/06-claridad.md). Un titular que dice el
    precio o lo que no incluye está usando el sitio de otro.
-2. **La descripción**, con las tres articulaciones y su firma al cierre.
+2. **La descripción**, con sus cuatro líneas —gancho, cuerpo, cifra, firma— y
+   los emojis de ritmo.
    **Con tope, y se cuenta:** 100 caracteres la primera línea, 300 el cuerpo y
    500 la descripción entera sin los hashtags —
    [`adn/02-voz-y-tono.md`](../../adn/02-voz-y-tono.md) → «El largo tiene tope».
@@ -302,7 +303,8 @@ Antes de entregar, una a una:
       nota y sube su consecuencia
 - [ ] ¿Llamada a la acción en 4 como mucho?
 - [ ] ¿Seis hashtags o menos en todas, y todos concretos?
-- [ ] ¿Emojis solo en las descripciones, y solo en sus tres articulaciones?
+- [ ] ¿Emojis solo en las descripciones, uno por grupo de sentido, ninguno
+      dentro de una imagen ni pegado a una cifra que no es la cifra?
 - [ ] ¿Ninguna descripción sin su firma al cierre, y la misma en las doce?
 - [ ] ¿La firma es la tagline del producto del mes, y no una inventada?
 - [ ] ¿Alguna pieza dice su tagline tres veces —titular, apertura y firma—?
