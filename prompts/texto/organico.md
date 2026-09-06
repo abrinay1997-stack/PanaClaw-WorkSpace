@@ -119,16 +119,20 @@ nuevo reparte peor los clics entre todos los demás.
 - **Hashtags: seis como máximo, todos concretos** y en minúscula
   (`#panaclaw`, `#sitioswebpanama`, `#panama`). Nada de `#emprendimiento
   #éxito #motivación`. Cuatro buenos valen más que seis con dos de paja.
-- **Emojis: solo en la descripción, y solo en sus tres articulaciones.** La
+- **Emojis: solo en la descripción, y de ritmo — uno por grupo de sentido.** La
   regla completa, con la estructura exacta, está en
-  [`adn/02-voz-y-tono.md`](../../adn/02-voz-y-tono.md) → «La excepción de redes
-  sociales». Dentro de la imagen no entra ninguno.
+  [`adn/02-voz-y-tono.md`](../../adn/02-voz-y-tono.md) → «Los emojis marcan el
+  ritmo». Dentro de la imagen no entra ninguno.
 - **La firma cierra siempre**, y la manda la tagline del producto del mes: la de
   marca por defecto, la del producto cuando tiene una declarada. La tabla está
   en [`adn/02-voz-y-tono.md`](../../adn/02-voz-y-tono.md).
 - **Sin carruseles de diez consejos.** No es la voz: la marca no da consejos
   genéricos, cuenta cómo trabaja.
-- **Sin «¿sabías que…?»** ni preguntas retóricas de apertura.
+- **Sin «¿sabías que…?»** ni preguntas de teletienda. La descripción sí puede
+  abrir con la pregunta que el lector ya se hace —«¿Y si me quedo corto con el
+  plan más barato?»—; la diferencia es de quién es la pregunta, y está en
+  [`adn/02-voz-y-tono.md`](../../adn/02-voz-y-tono.md) → «La pregunta que el
+  lector ya se hace».
 
 ---
 
@@ -208,6 +212,7 @@ días, eso es más de medio año sin repetirse **y sin inventar nada**.
 - [ ] ¿Alguna cifra? → verifícala contra `precios.json`
 - [ ] ¿Dice en algún punto qué no incluye?
 - [ ] ¿Exclamaciones, hashtags de relleno, más de seis hashtags?
-- [ ] ¿Algún emoji fuera de las tres articulaciones, o dentro de una imagen?
+- [ ] ¿Algún emoji dentro de una imagen, dos seguidos, o uno pegado a una cifra
+      que no es la cifra?
 - [ ] ¿Está la firma al cierre?
 - [ ] ¿Algún dato, métrica o testimonio que no puedas señalar en el repositorio?
