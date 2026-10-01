@@ -351,6 +351,15 @@ afirmativo, sin nombrar la marca.
 ✗  En PanaClaw hacemos webs rápidas.          ← empieza por nosotros
 ```
 
+> **La excepción, y es una sola.** En la descripción de una publicación de redes
+> —no en el titular, no en la web, no en pauta— sí se puede abrir con la
+> pregunta que el lector ya se hace, escrita con sus palabras: «¿Y si me quedo
+> corto con el plan más barato?». Es la característica 5 de
+> [`02-voz-y-tono.md`](02-voz-y-tono.md) dicha en interrogativo, y está ahí, en
+> «La pregunta que el lector ya se hace». Lo que sigue prohibido en todas partes
+> es la pregunta que se la hace la marca a él para venderle, que es justo la
+> primera de la lista de aquí arriba.
+
 ### El método: escribe diez, tacha nueve
 
 El primer gancho que sale es el más obvio, y el más obvio es el que ya escribió

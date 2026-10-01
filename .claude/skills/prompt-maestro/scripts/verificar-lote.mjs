@@ -257,7 +257,7 @@ for (const fr of marca.fronteras || []) {
 }
 
 // La proporción de alturas del lote.
-const alturas = [...T.matchAll(/^ALTURA\s+(\w+)/gim)].map((m) => m[1].toLowerCase());
+const alturas = [...T.matchAll(/^ALTURA\s+(\p{L}+)/gimu)].map((m) => m[1].toLowerCase());
 if (alturas.length && marca.alturas?.proporcionPorCadaOcho) {
   const cuenta = {};
   alturas.forEach((a) => (cuenta[a] = (cuenta[a] || 0) + 1));
@@ -299,7 +299,7 @@ if (rutaIndice && existsSync(rutaIndice)) {
   } else {
     repetidos.forEach((n) => error(`titular ${n} ya salió: está en el índice. Un titular publicado está gastado`));
   }
-  const puertas = [...T.matchAll(/^PUERTA\s*:?\s*(\w[\w\s]*)$/gim)].map((m) => m[1].trim().toLowerCase());
+  const puertas = [...T.matchAll(/^PUERTA\s*:?\s*(\p{L}[\p{L}\s]*)$/gimu)].map((m) => m[1].trim().toLowerCase());
   if (puertas.length) {
     const cuenta = {};
     puertas.forEach((p) => (cuenta[p] = (cuenta[p] || 0) + 1));
