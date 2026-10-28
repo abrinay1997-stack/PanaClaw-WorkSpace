@@ -105,6 +105,7 @@ según la petición:
 |---|---|
 | **Contenido de Instagram del mes** (piezas + descripciones + hashtags) | `skills/contenido-instagram/SKILL.md` — y de ahí a todo lo demás |
 | **Un post del blog, para SEO** | `skills/blog-seo/SKILL.md` — y de ahí a `prompts/texto/blog.md` |
+| **Candidatos de blog a partir de Search Console** | `skills/candidatos-blog-seo/SKILL.md` — propone, no escribe el post ni publica |
 | Prompts de imagen, creativos, Nano Banana | `datos/marca.json` → `prompts/README.md` → `prompts/bloques/` → `prompts/imagen/nano-banana.md` |
 | Imágenes **por lote** (10, 50, 200 piezas) | lo anterior + `prompts/imagen/lote.md` + `skills/lote-visual/SKILL.md` |
 | Maquetar una pieza: retícula, tamaños, qué va en naranja | `datos/marca.json` → `redesSociales` + `prompts/imagen/texto-en-imagen.md` |

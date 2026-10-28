@@ -1,5 +1,27 @@
 # Herramientas
 
+## `validar-candidatos.mjs`
+
+```bash
+node herramientas/validar-candidatos.mjs ruta/al/candidatos.json
+# o: npm run candidatos -- ruta/al/candidatos.json
+```
+
+Sin dependencias. Node 18+. Comprueba una lista de candidatos de blog
+—producida por [`skills/candidatos-blog-seo`](../skills/candidatos-blog-seo/SKILL.md)—
+contra los límites reales del schema de `content.config.ts` del sitio:
+`title` (15–90), `description` (60–200), `category` (las cinco del enum),
+`keywords` (1–6) y `readingTime` (entero, 2–30). También marca títulos
+repetidos dentro del mismo lote.
+
+**Es un espejo declarado**, igual que `datos/precios.json` lo es de
+`src/data/*.ts`: si el schema del sitio cambia sus límites, este archivo se
+desincroniza y hay que actualizar los dos juntos.
+
+Sale con código 1 si algún candidato no pasa.
+
+---
+
 ## `verificar.mjs`
 
 ```bash

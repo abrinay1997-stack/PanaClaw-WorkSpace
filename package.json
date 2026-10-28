@@ -12,6 +12,7 @@
     "test": "npm --prefix cotizador run test",
     "tipos": "tsc --noEmit -p tsconfig.worker.json && npm --prefix cotizador run tipos",
     "verificar": "node herramientas/verificar.mjs",
+    "candidatos": "node herramientas/validar-candidatos.mjs",
     "desplegar": "npm run build && wrangler deploy",
     "migrar": "wrangler d1 migrations apply panaclaw-propuestas --remote",
     "migrar:local": "wrangler d1 migrations apply panaclaw-propuestas --local"

@@ -124,6 +124,28 @@ vive meses.
 
 ---
 
+### Candidatos de blog a partir de Search Console
+
+> «Tengo el CSV de Search Console, dame candidatos de blog», «qué deberíamos
+> escribir el próximo mes según lo que la gente busca»
+
+**Lee:** [`skills/candidatos-blog-seo/SKILL.md`](../skills/candidatos-blog-seo/SKILL.md)
+— cruza las consultas reales con `adn/04-audiencia.md`, descarta lo que no
+encaje con ningún público, y valida cada candidato con
+`node herramientas/validar-candidatos.mjs` antes de entregarlo.
+
+**Pregunta antes:** dónde está el CSV exportado, y cuántos candidatos hacen
+falta (por defecto, entre 5 y 10).
+
+**Entrega:** una tabla de candidatos —título, categoría, keywords, público y
+la consulta real que lo justifica—, nunca el post completo. Escribirlo es
+trabajo de la skill de arriba, sobre el candidato que se elija.
+
+**La regla que no se negocia:** esta skill nunca hace `git push` ni toca
+`src/content/blog/`. Propone; publicar sigue siendo de una persona.
+
+---
+
 ### Video
 
 > «Un reel», «guion para un video», «prompt para Veo/Sora»

@@ -18,6 +18,7 @@ No son documentación de la marca: eso está en [`adn/`](../adn/) y
 | [`anuncio-pagado`](anuncio-pagado/SKILL.md) | «Anuncios para Meta», «copy para pauta» |
 | [`propuesta-comercial`](propuesta-comercial/SKILL.md) | «Arma una propuesta», «cotiza esto» |
 | [`blog-seo`](blog-seo/SKILL.md) | «Escribe un post del blog», «el próximo artículo para SEO» |
+| [`candidatos-blog-seo`](candidatos-blog-seo/SKILL.md) | «Tengo el CSV de Search Console, dame candidatos de blog» |
 
 Plantilla para crear una nueva: [`_plantilla/SKILL.md`](_plantilla/SKILL.md).
 
