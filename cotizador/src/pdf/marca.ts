@@ -84,11 +84,11 @@ export const TIPO = {
 export const HOJA = {
   ancho: 210,
   alto: 297,
-  margen: 15,
+  margen: 18,
   /** Alto de la banda negra de la primera página. */
   cabecera: 30,
   /** Alto reservado abajo para el pie. */
-  pie: 17,
+  pie: 18,
 } as const;
 
 export const ANCHO_UTIL = HOJA.ancho - HOJA.margen * 2;

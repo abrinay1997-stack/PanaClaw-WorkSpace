@@ -136,7 +136,7 @@ export function vineta(doc: jsPDF, x: number, y: number): void {
  * Lo que tiene que caber para que un rótulo de sección pueda empezar: él mismo
  * más unas dos líneas de lo que venga debajo.
  */
-const RESERVA_DE_SECCION = 26;
+const RESERVA_DE_SECCION = 22;
 
 export class Hoja {
   y: number;
@@ -185,19 +185,21 @@ export class Hoja {
    */
   rotulo(texto: string): void {
     this.espacio(RESERVA_DE_SECCION);
-    this.y = escribir(this.doc, texto.toUpperCase(), this.x, this.y + 3.6, {
-      tamano: 7.5,
-      color: COLOR.naranja,
+    this.y = escribir(this.doc, texto.toUpperCase(), this.x, this.y + 4.5, {
+      tamano: 8,
+      color: COLOR.negro,
       negrita: true,
-      entreLetras: 1.1,
+      entreLetras: 0.9,
     });
-    regla(this.doc, this.x, this.y - 1.5, this.ancho, COLOR.borde, 0.35);
-    this.avanzar(2.6);
+    // Filete fino en todo el ancho y, encima, el único acento de color.
+    regla(this.doc, this.x, this.y - 1.3, this.ancho, COLOR.borde, 0.3);
+    regla(this.doc, this.x, this.y - 1.3, 10, COLOR.naranja, 0.9);
+    this.avanzar(3.4);
   }
 
   /** Un párrafo de cuerpo, con salto de página si no cabe entero. */
   parrafo(texto: string, estilo: EstiloTexto = {}): void {
-    const completo = { tamano: 9, color: COLOR.tintaSuave, ancho: this.ancho, ...estilo };
+    const completo = { tamano: 9, color: COLOR.tintaSuave, ancho: this.ancho, interlineado: 1.45, ...estilo };
     this.espacio(altoDe(this.doc, texto, completo));
     this.y = escribir(this.doc, texto, this.x, this.y + 2.6, completo);
   }
@@ -205,9 +207,9 @@ export class Hoja {
   /** Una viñeta de la marca: punto naranja y texto al lado. */
   punto(texto: string): void {
     const ancho = this.ancho - 5;
-    const estilo: EstiloTexto = { tamano: 9, color: COLOR.tintaSuave, ancho };
+    const estilo: EstiloTexto = { tamano: 9, color: COLOR.tintaSuave, ancho, interlineado: 1.4 };
     this.espacio(altoDe(this.doc, texto, estilo) + 1.5);
-    this.y += 2.8;
+    this.y += 2.5;
     vineta(this.doc, this.x + 1.2, this.y - 1.1);
     this.y = escribir(this.doc, texto, this.x + 5, this.y, estilo);
   }

@@ -25,7 +25,7 @@ import {
 } from '../datos/textos';
 import { catalogo, ITBMS, itemDe } from '../dominio/catalogo';
 import { conImpuesto, esCero, formato, formatoExacto, formatoMensual, type Dinero } from '../dominio/dinero';
-import { fechaLarga, MONEDA_DECLARADA, sumarDias } from '../dominio/formato';
+import { fechaLarga, sumarDias } from '../dominio/formato';
 import {
   fronterasDe,
   importeDeLinea,
@@ -35,7 +35,7 @@ import {
   totalesDe,
 } from '../dominio/propuesta';
 import type { Propuesta } from '../dominio/tipos';
-import { altoDe, anchoDe, escribir, Hoja, panel, regla, relleno, tinta } from './documento';
+import { altoDe, anchoDe, escribir, Hoja, panel, regla, tinta } from './documento';
 import { anchoDeLogo, dibujarLogo } from './logo';
 import { ANCHO_UTIL, COLOR, FUENTE, HOJA, TIPO } from './marca';
 
@@ -71,98 +71,120 @@ export function generarPdf(propuesta: Propuesta): jsPDF {
 
 function cabecera(hoja: Hoja, propuesta: Propuesta): void {
   const { doc } = hoja;
-
-  // La banda va a sangre: el negro de la marca es fondo maestro, y dejarle
-  // márgenes blancos alrededor lo convertiría en una caja.
-  relleno(doc, COLOR.negro);
-  doc.rect(0, 0, HOJA.ancho, HOJA.cabecera, 'F');
-
-  const altoLogo = 9;
-  dibujarLogo(doc, HOJA.margen, 9.5, altoLogo, COLOR.naranja);
-
-  // PANACLAW en versalitas muy espaciadas seguido de un punto naranja, tal
-  // como lo declara `datos/marca.json` → `logo.wordmark`.
-  const x = HOJA.margen + anchoDeLogo(altoLogo) + 5;
-  escribir(doc, EMPRESA.nombre.toUpperCase(), x, 17, {
-    tamano: TIPO.wordmark,
-    color: COLOR.blancoCalido,
-    negrita: true,
-    entreLetras: 2.4,
-  });
-  const anchoWordmark = anchoDe(doc, EMPRESA.nombre.toUpperCase(), TIPO.wordmark, true) + 2.4 * EMPRESA.nombre.length;
-  escribir(doc, '.', x + anchoWordmark, 17, {
-    tamano: TIPO.wordmark,
-    color: COLOR.naranja,
-    negrita: true,
-  });
-
-  escribir(doc, EMPRESA.tagline, x, 22.5, { tamano: 8.5, color: COLOR.grisMarca });
-
-  // Número y fecha, a la derecha y en la misma banda: es lo primero que se
-  // busca al reabrir un documento archivado.
+  const izquierda = HOJA.margen;
   const derecha = HOJA.ancho - HOJA.margen;
-  escribir(doc, 'PROPUESTA', derecha, 12, {
-    tamano: 7,
-    color: COLOR.grisMarca,
+  const arriba = HOJA.margen;
+
+  // Papel blanco y el logo en su color: un documento que se imprime, se firma y
+  // se archiva no lleva una banda de tinta negra a sangre. La marca la sostienen
+  // el símbolo, el nombre y un único filete naranja.
+  const altoLogo = 11;
+  dibujarLogo(doc, izquierda, arriba, altoLogo, COLOR.naranja);
+
+  const x = izquierda + anchoDeLogo(altoLogo) + 4;
+  const nombre = EMPRESA.nombre.toUpperCase();
+  escribir(doc, nombre, x, arriba + 6.6, {
+    tamano: 15,
+    color: COLOR.negro,
+    negrita: true,
+    entreLetras: 2,
+  });
+  const anchoNombre = anchoDe(doc, nombre, 15, true) + 2 * nombre.length;
+  escribir(doc, '.', x + anchoNombre, arriba + 6.6, { tamano: 15, color: COLOR.naranja, negrita: true });
+  escribir(doc, EMPRESA.tagline, x, arriba + 11.4, { tamano: 8, color: COLOR.tintaSuave });
+
+  // El título del documento, a la derecha y sobrio: lo que es, no cómo suena.
+  escribir(doc, 'COTIZACIÓN', derecha, arriba + 6.2, {
+    tamano: 20,
+    color: COLOR.negro,
     negrita: true,
     alineacion: 'right',
-    entreLetras: 1,
   });
-  escribir(doc, propuesta.numero || 'Sin emitir', derecha, 18, {
-    tamano: 12,
-    color: COLOR.blancoCalido,
-    negrita: true,
-    alineacion: 'right',
-  });
-  escribir(doc, fechaLarga(propuesta.fecha), derecha, 22.5, {
-    tamano: 8.5,
-    color: COLOR.grisMarca,
+  escribir(doc, propuesta.numero || 'Sin emitir', derecha, arriba + 12, {
+    tamano: 10,
+    color: COLOR.tintaSuave,
     alineacion: 'right',
   });
 
-  hoja.y = HOJA.cabecera + 7;
+  // Un filete grueso y corto en naranja sobre el filete fino de todo el ancho.
+  const yFilete = arriba + 17;
+  regla(doc, izquierda, yFilete, ANCHO_UTIL, COLOR.borde, 0.3);
+  regla(doc, izquierda, yFilete, 22, COLOR.naranja, 0.9);
+
+  // Las tres fechas y el asesor en una franja: lo primero que se busca al
+  // reabrir un documento archivado.
+  const columnas = [
+    { rotulo: 'Fecha de emisión', valor: fechaLarga(propuesta.fecha) },
+    { rotulo: 'Válida hasta', valor: fechaLarga(sumarDias(propuesta.fecha, propuesta.condiciones.validezDias)) },
+    { rotulo: 'Moneda', valor: `Dólares (${catalogo.moneda})` },
+  ];
+  const anchoColumna = ANCHO_UTIL / columnas.length;
+  columnas.forEach((columna, i) => {
+    const xc = izquierda + anchoColumna * i;
+    escribir(doc, columna.rotulo.toUpperCase(), xc, yFilete + 6, {
+      tamano: 6.5,
+      color: COLOR.tintaTenue,
+      negrita: true,
+      entreLetras: 0.7,
+    });
+    escribir(doc, columna.valor, xc, yFilete + 11, {
+      tamano: 9,
+      color: COLOR.negro,
+      negrita: true,
+      ancho: anchoColumna - 4,
+    });
+  });
+  regla(doc, izquierda, yFilete + 14, ANCHO_UTIL, COLOR.borde, 0.3);
+
+  hoja.y = yFilete + 14;
 }
 
 /* ------------------------------------------------------------------ *
- * A quién va
+ * Las dos partes
  * ------------------------------------------------------------------ */
 
 function panelCliente(hoja: Hoja, propuesta: Propuesta): void {
   const { doc } = hoja;
   const { cliente } = propuesta;
   const documento = cliente.documento?.trim();
-  const alto = documento ? 22 : 18;
+  const mitad = hoja.ancho / 2;
+  const arriba = hoja.y + 6.5;
 
-  panel(doc, { x: hoja.x, y: hoja.y, ancho: hoja.ancho, alto }, { fondo: COLOR.papelTenue });
-
-  const columnas = [
-    { rotulo: 'Para', valor: cliente.negocio || '—', detalle: documento ? `RUC / Cédula ${documento}` : '' },
-    { rotulo: 'Contacto', valor: [cliente.contacto, cliente.whatsapp].filter(Boolean).join(' · ') || '—' },
-    { rotulo: 'Ciudad', valor: cliente.ciudad || EMPRESA.mercado },
-    { rotulo: 'Válida hasta', valor: fechaLarga(sumarDias(propuesta.fecha, propuesta.condiciones.validezDias)) },
-  ];
-
-  const anchoColumna = (hoja.ancho - 12) / columnas.length;
-  columnas.forEach((columna, i) => {
-    const x = hoja.x + 6 + anchoColumna * i;
-    escribir(doc, columna.rotulo.toUpperCase(), x, hoja.y + 7, {
+  const bloque = (x: number, rotulo: string, titulo: string, lineas: string[]): number => {
+    escribir(doc, rotulo, x, arriba, {
       tamano: 6.5,
       color: COLOR.tintaTenue,
       negrita: true,
       entreLetras: 0.7,
     });
-    escribir(doc, columna.valor, x, hoja.y + 11.8, {
-      tamano: 9,
+    let y = escribir(doc, titulo, x, arriba + 6, {
+      tamano: 11,
       color: COLOR.negro,
       negrita: true,
-      ancho: anchoColumna - 4,
+      ancho: mitad - 8,
     });
-    if (columna.detalle) {
-      escribir(doc, columna.detalle, x, hoja.y + 17, { tamano: 7.5, color: COLOR.tintaSuave, ancho: anchoColumna - 4 });
+    for (const linea of lineas.filter(Boolean)) {
+      y = escribir(doc, linea, x, y + 0.6, { tamano: 8.5, color: COLOR.tintaSuave, ancho: mitad - 8 });
     }
-  });
+    return y;
+  };
 
-  hoja.avanzar(alto + 3);
+  const yCliente = bloque(hoja.x, 'PREPARADA PARA', cliente.negocio || '—', [
+    cliente.contacto,
+    documento ? `RUC / Cédula ${documento}` : '',
+    [cliente.whatsapp, cliente.correo].filter(Boolean).join(' · '),
+    cliente.ciudad || EMPRESA.mercado,
+  ]);
+  const yEmisor = bloque(hoja.x + mitad, 'PREPARADA POR', EMPRESA.nombre, [
+    propuesta.asesor,
+    `WhatsApp ${EMPRESA.whatsapp}`,
+    EMPRESA.sitio.replace('https://', ''),
+    EMPRESA.horario,
+  ]);
+
+  hoja.y = Math.max(yCliente, yEmisor) + 3;
+  regla(doc, hoja.x, hoja.y, hoja.ancho, COLOR.borde, 0.3);
+  hoja.avanzar(3);
 }
 
 /* ------------------------------------------------------------------ *
@@ -184,57 +206,50 @@ function queIncluye(hoja: Hoja, propuesta: Propuesta): void {
   // La cabecera oscura es lo que convierte la lista en un documento que se
   // puede revisar renglón por renglón antes de firmar.
   const derecha = hoja.x + hoja.ancho;
-  const xImporte = derecha - 3;
-  const xPrecio = derecha - 38;
-  const xCantidad = derecha - 66;
+  const xImporte = derecha;
+  const xPrecio = derecha - 36;
+  const xCantidad = derecha - 64;
   const anchoTexto = xCantidad - hoja.x - 14;
 
   const cabeceraTabla = (): void => {
     hoja.espacio(14);
-    hoja.y += 1.5;
-    panel(doc, { x: hoja.x, y: hoja.y, ancho: hoja.ancho, alto: 7 }, { fondo: COLOR.negro, radio: 1.2 });
-    const base = hoja.y + 4.7;
+    hoja.y += 1;
+    const base = hoja.y + 5;
     // Sin espaciado entre letras en las columnas de la derecha: jsPDF cuenta el
     // espacio también tras la última letra y el texto se corre contra el borde.
-    const estilo = { tamano: 6.5, color: COLOR.blancoCalido, negrita: true } as const;
-    escribir(doc, 'DESCRIPCIÓN', hoja.x + 3, base, { ...estilo, entreLetras: 0.8 });
+    const estilo = { tamano: 6.5, color: COLOR.tintaSuave, negrita: true } as const;
+    escribir(doc, 'DESCRIPCIÓN', hoja.x, base, { ...estilo, entreLetras: 0.8 });
     escribir(doc, 'CANT.', xCantidad, base, { ...estilo, alineacion: 'right' });
     escribir(doc, 'PRECIO', xPrecio, base, { ...estilo, alineacion: 'right' });
     escribir(doc, 'IMPORTE', xImporte, base, { ...estilo, alineacion: 'right' });
-    hoja.y += 7;
+    hoja.y += 7.5;
+    regla(doc, hoja.x, hoja.y - 1, hoja.ancho, COLOR.negro, 0.4);
   };
   cabeceraTabla();
 
-  propuesta.lineas.forEach((linea, i) => {
+  propuesta.lineas.forEach((linea) => {
     const item = itemDe(linea.itemId);
     const nota = [linea.nota.trim(), item?.queConsigue].find(Boolean) ?? '';
     const titulo = linea.descripcion;
 
     const altoTitulo = altoDe(doc, titulo, { tamano: TIPO.tabla, negrita: true, ancho: anchoTexto });
     const altoNota = nota ? altoDe(doc, nota, { tamano: 8, ancho: anchoTexto }) : 0;
-    const alto = Math.max(altoTitulo + altoNota + 5.5, 11);
+    const alto = Math.max(altoTitulo + altoNota + 6.5, 11.5);
 
     if (hoja.y + alto > hoja.fondo) {
       hoja.nuevaPagina();
       cabeceraTabla();
     }
 
-    // Renglones alternos: en una tabla de doce filas, lo único que impide
-    // saltar de línea al leer un importe es un fondo que cambie.
-    if (i % 2 === 1) {
-      relleno(doc, COLOR.papelTenue);
-      doc.rect(hoja.x, hoja.y, hoja.ancho, alto, 'F');
-    }
-
-    const yFila = hoja.y + 5;
-    const y = escribir(doc, titulo, hoja.x + 3, yFila, {
+    const yFila = hoja.y + 5.5;
+    const y = escribir(doc, titulo, hoja.x, yFila, {
       tamano: TIPO.tabla,
       color: COLOR.negro,
       negrita: true,
       ancho: anchoTexto,
     });
     if (nota) {
-      escribir(doc, nota, hoja.x + 3, y + 0.2, { tamano: 8, color: COLOR.tintaSuave, ancho: anchoTexto });
+      escribir(doc, nota, hoja.x, y + 0.4, { tamano: 8, color: COLOR.tintaSuave, ancho: anchoTexto });
     }
 
     const mensual = item?.recurrencia === 'mensual' && !linea.incluida;
@@ -287,7 +302,7 @@ function queNoIncluye(hoja: Hoja, propuesta: Propuesta): void {
     { tamano: 8.5, color: COLOR.tintaTenue },
   );
   for (const punto of lista) hoja.punto(punto);
-  hoja.avanzar(4);
+  hoja.avanzar(2);
 }
 
 /* ------------------------------------------------------------------ *
@@ -330,8 +345,8 @@ function lasCifras(hoja: Hoja, propuesta: Propuesta, totales: ReturnType<typeof 
   const bloques = hayMensual ? [unico, mensual] : [unico];
   const alto = Math.max(...bloques.map((b) => altoDeBloque(doc, b)));
 
-  hoja.espacio(alto + 16);
-  hoja.avanzar(4);
+  hoja.espacio(alto + 3);
+  hoja.avanzar(2);
   for (const bloque of bloques) bloqueCifra(hoja, { ...bloque, alto });
   hoja.avanzar(alto + 6);
 
@@ -346,12 +361,6 @@ function lasCifras(hoja: Hoja, propuesta: Propuesta, totales: ReturnType<typeof 
     }
     hoja.avanzar(3);
   }
-
-  escribir(doc, `${MONEDA_DECLARADA} Los precios no incluyen ${ITBMS.texto}, que se suma aparte.`, hoja.x, hoja.y + 3, {
-    tamano: 7.5,
-    color: COLOR.tintaTenue,
-  });
-  hoja.avanzar(6);
 }
 
 interface BloqueCifra {
@@ -363,62 +372,66 @@ interface BloqueCifra {
   pie: string;
 }
 
-const ALTO_CIFRA = 28;
-const ALTO_DESGLOSE = 15;
+/** Lo que ocupa todo lo que va encima del pie: rótulo, dos renglones y el total. */
+const ALTO_CUERPO = 38;
 
-/** Lo que mide un panel: la cifra, el desglose del impuesto y el pie, completo. */
+/** Lo que mide una tarjeta: el cuerpo y el pie, completo. */
 function altoDeBloque(doc: jsPDF, bloque: BloqueCifra): number {
-  const alto = altoDe(doc, bloque.pie, { tamano: 7.5, ancho: bloque.ancho - 12 });
-  return ALTO_CIFRA + ALTO_DESGLOSE + alto + 4;
+  const alto = altoDe(doc, bloque.pie, { tamano: 7.5, ancho: bloque.ancho - 14 });
+  return ALTO_CUERPO + alto + 4;
 }
 
+/**
+ * Una tarjeta clara con tres renglones: lo publicado, el impuesto y lo que de
+ * verdad se paga. Cada total lleva el mismo sufijo que su cifra, para que el
+ * mensual no se lea como un pago único.
+ */
 function bloqueCifra(hoja: Hoja, bloque: BloqueCifra & { alto: number }): void {
   const { doc } = hoja;
   const { impuesto, total } = conImpuesto(bloque.base, ITBMS.tasa);
-  panel(doc, { x: bloque.x, y: hoja.y, ancho: bloque.ancho, alto: bloque.alto }, { fondo: COLOR.negro });
-
-  escribir(doc, bloque.rotulo.toUpperCase(), bloque.x + 6, hoja.y + 8, {
-    tamano: 7,
-    color: COLOR.grisMarca,
-    negrita: true,
-    entreLetras: 1.1,
-  });
-
-  // La cifra se encoge sola si el rango es largo: '$1,455–$1,530/mes' no cabe
-  // al mismo cuerpo que '$295', y dejarlo desbordar rompería el panel.
-  let tamano = 21;
-  while (anchoDe(doc, bloque.cifra, tamano, true) > bloque.ancho - 12 && tamano > 11) tamano -= 1;
-  escribir(doc, bloque.cifra, bloque.x + 6, hoja.y + 19.5, {
-    tamano,
-    color: COLOR.naranja,
-    negrita: true,
-  });
-
-  // Desglose: lo publicado, lo que se suma aparte y lo que de verdad se paga.
-  // Cada total lleva el mismo sufijo que su cifra, para que el mensual no se
-  // lea como un pago único.
   const sufijo = bloque.rotulo === 'Cada mes' ? '/mes' : '';
-  const derecha = bloque.x + bloque.ancho - 6;
-  const yDesglose = hoja.y + ALTO_CIFRA - 3;
-  regla(doc, bloque.x + 6, yDesglose - 3.2, bloque.ancho - 12, [70, 62, 62], 0.2);
-  escribir(doc, ITBMS.texto, bloque.x + 6, yDesglose + 1.2, { tamano: 8, color: COLOR.grisMarca });
-  escribir(doc, `+ ${formatoExacto(impuesto)}${sufijo}`, derecha, yDesglose + 1.2, {
-    tamano: 8,
-    color: COLOR.blancoCalido,
-    alineacion: 'right',
+  const izquierda = bloque.x + 7;
+  const derecha = bloque.x + bloque.ancho - 7;
+  const y = hoja.y;
+
+  panel(doc, { x: bloque.x, y, ancho: bloque.ancho, alto: bloque.alto }, { fondo: COLOR.papelTenue, borde: COLOR.borde, radio: 1.5 });
+  // El único toque de color: un filete corto en lo alto de la tarjeta.
+  regla(doc, izquierda, y, 12, COLOR.naranja, 1);
+
+  escribir(doc, bloque.rotulo.toUpperCase(), izquierda, y + 8, {
+    tamano: 7,
+    color: COLOR.tintaSuave,
+    negrita: true,
+    entreLetras: 0.8,
   });
-  escribir(doc, 'Total con ITBMS', bloque.x + 6, yDesglose + 7, { tamano: 8.5, color: COLOR.blancoCalido, negrita: true });
-  escribir(doc, `${formatoExacto(total)}${sufijo}`, derecha, yDesglose + 7, {
-    tamano: 8.5,
-    color: COLOR.blancoCalido,
+
+  const renglon = (rotulo: string, valor: string, yy: number): void => {
+    escribir(doc, rotulo, izquierda, yy, { tamano: 9, color: COLOR.tintaSuave });
+    escribir(doc, valor, derecha, yy, { tamano: 9, color: COLOR.negro, alineacion: 'right' });
+  };
+  renglon('Subtotal', bloque.cifra, y + 16);
+  renglon(ITBMS.texto, `+ ${formatoExacto(impuesto)}${sufijo}`, y + 22);
+
+  regla(doc, izquierda, y + 25, bloque.ancho - 14, COLOR.negro, 0.35);
+  escribir(doc, 'Total con ITBMS', izquierda, y + 32, { tamano: 9.5, color: COLOR.negro, negrita: true });
+
+  // La cifra se encoge sola si el rango es largo: '$235.40–$395.90/mes' no cabe
+  // al mismo cuerpo que '$909.50', y dejarlo desbordar rompería la tarjeta.
+  const cifraTotal = `${formatoExacto(total)}${sufijo}`;
+  const reservado = anchoDe(doc, 'Total con ITBMS', 9.5, true) + 6;
+  let tamano = 15;
+  while (anchoDe(doc, cifraTotal, tamano, true) > bloque.ancho - 14 - reservado && tamano > 8) tamano -= 1;
+  escribir(doc, cifraTotal, derecha, y + 32.5, {
+    tamano,
+    color: COLOR.negro,
     negrita: true,
     alineacion: 'right',
   });
 
-  escribir(doc, bloque.pie, bloque.x + 6, hoja.y + ALTO_CIFRA + ALTO_DESGLOSE - 1.5, {
+  escribir(doc, bloque.pie, izquierda, y + ALTO_CUERPO - 1, {
     tamano: 7.5,
-    color: COLOR.grisMarca,
-    ancho: bloque.ancho - 12,
+    color: COLOR.tintaSuave,
+    ancho: bloque.ancho - 14,
   });
 }
 
@@ -482,7 +495,7 @@ function condiciones(hoja: Hoja, propuesta: Propuesta): void {
     hoja.punto(CANCELACION_MENSUAL);
   }
   hoja.punto(TRABAJO_REMOTO);
-  hoja.punto(`Ningún precio de esta propuesta incluye el ${ITBMS.texto}: se suma aparte, sobre el pago único y sobre lo mensual por separado.`);
+  hoja.punto(`Los precios de esta cotización no incluyen ${ITBMS.texto}: se suma aparte, sobre el pago único y sobre lo mensual por separado.`);
 
   if (propuesta.condiciones.observaciones.trim()) {
     hoja.avanzar(2);
@@ -540,7 +553,7 @@ function pies(doc: jsPDF, propuesta: Propuesta): void {
     doc.setPage(pagina);
     const y = HOJA.alto - 12;
 
-    regla(doc, HOJA.margen, y - 5, ANCHO_UTIL, COLOR.borde, 0.25);
+    regla(doc, HOJA.margen, y - 5, ANCHO_UTIL, COLOR.borde, 0.3);
 
     doc.setFont(FUENTE, 'normal');
     doc.setFontSize(TIPO.pie);
@@ -551,7 +564,7 @@ function pies(doc: jsPDF, propuesta: Propuesta): void {
       y,
     );
     doc.text(
-      `${propuesta.numero || 'Sin emitir'} · ${pagina}/${paginas}`,
+      `${propuesta.numero || 'Sin emitir'} · Página ${pagina}/${paginas}`,
       HOJA.ancho - HOJA.margen,
       y,
       { align: 'right' },

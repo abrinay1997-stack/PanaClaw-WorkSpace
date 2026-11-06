@@ -119,6 +119,13 @@ mezcle los dos, con impuesto ni sin él. En un rango se calcula en los dos
 extremos. El PDF, la pantalla y el mensaje de WhatsApp enseñan lo publicado, el
 impuesto y el total con impuesto, y declaran que los precios no lo incluyen.
 
+El PDF es un documento de oficina, no una pieza de campaña: papel blanco, el
+logo en su color, una franja con fecha, vigencia y moneda, «preparada para» y
+«preparada por» a dos columnas, una tabla ligera, y los totales en dos tarjetas
+claras separadas. El naranja queda para el símbolo y un filete corto sobre cada
+sección; el resto es tinta y gris. Pensado para que lo firme un despacho de
+abogados, un arquitecto o un consultorio sin que parezca publicidad.
+
 El PDF también lleva el RUC o la cédula del cliente cuando se escribe, el detalle
 con cantidad, precio e importe por renglón, y un espacio para firmar y fechar.
 
