@@ -124,6 +124,31 @@ con cantidad, precio e importe por renglón, y un espacio para firmar y fechar.
 
 ---
 
+## Los cobros
+
+Una propuesta **aceptada** tiene su libro de cobros (botón «Cobros» en el
+historial). Es el mismo criterio del libro de D'Casa:
+
+- **El saldo es la suma del libro**, no una columna. Lo debido sale del documento
+  guardado con la misma cuenta del PDF (`debidoCentavos`: el pago único más su
+  ITBMS); lo cobrado, de sumar los asientos.
+- **Lo escrito no se edita ni se elimina.** Dos disparadores de la base
+  (`migraciones/0003_cobros.sql`) lo impiden. Un cobro mal puesto se corrige con
+  un asiento contrario con motivo; los dos quedan a la vista y cada cobro se
+  corrige una sola vez.
+- **Solo el pago único.** Lo mensual no pasa por el libro, y no existe un total
+  que lo mezcle (regla 2).
+- **Con un rango sin cerrar no hay cifra que cobrar**, y el libro no deja
+  registrar nada hasta emitir la versión definitiva.
+- No se cobra de más (un saldo a favor es una decisión que este libro todavía no
+  lleva), ni una propuesta que no esté aceptada, ni una que esté en la papelera.
+- Una propuesta con cobros no se puede purgar de la papelera.
+- Quién registró cada asiento sale del token de Access, nunca del cuerpo.
+
+Para activarlo en producción hay que aplicar la migración: `npm run migrar`.
+
+---
+
 ## El historial es del equipo, y el número lo da el servidor
 
 `PROP-2026-0001` lo llevaba el navegador de cada quien. Con una persona
@@ -314,7 +339,7 @@ implementación y el resto de la aplicación no se entera.
 ## Lo que NO hace
 
 - **No factura.** Saca una propuesta, no un documento fiscal.
-- **No cobra.** No hay pasarela de pago ni enlace de cobro.
+- **No cobra.** No hay pasarela de pago ni enlace de cobro. Sí **registra** lo que el cliente ya pagó (ver «Los cobros»).
 - **No manda correos.** Sale por WhatsApp o como archivo, y lo manda una persona.
 - **No inventa un plan.** Si el caso no encaja en ninguno, eso lo decide quien
   vende, y la respuesta oficial de la marca es decirlo.

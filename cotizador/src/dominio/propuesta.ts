@@ -10,8 +10,8 @@
  * paso al que corresponde.
  */
 
-import { CERO, multiplicar, sumar, type Dinero } from './dinero';
-import { itemDe } from './catalogo';
+import { CERO, conImpuesto, multiplicar, sumar, type Dinero } from './dinero';
+import { ITBMS, itemDe } from './catalogo';
 import { PLANES, type Familia, type Item, type Linea, type PlanSlug, type Totales } from './tipos';
 import {
   FRONTERAS,
@@ -40,6 +40,20 @@ export function importeDeLinea(linea: Linea): Dinero {
  * Los costos de terceros de eBot van en su tercer bloque por la misma razón
  * invertida: son dinero que el cliente paga, pero no a PanaClaw.
  */
+/**
+ * Lo que el cliente debe por el pago único, con ITBMS, en centavos.
+ *
+ * `null` cuando el pago único es un rango sin cerrar: no hay una cifra que
+ * cobrar, y elegir un extremo sería inventarla. Es la misma cuenta que enseña el
+ * PDF (`conImpuesto` sobre `totalesDe`), para que el saldo no pueda discrepar del
+ * documento que el cliente tiene en la mano. Lo mensual no entra.
+ */
+export function debidoCentavos(lineas: readonly Linea[]): number | null {
+  const { unico } = totalesDe(lineas, []);
+  if (unico.min !== unico.max) return null;
+  return Math.round(conImpuesto(unico, ITBMS.tasa).total.min * 100);
+}
+
 export function totalesDe(lineas: readonly Linea[], terceros: Totales['terceros']): Totales {
   let unico = CERO;
   let mensual = CERO;

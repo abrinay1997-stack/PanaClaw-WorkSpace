@@ -11,6 +11,7 @@
  */
 
 import * as clientes from './clientes';
+import * as cobrosDe from './cobros';
 import * as propuestas from './propuestas';
 import { ErrorPeticion, cuerpoJson, fallo, json } from './http';
 import type { Env } from './entorno';
@@ -185,6 +186,20 @@ async function enrutarPropuestas(
   }
   if (metodo === 'POST' && ruta === 'propuestas/purgar') {
     return json(await propuestas.purgar(base, await propuestas.leerSeleccion(peticion)));
+  }
+
+  // Los cobros de una propuesta: el libro, el cobro nuevo y la corrección.
+  const cobros = /^propuestas\/([^/]+)\/cobros$/.exec(ruta);
+  if (cobros) {
+    const numero = decodeURIComponent(cobros[1]!);
+    if (metodo === 'GET') return json(await cobrosDe.listar(base, numero));
+    if (metodo === 'POST') return json(await cobrosDe.registrar(base, numero, peticion, correo), 201);
+  }
+  const correccion = /^propuestas\/([^/]+)\/cobros\/(\d+)\/corregir$/.exec(ruta);
+  if (correccion && metodo === 'POST') {
+    return json(
+      await cobrosDe.corregir(base, decodeURIComponent(correccion[1]!), Number(correccion[2]), peticion, correo),
+    );
   }
 
   const estado = /^propuestas\/([^/]+)\/estado$/.exec(ruta);

@@ -522,7 +522,7 @@ export async function restaurar(base: D1Database, seleccion: Seleccion): Promise
 export async function purgar(base: D1Database, seleccion: Seleccion): Promise<Cuantas> {
   const { donde, valores } = alcanceDe(seleccion, true);
 
-  const resultado = await base.prepare(`DELETE FROM propuestas ${donde}`).bind(...valores).run();
+  const resultado = await base.prepare(`DELETE FROM propuestas ${donde} AND numero NOT IN (SELECT propuesta FROM cobros)`).bind(...valores).run();
 
   return { cuantas: resultado.meta.changes ?? 0 };
 }
