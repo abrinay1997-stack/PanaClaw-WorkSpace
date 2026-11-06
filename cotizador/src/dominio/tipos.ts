@@ -96,6 +96,8 @@ export interface Cliente {
   whatsapp: string;
   correo: string;
   ciudad: string;
+  /** RUC o cédula, como lo escribió quien cotiza. Opcional: sale en el PDF si existe. */
+  documento?: string;
 }
 
 /** Una línea de la propuesta en construcción. */

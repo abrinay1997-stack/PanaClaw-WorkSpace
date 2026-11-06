@@ -23,8 +23,8 @@ import {
   QUE_NECESITAS_PARA_ARRANCAR,
   TRABAJO_REMOTO,
 } from '../datos/textos';
-import { catalogo, itemDe } from '../dominio/catalogo';
-import { esCero, formato, formatoMensual } from '../dominio/dinero';
+import { catalogo, ITBMS, itemDe } from '../dominio/catalogo';
+import { conImpuesto, esCero, formato, formatoExacto, formatoMensual, type Dinero } from '../dominio/dinero';
 import { fechaLarga, MONEDA_DECLARADA, sumarDias } from '../dominio/formato';
 import {
   fronterasDe,
@@ -59,6 +59,7 @@ export function generarPdf(propuesta: Propuesta): jsPDF {
   plazoYCambios(hoja, propuesta);
   lasFronteras(hoja, propuesta);
   condiciones(hoja, propuesta);
+  aceptacion(hoja);
   pies(doc, propuesta);
 
   return doc;
@@ -129,12 +130,13 @@ function cabecera(hoja: Hoja, propuesta: Propuesta): void {
 function panelCliente(hoja: Hoja, propuesta: Propuesta): void {
   const { doc } = hoja;
   const { cliente } = propuesta;
-  const alto = 18;
+  const documento = cliente.documento?.trim();
+  const alto = documento ? 22 : 18;
 
   panel(doc, { x: hoja.x, y: hoja.y, ancho: hoja.ancho, alto }, { fondo: COLOR.papelTenue });
 
   const columnas = [
-    { rotulo: 'Para', valor: cliente.negocio || '—' },
+    { rotulo: 'Para', valor: cliente.negocio || '—', detalle: documento ? `RUC / Cédula ${documento}` : '' },
     { rotulo: 'Contacto', valor: [cliente.contacto, cliente.whatsapp].filter(Boolean).join(' · ') || '—' },
     { rotulo: 'Ciudad', valor: cliente.ciudad || EMPRESA.mercado },
     { rotulo: 'Válida hasta', valor: fechaLarga(sumarDias(propuesta.fecha, propuesta.condiciones.validezDias)) },
@@ -155,6 +157,9 @@ function panelCliente(hoja: Hoja, propuesta: Propuesta): void {
       negrita: true,
       ancho: anchoColumna - 4,
     });
+    if (columna.detalle) {
+      escribir(doc, columna.detalle, x, hoja.y + 17, { tamano: 7.5, color: COLOR.tintaSuave, ancho: anchoColumna - 4 });
+    }
   });
 
   hoja.avanzar(alto + 3);
@@ -175,36 +180,79 @@ function queIncluye(hoja: Hoja, propuesta: Propuesta): void {
   const { doc } = hoja;
   hoja.rotulo('Qué incluye');
 
-  const anchoImporte = 34;
-  const anchoTexto = hoja.ancho - anchoImporte - 6;
+  // Cuatro columnas: lo que se compra, cuántas, a cuánto cada una y el importe.
+  // La cabecera oscura es lo que convierte la lista en un documento que se
+  // puede revisar renglón por renglón antes de firmar.
+  const derecha = hoja.x + hoja.ancho;
+  const xImporte = derecha - 3;
+  const xPrecio = derecha - 38;
+  const xCantidad = derecha - 66;
+  const anchoTexto = xCantidad - hoja.x - 14;
 
-  for (const linea of propuesta.lineas) {
+  const cabeceraTabla = (): void => {
+    hoja.espacio(14);
+    hoja.y += 1.5;
+    panel(doc, { x: hoja.x, y: hoja.y, ancho: hoja.ancho, alto: 7 }, { fondo: COLOR.negro, radio: 1.2 });
+    const base = hoja.y + 4.7;
+    // Sin espaciado entre letras en las columnas de la derecha: jsPDF cuenta el
+    // espacio también tras la última letra y el texto se corre contra el borde.
+    const estilo = { tamano: 6.5, color: COLOR.blancoCalido, negrita: true } as const;
+    escribir(doc, 'DESCRIPCIÓN', hoja.x + 3, base, { ...estilo, entreLetras: 0.8 });
+    escribir(doc, 'CANT.', xCantidad, base, { ...estilo, alineacion: 'right' });
+    escribir(doc, 'PRECIO', xPrecio, base, { ...estilo, alineacion: 'right' });
+    escribir(doc, 'IMPORTE', xImporte, base, { ...estilo, alineacion: 'right' });
+    hoja.y += 7;
+  };
+  cabeceraTabla();
+
+  propuesta.lineas.forEach((linea, i) => {
     const item = itemDe(linea.itemId);
     const nota = [linea.nota.trim(), item?.queConsigue].find(Boolean) ?? '';
-    const titulo = linea.cantidad > 1 ? `${linea.descripcion} × ${linea.cantidad}` : linea.descripcion;
+    const titulo = linea.descripcion;
 
     const altoTitulo = altoDe(doc, titulo, { tamano: TIPO.tabla, negrita: true, ancho: anchoTexto });
     const altoNota = nota ? altoDe(doc, nota, { tamano: 8, ancho: anchoTexto }) : 0;
-    hoja.espacio(altoTitulo + altoNota + 6);
+    const alto = Math.max(altoTitulo + altoNota + 5.5, 11);
 
-    hoja.y += 4.5;
-    const yFila = hoja.y;
+    if (hoja.y + alto > hoja.fondo) {
+      hoja.nuevaPagina();
+      cabeceraTabla();
+    }
 
-    let y = escribir(doc, titulo, hoja.x, yFila, {
+    // Renglones alternos: en una tabla de doce filas, lo único que impide
+    // saltar de línea al leer un importe es un fondo que cambie.
+    if (i % 2 === 1) {
+      relleno(doc, COLOR.papelTenue);
+      doc.rect(hoja.x, hoja.y, hoja.ancho, alto, 'F');
+    }
+
+    const yFila = hoja.y + 5;
+    const y = escribir(doc, titulo, hoja.x + 3, yFila, {
       tamano: TIPO.tabla,
       color: COLOR.negro,
       negrita: true,
       ancho: anchoTexto,
     });
     if (nota) {
-      y = escribir(doc, nota, hoja.x, y + 0.4, { tamano: 8, color: COLOR.tintaSuave, ancho: anchoTexto });
+      escribir(doc, nota, hoja.x + 3, y + 0.2, { tamano: 8, color: COLOR.tintaSuave, ancho: anchoTexto });
     }
 
-    // El importe, alineado a la derecha y a la altura del título. Una línea
-    // incluida enseña «Incluido» en vez de $0: un cero se lee como un error de
-    // cálculo, «Incluido» se lee como lo que es.
-    const importe = linea.incluida ? 'Incluido' : formato(importeDeLinea(linea));
-    escribir(doc, importe, hoja.x + hoja.ancho, yFila, {
+    const mensual = item?.recurrencia === 'mensual' && !linea.incluida;
+    // Un precio por unidad solo dice algo cuando hay más de una unidad.
+    escribir(doc, String(linea.cantidad), xCantidad, yFila, {
+      tamano: TIPO.tabla,
+      color: COLOR.tintaSuave,
+      alineacion: 'right',
+    });
+    escribir(doc, linea.incluida ? '—' : formato(linea.precio), xPrecio, yFila, {
+      tamano: TIPO.tabla,
+      color: COLOR.tintaSuave,
+      alineacion: 'right',
+    });
+
+    // Una línea incluida enseña «Incluido» en vez de $0: un cero se lee como un
+    // error de cálculo, «Incluido» se lee como lo que es.
+    escribir(doc, linea.incluida ? 'Incluido' : formato(importeDeLinea(linea)), xImporte, yFila, {
       tamano: TIPO.tabla,
       color: linea.incluida ? COLOR.tintaTenue : COLOR.negro,
       negrita: !linea.incluida,
@@ -213,8 +261,8 @@ function queIncluye(hoja: Hoja, propuesta: Propuesta): void {
 
     // El sufijo mensual va debajo del importe, no pegado a él: es lo que
     // distingue esta línea de las que se pagan una sola vez.
-    if (item?.recurrencia === 'mensual' && !linea.incluida) {
-      escribir(doc, 'cada mes', hoja.x + hoja.ancho, yFila + 4, {
+    if (mensual) {
+      escribir(doc, 'cada mes', xImporte, yFila + 4, {
         tamano: 7,
         color: COLOR.naranja,
         alineacion: 'right',
@@ -222,9 +270,9 @@ function queIncluye(hoja: Hoja, propuesta: Propuesta): void {
       });
     }
 
-    hoja.y = Math.max(y, yFila + 6);
-    regla(doc, hoja.x, hoja.y + 1, hoja.ancho, COLOR.borde, 0.15);
-  }
+    hoja.y += alto;
+    regla(doc, hoja.x, hoja.y, hoja.ancho, COLOR.borde, 0.15);
+  });
 
   hoja.avanzar(3);
 }
@@ -249,42 +297,43 @@ function queNoIncluye(hoja: Hoja, propuesta: Propuesta): void {
 function lasCifras(hoja: Hoja, propuesta: Propuesta, totales: ReturnType<typeof totalesDe>): void {
   const { doc } = hoja;
   const hayMensual = !esCero(totales.mensual);
-  const alto = 28;
-
-  hoja.espacio(alto + 16);
-  hoja.avanzar(4);
 
   /**
    * Dos paneles separados por un hueco, y nunca uno con dos cifras dentro.
    *
    * La separación física ES el mensaje: son dos compromisos con dos
    * duraciones. Un solo panel con las dos cifras invita a leerlas como partes
-   * de un mismo número, y ese número no existe.
+   * de un mismo número, y ese número no existe. El ITBMS se calcula dentro de
+   * cada panel, sobre su propio bloque, por la misma razón.
    */
   const hueco = 6;
   const ancho = hayMensual ? (hoja.ancho - hueco) / 2 : hoja.ancho;
 
-  bloqueCifra(hoja, {
+  const unico = {
     x: hoja.x,
     ancho,
-    alto,
     rotulo: 'Pago único',
+    base: totales.unico,
     cifra: formato(totales.unico),
     pie: cobroDe(propuesta),
-  });
+  };
+  const mensual = {
+    x: hoja.x + ancho + hueco,
+    ancho,
+    rotulo: 'Cada mes',
+    base: totales.mensual,
+    cifra: formatoMensual(totales.mensual),
+    pie: 'Opcional y sin permanencia. Se cancela cuando quieras.',
+  };
 
-  if (hayMensual) {
-    bloqueCifra(hoja, {
-      x: hoja.x + ancho + hueco,
-      ancho,
-      alto,
-      rotulo: 'Cada mes',
-      cifra: formatoMensual(totales.mensual),
-      pie: 'Opcional y sin permanencia. Se cancela cuando quieras.',
-    });
-  }
+  // Los dos paneles miden lo mismo: el más alto manda, y así ningún pie se sale.
+  const bloques = hayMensual ? [unico, mensual] : [unico];
+  const alto = Math.max(...bloques.map((b) => altoDeBloque(doc, b)));
 
-  hoja.avanzar(alto + 2);
+  hoja.espacio(alto + 16);
+  hoja.avanzar(4);
+  for (const bloque of bloques) bloqueCifra(hoja, { ...bloque, alto });
+  hoja.avanzar(alto + 6);
 
   if (totales.terceros.length) {
     hoja.rotulo('A terceros');
@@ -298,15 +347,34 @@ function lasCifras(hoja: Hoja, propuesta: Propuesta, totales: ReturnType<typeof 
     hoja.avanzar(3);
   }
 
-  escribir(doc, MONEDA_DECLARADA, hoja.x, hoja.y + 3, { tamano: 7.5, color: COLOR.tintaTenue });
+  escribir(doc, `${MONEDA_DECLARADA} Los precios no incluyen ${ITBMS.texto}, que se suma aparte.`, hoja.x, hoja.y + 3, {
+    tamano: 7.5,
+    color: COLOR.tintaTenue,
+  });
   hoja.avanzar(6);
 }
 
-function bloqueCifra(
-  hoja: Hoja,
-  bloque: { x: number; ancho: number; alto: number; rotulo: string; cifra: string; pie: string },
-): void {
+interface BloqueCifra {
+  x: number;
+  ancho: number;
+  rotulo: string;
+  base: Dinero;
+  cifra: string;
+  pie: string;
+}
+
+const ALTO_CIFRA = 28;
+const ALTO_DESGLOSE = 15;
+
+/** Lo que mide un panel: la cifra, el desglose del impuesto y el pie, completo. */
+function altoDeBloque(doc: jsPDF, bloque: BloqueCifra): number {
+  const alto = altoDe(doc, bloque.pie, { tamano: 7.5, ancho: bloque.ancho - 12 });
+  return ALTO_CIFRA + ALTO_DESGLOSE + alto + 4;
+}
+
+function bloqueCifra(hoja: Hoja, bloque: BloqueCifra & { alto: number }): void {
   const { doc } = hoja;
+  const { impuesto, total } = conImpuesto(bloque.base, ITBMS.tasa);
   panel(doc, { x: bloque.x, y: hoja.y, ancho: bloque.ancho, alto: bloque.alto }, { fondo: COLOR.negro });
 
   escribir(doc, bloque.rotulo.toUpperCase(), bloque.x + 6, hoja.y + 8, {
@@ -326,7 +394,28 @@ function bloqueCifra(
     negrita: true,
   });
 
-  escribir(doc, bloque.pie, bloque.x + 6, hoja.y + 25.5, {
+  // Desglose: lo publicado, lo que se suma aparte y lo que de verdad se paga.
+  // Cada total lleva el mismo sufijo que su cifra, para que el mensual no se
+  // lea como un pago único.
+  const sufijo = bloque.rotulo === 'Cada mes' ? '/mes' : '';
+  const derecha = bloque.x + bloque.ancho - 6;
+  const yDesglose = hoja.y + ALTO_CIFRA - 3;
+  regla(doc, bloque.x + 6, yDesglose - 3.2, bloque.ancho - 12, [70, 62, 62], 0.2);
+  escribir(doc, ITBMS.texto, bloque.x + 6, yDesglose + 1.2, { tamano: 8, color: COLOR.grisMarca });
+  escribir(doc, `+ ${formatoExacto(impuesto)}${sufijo}`, derecha, yDesglose + 1.2, {
+    tamano: 8,
+    color: COLOR.blancoCalido,
+    alineacion: 'right',
+  });
+  escribir(doc, 'Total con ITBMS', bloque.x + 6, yDesglose + 7, { tamano: 8.5, color: COLOR.blancoCalido, negrita: true });
+  escribir(doc, `${formatoExacto(total)}${sufijo}`, derecha, yDesglose + 7, {
+    tamano: 8.5,
+    color: COLOR.blancoCalido,
+    negrita: true,
+    alineacion: 'right',
+  });
+
+  escribir(doc, bloque.pie, bloque.x + 6, hoja.y + ALTO_CIFRA + ALTO_DESGLOSE - 1.5, {
     tamano: 7.5,
     color: COLOR.grisMarca,
     ancho: bloque.ancho - 12,
@@ -393,12 +482,51 @@ function condiciones(hoja: Hoja, propuesta: Propuesta): void {
     hoja.punto(CANCELACION_MENSUAL);
   }
   hoja.punto(TRABAJO_REMOTO);
+  hoja.punto(`Ningún precio de esta propuesta incluye el ${ITBMS.texto}: se suma aparte, sobre el pago único y sobre lo mensual por separado.`);
 
   if (propuesta.condiciones.observaciones.trim()) {
     hoja.avanzar(2);
     hoja.rotulo('Notas');
     hoja.parrafo(propuesta.condiciones.observaciones.trim(), { tamano: 9, color: COLOR.negro });
   }
+}
+
+/* ------------------------------------------------------------------ *
+ * Aceptación
+ * ------------------------------------------------------------------ */
+
+/**
+ * El cierre: un espacio para firmar. Una propuesta que se acepta con un
+ * «dale» por WhatsApp y se discute meses después necesita una línea con fecha
+ * y nombre; este bloque la pone sin añadir una sola promesa.
+ */
+function aceptacion(hoja: Hoja): void {
+  const { doc } = hoja;
+  hoja.avanzar(4);
+  hoja.espacio(48);
+  hoja.rotulo('Aceptación');
+  hoja.parrafo('Firmar aquí es aceptar esta propuesta con lo que incluye y con lo que no incluye.', {
+    tamano: 9,
+    color: COLOR.negro,
+  });
+  hoja.avanzar(12);
+
+  const anchoFecha = 50;
+  const anchoFirma = hoja.ancho - anchoFecha - 12;
+  const campos = [
+    { rotulo: 'Nombre y firma', x: hoja.x, ancho: anchoFirma },
+    { rotulo: 'Fecha', x: hoja.x + anchoFirma + 12, ancho: anchoFecha },
+  ];
+  for (const campo of campos) {
+    regla(doc, campo.x, hoja.y, campo.ancho, COLOR.negro, 0.3);
+    escribir(doc, campo.rotulo.toUpperCase(), campo.x, hoja.y + 4, {
+      tamano: 6.5,
+      color: COLOR.tintaTenue,
+      negrita: true,
+      entreLetras: 0.7,
+    });
+  }
+  hoja.avanzar(8);
 }
 
 /* ------------------------------------------------------------------ *

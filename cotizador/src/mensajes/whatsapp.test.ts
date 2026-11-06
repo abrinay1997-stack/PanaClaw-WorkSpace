@@ -40,6 +40,15 @@ describe('regla 2 · tampoco en el chat se suman', () => {
   });
 });
 
+describe('ITBMS en el chat', () => {
+  it('cada bloque lleva su propio impuesto y el aviso de que no está incluido', () => {
+    const texto = mensajeWhatsapp(propuesta([linea('web-corporate'), linea('care-base')]));
+    expect(texto).toContain('+ ITBMS 7 %: $59.50 · Total con ITBMS: $909.50');
+    expect(texto).toContain('+ ITBMS 7 %: $2.45/mes · Total con ITBMS: $37.45/mes');
+    expect(texto).toContain('no incluyen ITBMS 7 %');
+  });
+});
+
 describe('el mensaje lleva lo mismo que el PDF', () => {
   it('el «qué NO incluye» va antes del precio', () => {
     const texto = mensajeWhatsapp(propuesta([linea('web-start')]));

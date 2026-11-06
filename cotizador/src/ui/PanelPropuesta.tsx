@@ -2,8 +2,8 @@
  * La propuesta en construcción: a quién va, qué lleva y cuánto cuesta.
  */
 
-import { itemDe } from '../dominio/catalogo';
-import { esCero, esRango, fijo, formato, formatoMensual } from '../dominio/dinero';
+import { ITBMS, itemDe } from '../dominio/catalogo';
+import { conImpuesto, esCero, esRango, fijo, formato, formatoExacto, formatoMensual, type Dinero } from '../dominio/dinero';
 import { fechaLarga, sumarDias } from '../dominio/formato';
 import { importeDeLinea, noIncluyeDe, plazosDe, rondasDe } from '../dominio/propuesta';
 import type { Linea, Propuesta, Totales } from '../dominio/tipos';
@@ -69,6 +69,7 @@ export function DatosCliente({ propuesta, despachar }: { propuesta: Propuesta; d
               whatsapp: ficha.whatsapp,
               correo: ficha.correo,
               ciudad: ficha.ciudad,
+              documento: ficha.documento,
             },
           })
         }
@@ -80,6 +81,7 @@ export function DatosCliente({ propuesta, despachar }: { propuesta: Propuesta; d
         <Campo etiqueta="Contacto" valor={cliente.contacto} alCambiar={(v) => cambiar({ contacto: v })} marcador="Luis Ortega" />
         <Campo etiqueta="WhatsApp" valor={cliente.whatsapp} alCambiar={(v) => cambiar({ whatsapp: v })} marcador="6531-0721" />
         <Campo etiqueta="Correo" valor={cliente.correo} alCambiar={(v) => cambiar({ correo: v })} tipo="email" marcador="luis@negocio.com" />
+        <Campo etiqueta="RUC o cédula" valor={cliente.documento ?? ''} alCambiar={(v) => cambiar({ documento: v })} marcador="Opcional" />
         <Campo etiqueta="Ciudad" valor={cliente.ciudad} alCambiar={(v) => cambiar({ ciudad: v })} />
         <Campo etiqueta="Quién cotiza" valor={propuesta.asesor} alCambiar={(v) => despachar({ tipo: 'asesor', nombre: v })} marcador="Tu nombre" />
       </div>
@@ -300,6 +302,7 @@ export function LosDosTotales({ totales }: { totales: Totales }) {
           rotulo="Pago único"
           cifra={formato(totales.unico)}
           pie="50 % al empezar, 50 % al entregar."
+          desglose={desgloseDe(totales.unico, '')}
         />
         {hayMensual ? (
           // La línea que los separa es el mensaje: dos compromisos con dos
@@ -308,6 +311,7 @@ export function LosDosTotales({ totales }: { totales: Totales }) {
             rotulo="Cada mes"
             cifra={formatoMensual(totales.mensual)}
             pie="Opcional y sin permanencia."
+            desglose={desgloseDe(totales.mensual, '/mes')}
             conSeparador
           />
         ) : null}
@@ -336,20 +340,38 @@ function BloqueCifra({
   rotulo,
   cifra,
   pie,
+  desglose,
   conSeparador = false,
 }: {
   rotulo: string;
   cifra: string;
   pie: string;
+  desglose: { impuesto: string; total: string };
   conSeparador?: boolean;
 }) {
   return (
     <div className={`p-5 ${conSeparador ? 'border-t border-white/10 sm:border-t-0 sm:border-l' : ''}`}>
       <h3 className="antetitulo">{rotulo}</h3>
       <p className="mt-2 text-3xl leading-none font-semibold tracking-tight text-naranja">{cifra}</p>
-      <p className="mt-2 text-xs text-gris">{pie}</p>
+      <dl className="mt-3 space-y-1 border-t border-white/10 pt-3 text-xs">
+        <div className="flex justify-between text-gris">
+          <dt>{ITBMS.texto}</dt>
+          <dd>+ {desglose.impuesto}</dd>
+        </div>
+        <div className="flex justify-between font-semibold text-blanco">
+          <dt>Total con ITBMS</dt>
+          <dd>{desglose.total}</dd>
+        </div>
+      </dl>
+      <p className="mt-3 text-xs text-gris">{pie}</p>
     </div>
   );
+}
+
+/** El ITBMS de un bloque y lo que se paga con él, cada bloque por su cuenta. */
+function desgloseDe(base: Dinero, sufijo: string): { impuesto: string; total: string } {
+  const { impuesto, total } = conImpuesto(base, ITBMS.tasa);
+  return { impuesto: `${formatoExacto(impuesto)}${sufijo}`, total: `${formatoExacto(total)}${sufijo}` };
 }
 
 /* ------------------------------------------------------------------ *

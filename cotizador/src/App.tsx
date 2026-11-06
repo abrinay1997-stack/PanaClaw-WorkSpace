@@ -86,6 +86,7 @@ export default function App() {
                 whatsapp: cliente.whatsapp,
                 correo: cliente.correo,
                 ciudad: cliente.ciudad,
+                documento: cliente.documento,
               },
             });
             ir({ pantalla: 'cotizador' });

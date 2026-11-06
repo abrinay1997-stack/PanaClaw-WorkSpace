@@ -43,6 +43,24 @@ export function leer(texto: string): Dinero {
   return { min: cifras[0]!, max: cifras[cifras.length - 1]! };
 }
 
+/**
+ * El impuesto sobre un importe, al centavo.
+ *
+ * Se aplica a los dos extremos de un rango por separado: el ITBMS de
+ * $80–$150 es el de $80 hasta el de $150, no un número intermedio.
+ */
+export function conImpuesto({ min, max }: Dinero, tasa: number): { impuesto: Dinero; total: Dinero } {
+  const centavos = (v: number): number => Math.round(v * tasa * 100) / 100;
+  const impuesto = { min: centavos(min), max: centavos(max) };
+  return {
+    impuesto,
+    total: {
+      min: Math.round((min + impuesto.min) * 100) / 100,
+      max: Math.round((max + impuesto.max) * 100) / 100,
+    },
+  };
+}
+
 export const esCero = ({ min, max }: Dinero): boolean => min === 0 && max === 0;
 
 export const esRango = ({ min, max }: Dinero): boolean => min !== max;
@@ -73,6 +91,19 @@ export function formato(importe: Dinero): string {
   return esRango(importe)
     ? `${unaCifra(importe.min)}–${unaCifra(importe.max)}`
     : unaCifra(importe.min);
+}
+
+const cifraExacta = (valor: number): string =>
+  `$${valor.toLocaleString('en-US', {
+    minimumFractionDigits: Number.isInteger(valor) ? 0 : 2,
+    maximumFractionDigits: 2,
+  })}`;
+
+/** Como `formato`, pero con centavos cuando los hay: para cifras calculadas, como el ITBMS. */
+export function formatoExacto(importe: Dinero): string {
+  return esRango(importe)
+    ? `${cifraExacta(importe.min)}–${cifraExacta(importe.max)}`
+    : cifraExacta(importe.min);
 }
 
 /**

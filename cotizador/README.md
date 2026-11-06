@@ -109,6 +109,21 @@ eBot en su propio bloque cuando lleva eBot.
 
 ---
 
+## El ITBMS, aparte y bloque por bloque
+
+Ningún precio publicado incluye el ITBMS. La tasa vive en
+[`datos/precios.json`](../datos/precios.json) → `impuestos.itbms` y se aplica con
+`conImpuesto` **sobre cada bloque por separado**: el pago único lleva su impuesto
+y lo mensual el suyo. Es la regla 1 llevada al impuesto: no existe un total que
+mezcle los dos, con impuesto ni sin él. En un rango se calcula en los dos
+extremos. El PDF, la pantalla y el mensaje de WhatsApp enseñan lo publicado, el
+impuesto y el total con impuesto, y declaran que los precios no lo incluyen.
+
+El PDF también lleva el RUC o la cédula del cliente cuando se escribe, el detalle
+con cantidad, precio e importe por renglón, y un espacio para firmar y fechar.
+
+---
+
 ## El historial es del equipo, y el número lo da el servidor
 
 `PROP-2026-0001` lo llevaba el navegador de cada quien. Con una persona
