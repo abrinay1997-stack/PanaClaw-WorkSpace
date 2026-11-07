@@ -26,7 +26,7 @@ import { FalloApi, mensajeDe } from '../api/fallo';
 import { esCero, formato, formatoMensual } from '../dominio/dinero';
 import { fechaLarga } from '../dominio/formato';
 import { NOMBRE_ESTADO } from '../historial/contrato';
-import { Campo, CampoLargo, Pastilla, Seccion } from '../ui/componentes';
+import { Campo, CampoLargo, Pastilla, Seccion, VolverAlHub } from '../ui/componentes';
 import { clientes } from './almacen';
 
 export function FichaCliente({
@@ -130,6 +130,7 @@ export function FichaCliente({
         <button type="button" className="boton boton-secundario" onClick={alVolver}>
           ← Volver a clientes
         </button>
+        <VolverAlHub />
         <h1 className="mr-auto min-w-0 truncate text-lg font-semibold">
           {ficha ? ficha.negocio || ficha.codigo : 'Cliente nuevo'}
         </h1>

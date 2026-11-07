@@ -19,7 +19,7 @@ import {
 } from '../../../compartido/clientes';
 import { ES_DEMOSTRACION } from '../api/pedir';
 import { mensajeDe } from '../api/fallo';
-import { Pastilla, Seccion } from '../ui/componentes';
+import { Pastilla, Seccion, VolverAlHub } from '../ui/componentes';
 import { clientes } from './almacen';
 import { descargarCsv } from './exportar';
 
@@ -128,6 +128,7 @@ export function PantallaClientes({
         <button type="button" className="boton boton-secundario" onClick={alVolver}>
           ← Volver al cotizador
         </button>
+        <VolverAlHub />
         <h1 className="mr-auto text-lg font-semibold">
           Clientes
           <span className="ml-2 text-sm font-normal text-gris">
@@ -356,6 +357,7 @@ function SinServidor({ alVolver }: { alVolver: () => void }) {
         <button type="button" className="boton boton-secundario" onClick={alVolver}>
           ← Volver al cotizador
         </button>
+        <VolverAlHub />
         <h1 className="text-lg font-semibold">Clientes</h1>
       </header>
 

@@ -27,7 +27,7 @@ import { PantallaContabilidad } from './contabilidad/PantallaContabilidad';
 import { almacen } from './historial/almacen';
 import { PantallaHistorial } from './historial/PantallaHistorial';
 import { abrirWhatsapp, copiarMensaje, descargarPdf, verPdf } from './ui/acciones';
-import { Simbolo } from './ui/componentes';
+import { Simbolo, VolverAlHub } from './ui/componentes';
 import { PanelCatalogo } from './ui/PanelCatalogo';
 import {
   Alertas,
@@ -193,7 +193,8 @@ function Cotizador({
   return (
     <div className="flex min-h-screen flex-col pb-24 lg:pb-0">
       <header className="cristal sticky top-0 z-30 border-b border-white/10">
-        <div className="mx-auto flex w-full max-w-[110rem] items-center gap-4 px-4 py-3 lg:px-6">
+        <div className="mx-auto flex w-full max-w-[110rem] flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 lg:flex-nowrap lg:px-6">
+          <VolverAlHub conFlecha />
           <Simbolo className="h-6 shrink-0 text-naranja" />
           <div className="mr-auto min-w-0">
             <h1 className="truncate text-sm font-semibold">Cotizador · {EMPRESA.nombre}</h1>
@@ -202,17 +203,22 @@ function Cotizador({
             </p>
           </div>
 
-          <button type="button" className="boton boton-secundario" onClick={alClientes}>
-            Clientes
-          </button>
-
-          <button type="button" className="boton boton-secundario" onClick={alHistorial}>
-            Historial
-          </button>
-
-          <button type="button" className="boton boton-secundario" onClick={alContabilidad}>
-            Contabilidad
-          </button>
+          {/*
+            Las tres pantallas hermanas. En el móvil bajan a su propia fila y se
+            reparten el ancho: con cuatro botones en la fila del título, el último
+            se salía de la pantalla y el panel no admite desbordes laterales.
+          */}
+          <nav className="order-last flex w-full gap-2 lg:order-none lg:w-auto" aria-label="Pantallas del cotizador">
+            <button type="button" className="boton boton-secundario flex-1 lg:flex-none" onClick={alClientes}>
+              Clientes
+            </button>
+            <button type="button" className="boton boton-secundario flex-1 lg:flex-none" onClick={alHistorial}>
+              Historial
+            </button>
+            <button type="button" className="boton boton-secundario flex-1 lg:flex-none" onClick={alContabilidad}>
+              Contabilidad
+            </button>
+          </nav>
 
           <div className="hidden flex-wrap items-center gap-2 lg:flex">
             <button type="button" className="boton boton-fantasma" onClick={acciones.nueva}>

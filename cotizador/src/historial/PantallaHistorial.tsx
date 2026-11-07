@@ -17,7 +17,7 @@ import type { Propuesta } from '../dominio/tipos';
 import { ES_DEMOSTRACION } from '../api/pedir';
 import { mensajeDe } from '../api/fallo';
 import { descargarPdf } from '../ui/acciones';
-import { Pastilla, Seccion } from '../ui/componentes';
+import { Pastilla, Seccion, VolverAlHub } from '../ui/componentes';
 import { PanelCobros } from '../cobros/PanelCobros';
 import { almacen } from './almacen';
 import {
@@ -130,6 +130,7 @@ export function PantallaHistorial({
         <button type="button" className="boton boton-secundario" onClick={alVolver}>
           ← Volver al cotizador
         </button>
+        <VolverAlHub />
         <h1 className="text-lg font-semibold">
           Historial
           <span className="ml-2 text-sm font-normal text-gris">
