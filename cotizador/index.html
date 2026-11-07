@@ -4,7 +4,17 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow" />
-    <meta name="theme-color" content="#100101" />
+    <meta name="theme-color" content="#f6f3f1" />
+    <script>
+      /* El tema se pone antes de pintar, para que quien eligió el oscuro no vea un
+         destello claro al abrir. Claro por defecto. Ver src/ui/tema.ts. */
+      try {
+        if (localStorage.getItem('panaclaw-tema') === 'oscuro') {
+          document.documentElement.dataset.tema = 'oscuro';
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#100101');
+        }
+      } catch (e) {}
+    </script>
     <link rel="icon" href="./marca/icono.svg" />
     <title>Cotizador · PanaClaw</title>
   </head>

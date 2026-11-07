@@ -12,7 +12,7 @@ import { useEffect, useMemo } from 'react';
 
 import { ES_DEMOSTRACION } from '../api/pedir';
 import { TEXTOS_EDITABLES, type TextoEditable } from '../dominio/textos';
-import { VolverAlHub } from '../ui/componentes';
+import { BotonDeTema, VolverAlHub } from '../ui/componentes';
 import { almacenTextos } from './almacenTextos';
 import { FilaDeTexto } from './FilaDeTexto';
 import { cargarPlantilla, fijarPlantilla, useEdiciones, usePlantilla } from './plantilla';
@@ -43,6 +43,7 @@ export function PantallaTextos({ alVolver }: { alVolver: () => void }) {
           ← Volver al cotizador
         </button>
         <VolverAlHub />
+        <BotonDeTema />
         <h1 className="text-lg font-semibold">Textos del documento</h1>
       </header>
 

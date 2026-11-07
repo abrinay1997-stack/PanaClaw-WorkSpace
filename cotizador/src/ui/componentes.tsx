@@ -6,6 +6,7 @@
  */
 
 import type { ReactNode } from 'react';
+import { useTema } from './tema';
 
 import { LOGO } from '../datos/empresa';
 
@@ -104,7 +105,7 @@ export function Punto({ children }: { children: ReactNode }) {
   return (
     <li className="flex items-start gap-2.5 text-sm leading-relaxed text-gris">
       <span className="vineta mt-1.5" aria-hidden="true" />
-      <span className="min-w-0">{children}</span>
+      <span className="min-w-0 flex-1">{children}</span>
     </li>
   );
 }
@@ -113,10 +114,10 @@ export function Punto({ children }: { children: ReactNode }) {
 export function Pastilla({ children, encendida = false }: { children: ReactNode; encendida?: boolean }) {
   return (
     <span
-      className={`inline-flex items-center rounded-pastilla px-2.5 py-0.5 text-[0.6875rem] font-medium tracking-wide uppercase ${
+      className={`inline-flex items-center rounded-pastilla px-2.5 py-0.5 text-[0.75rem] font-medium tracking-wide uppercase ${
         encendida
           ? 'bg-naranja/15 text-naranja ring-1 ring-naranja/30'
-          : 'bg-white/5 text-gris ring-1 ring-white/10'
+          : 'bg-velo-fuerte text-gris ring-1 ring-linea'
       }`}
     >
       {children}
@@ -141,5 +142,48 @@ export function VolverAlHub({ conFlecha = false }: { conFlecha?: boolean }) {
     <a href="../" className="boton boton-secundario" aria-label="Volver a la portada del hub">
       {conFlecha ? '← Hub' : 'Hub'}
     </a>
+  );
+}
+
+/**
+ * Cambia entre el tema claro y el oscuro.
+ *
+ * Un solo botón con un icono que dice a qué se va a cambiar (una luna en el claro,
+ * un sol en el oscuro) y un nombre para los lectores de pantalla. Solo icono: en el
+ * móvil la cabecera no tiene sitio para una palabra más.
+ */
+export function BotonDeTema() {
+  const [tema, alternar] = useTema();
+  const aOscuro = tema === 'claro';
+
+  return (
+    <button
+      type="button"
+      className="boton boton-secundario !px-3"
+      onClick={alternar}
+      aria-label={aOscuro ? 'Cambiar al tema oscuro' : 'Cambiar al tema claro'}
+      title={aOscuro ? 'Tema oscuro' : 'Tema claro'}
+    >
+      <svg
+        viewBox="0 0 24 24"
+        width="18"
+        height="18"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        {aOscuro ? (
+          <path d="M21 12.8A8.5 8.5 0 1 1 11.2 3a6.6 6.6 0 0 0 9.8 9.8Z" />
+        ) : (
+          <>
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+          </>
+        )}
+      </svg>
+    </button>
   );
 }

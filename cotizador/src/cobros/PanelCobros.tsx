@@ -88,7 +88,7 @@ export function PanelCobros({ numero }: { numero: string }) {
   const yaCorregidos = new Set(libro.cobros.map((c) => c.corrigeA).filter((x): x is number => x !== null));
 
   return (
-    <div className="mt-3 rounded-lg border border-white/10 p-4" aria-label={`Cobros de ${numero}`}>
+    <div className="mt-3 rounded-lg border border-linea p-4" aria-label={`Cobros de ${numero}`}>
       {!cargado ? <p className="text-xs text-gris">Cargando cobros…</p> : null}
 
       {cargado && sinCifra ? (
@@ -125,7 +125,7 @@ export function PanelCobros({ numero }: { numero: string }) {
       ) : null}
 
       {libro.cobros.length ? (
-        <ul className="mt-4 divide-y divide-white/10 text-xs">
+        <ul className="mt-4 divide-y divide-linea text-xs">
           {libro.cobros.map((c) => (
             <li key={c.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
               <span className="text-gris">{c.fecha}</span>

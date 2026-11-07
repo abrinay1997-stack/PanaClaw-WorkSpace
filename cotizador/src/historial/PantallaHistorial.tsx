@@ -17,7 +17,7 @@ import type { Propuesta } from '../dominio/tipos';
 import { ES_DEMOSTRACION } from '../api/pedir';
 import { mensajeDe } from '../api/fallo';
 import { descargarPdf } from '../ui/acciones';
-import { Pastilla, Seccion, VolverAlHub } from '../ui/componentes';
+import { Pastilla, Seccion, BotonDeTema, VolverAlHub } from '../ui/componentes';
 import { PanelCobros } from '../cobros/PanelCobros';
 import { almacen } from './almacen';
 import {
@@ -131,6 +131,7 @@ export function PantallaHistorial({
           ← Volver al cotizador
         </button>
         <VolverAlHub />
+        <BotonDeTema />
         <h1 className="text-lg font-semibold">
           Historial
           <span className="ml-2 text-sm font-normal text-gris">
@@ -143,7 +144,7 @@ export function PantallaHistorial({
         <p className="rounded-tarjeta border border-naranja/30 bg-naranja/10 p-4 text-sm leading-relaxed text-blanco">
           Esta es la <strong className="font-semibold">vista previa</strong>: el historial vive solo
           en este navegador, no lo ve nadie más y los números salen como{' '}
-          <code className="rounded bg-white/10 px-1">PROP-DEMO-0001</code> para que ningún PDF de
+          <code className="rounded bg-velo-fuerte px-1">PROP-DEMO-0001</code> para que ningún PDF de
           éstos se confunda con uno de verdad. En el hub publicado, el historial es el mismo para
           todo el equipo y el número lo da el servidor.
         </p>

@@ -5,12 +5,14 @@
 import { ITBMS, itemDe } from '../dominio/catalogo';
 import { conImpuesto, esCero, esRango, fijo, formato, formatoExacto, formatoMensual, type Dinero } from '../dominio/dinero';
 import { fechaLarga, sumarDias } from '../dominio/formato';
-import { importeDeLinea, noIncluyeDe, plazosDe, rondasDe } from '../dominio/propuesta';
+import { definicion } from '../dominio/textos';
+import { fronterasEntradas, importeDeLinea, noIncluyeEntradas, plazosDe, rondasDe } from '../dominio/propuesta';
 import type { Linea, Propuesta, Totales } from '../dominio/tipos';
 import type { Alerta } from '../dominio/revision';
 import { BuscadorCliente } from '../clientes/BuscadorCliente';
 import { Campo, CampoLargo, Pastilla, Punto, Seccion } from './componentes';
 import { usePlantilla } from '../textos/plantilla';
+import { TextoEnLugar } from '../textos/TextoEnLugar';
 import type { Accion } from './usePropuesta';
 
 type Despachar = (accion: Accion) => void;
@@ -32,7 +34,7 @@ export function Alertas({ alertas }: { alertas: Alerta[] }) {
               ? // El ember es fondo, nunca texto: la regla de marca cumplida
                 // justo donde más tentador sería romperla.
                 'border-ember/40 bg-ember/12'
-              : 'border-white/10 bg-white/3'
+              : 'border-linea bg-velo'
           }`}
         >
           <p className="text-sm font-semibold text-blanco">{alerta.texto}</p>
@@ -111,43 +113,77 @@ export function ListaLineas({
   propuesta,
   despachar,
   alertas,
+  alIncluir,
 }: {
   propuesta: Propuesta;
   despachar: Despachar;
   alertas: Alerta[];
+  /** Abre el catálogo para elegir qué más incluir. */
+  alIncluir: () => void;
 }) {
-  if (!propuesta.lineas.length) {
-    return (
-      <Seccion titulo="Qué incluye">
-        <p className="py-6 text-center text-sm text-gris">
-          Elige del catálogo lo que va a llevar la propuesta.
-        </p>
-      </Seccion>
-    );
-  }
+  const hay = propuesta.lineas.length > 0;
 
   return (
-    <Seccion titulo={`Qué incluye · ${propuesta.lineas.length}`}>
-      <ul className="space-y-3">
-        {propuesta.lineas.map((linea) => (
-          <li key={linea.id}>
-            <FilaLinea
-              linea={linea}
-              despachar={despachar}
-              senalada={alertas.some((a) => a.lineaId === linea.id && a.gravedad === 'grave')}
-            />
-          </li>
-        ))}
-      </ul>
+    <Seccion
+      titulo={hay ? `Qué incluye · ${propuesta.lineas.length}` : 'Qué incluye'}
+      ayuda={
+        hay
+          ? 'Cada producto que va en la propuesta. Cambia el nombre, la descripción o la cantidad aquí mismo.'
+          : undefined
+      }
+      accion={
+        hay ? (
+          <button type="button" className="boton boton-primario !py-2 text-sm" onClick={alIncluir}>
+            <span aria-hidden="true">＋</span> Incluir algo más
+          </button>
+        ) : undefined
+      }
+    >
+      {hay ? (
+        <>
+          <ul className="space-y-3">
+            {propuesta.lineas.map((linea) => (
+              <li key={linea.id}>
+                <FilaLinea
+                  propuesta={propuesta}
+                  linea={linea}
+                  despachar={despachar}
+                  senalada={alertas.some((a) => a.lineaId === linea.id && a.gravedad === 'grave')}
+                />
+              </li>
+            ))}
+          </ul>
+          <button
+            type="button"
+            className="mt-3 w-full rounded-campo border border-dashed border-linea-fuerte py-3 text-sm font-medium text-gris transition hover:border-naranja hover:text-naranja"
+            onClick={alIncluir}
+          >
+            <span aria-hidden="true">＋</span> Incluir algo más
+          </button>
+        </>
+      ) : (
+        <div className="rounded-campo border border-dashed border-linea-fuerte p-8 text-center">
+          <p className="text-base font-semibold text-blanco">Todavía no hay nada en la propuesta</p>
+          <p className="mx-auto mt-1 max-w-md text-sm text-gris">
+            Empieza por lo que el cliente necesita: un sitio web, un asistente de mensajes, seguridad… Elige del
+            catálogo y se añade aquí.
+          </p>
+          <button type="button" className="boton boton-primario mt-5" onClick={alIncluir}>
+            <span aria-hidden="true">＋</span> Incluir un producto
+          </button>
+        </div>
+      )}
     </Seccion>
   );
 }
 
 function FilaLinea({
+  propuesta,
   linea,
   despachar,
   senalada,
 }: {
+  propuesta: Propuesta;
   linea: Linea;
   despachar: Despachar;
   senalada: boolean;
@@ -161,27 +197,49 @@ function FilaLinea({
   const importe = importeDeLinea(linea);
   const mensual = item.recurrencia === 'mensual';
   const rangoAbierto = esRango(linea.precio);
+  const notaPropia = linea.nota.trim();
+  const tieneDescripcion = !!definicion(`item.${item.id}`);
 
   return (
-    <div
-      className={`rounded-campo border p-4 ${senalada ? 'border-ember/40 bg-ember/8' : 'border-white/10 bg-white/2'}`}
-    >
-      <div className="flex items-start justify-between gap-3">
-        <input
-          className="min-w-0 flex-1 border-0 bg-transparent p-0 text-sm font-medium text-blanco focus:outline-none"
-          value={linea.descripcion}
-          onChange={(e) => editar({ descripcion: e.currentTarget.value })}
-          aria-label="Descripción de la línea"
-        />
+    <div className={`rounded-campo border p-4 ${senalada ? 'border-ember/50 bg-ember/10' : 'border-linea bg-papel'}`}>
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <input
+            className="w-full rounded-sm border-0 border-b border-transparent bg-transparent p-0 pb-0.5 text-base font-semibold text-blanco hover:border-linea-fuerte focus:border-naranja focus:outline-none"
+            value={linea.descripcion}
+            onChange={(e) => editar({ descripcion: e.currentTarget.value })}
+            aria-label="Nombre del producto en la cotización"
+          />
+
+          {/* La descripción es la nota gris que sale bajo el nombre en el PDF. Si
+              la línea trae una nota propia, esa manda; si no, el texto del producto,
+              que se edita aquí mismo. */}
+          <div className="mt-2">
+            {notaPropia ? (
+              <p className="text-sm leading-relaxed text-gris">
+                {notaPropia} <span className="text-xs">(nota de esta línea; se cambia en «Más opciones»)</span>
+              </p>
+            ) : tieneDescripcion ? (
+              <TextoEnLugar
+                clave={`item.${item.id}`}
+                nombre={`la descripción de ${item.nombre}`}
+                propuesta={propuesta}
+                despachar={despachar}
+                claseDelTexto="text-sm leading-relaxed text-gris"
+              />
+            ) : null}
+          </div>
+        </div>
+
         <div className="shrink-0 text-right">
-          <p className={`text-sm font-semibold ${linea.incluida ? 'text-gris' : 'text-naranja'}`}>
+          <p className={`text-lg font-semibold ${linea.incluida ? 'text-gris' : 'text-naranja'}`}>
             {linea.incluida ? 'Incluido' : mensual ? formatoMensual(importe) : formato(importe)}
           </p>
-          <p className="text-[0.6875rem] text-gris">{mensual ? 'cada mes' : 'pago único'}</p>
+          <p className="text-xs text-gris">{mensual ? 'cada mes' : 'pago único'}</p>
         </div>
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2">
+      <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-linea pt-3">
         {/*
           El precio cerrado NO se puede tocar, y es la regla de marca «la marca
           no regatea» hecha interfaz. Lo único editable es un RANGO, y solo
@@ -196,13 +254,13 @@ function FilaLinea({
         )}
 
         {item.repetible ? (
-          <label className="flex items-center gap-2 text-xs text-gris">
+          <label className="flex items-center gap-2 text-sm text-gris">
             Cantidad
             <input
               type="number"
               min={1}
               max={20}
-              className="campo w-16 px-2 py-1 text-center"
+              className="campo w-20 px-2 py-1 text-center"
               value={linea.cantidad}
               onChange={(e) => editar({ cantidad: Math.max(1, Number(e.currentTarget.value) || 1) })}
             />
@@ -210,9 +268,10 @@ function FilaLinea({
         ) : null}
 
         {item.incluidoDesde ? (
-          <label className="flex cursor-pointer items-center gap-2 text-xs text-gris">
+          <label className="flex cursor-pointer items-center gap-2 text-sm text-gris">
             <input
               type="checkbox"
+              className="size-4 accent-naranja"
               checked={linea.incluida}
               onChange={(e) => editar({ incluida: e.currentTarget.checked })}
             />
@@ -222,20 +281,25 @@ function FilaLinea({
 
         <button
           type="button"
-          className="boton boton-fantasma ml-auto px-2 py-1 text-xs"
+          className="boton boton-fantasma ml-auto !px-2 !py-1 text-sm"
           onClick={() => despachar({ tipo: 'quitar', lineaId: linea.id })}
         >
           Quitar
         </button>
       </div>
 
-      <input
-        className="campo mt-3 text-xs"
-        placeholder={item.queConsigue ?? 'Nota para el cliente'}
-        value={linea.nota}
-        onChange={(e) => editar({ nota: e.currentTarget.value })}
-        aria-label="Nota de la línea"
-      />
+      <details className="mt-2">
+        <summary className="cursor-pointer text-xs font-medium text-gris hover:text-blanco">Más opciones</summary>
+        <label className="mt-2 block">
+          <span className="etiqueta">Nota solo para esta línea</span>
+          <input
+            className="campo text-sm"
+            placeholder="Si escribes algo aquí, sustituye a la descripción en el documento"
+            value={linea.nota}
+            onChange={(e) => editar({ nota: e.currentTarget.value })}
+          />
+        </label>
+      </details>
     </div>
   );
 }
@@ -293,11 +357,26 @@ function CerrarRango({ linea, editar }: { linea: Linea; editar: (cambios: Partia
  * Los dos totales
  * ------------------------------------------------------------------ */
 
-export function LosDosTotales({ totales }: { totales: Totales }) {
+export function LosDosTotales({
+  totales,
+  propuesta,
+  despachar,
+}: {
+  totales: Totales;
+  propuesta: Propuesta;
+  despachar: Despachar;
+}) {
   const hayMensual = !esCero(totales.mensual);
 
   return (
     <section className="tarjeta overflow-hidden">
+      <header className="px-5 pt-5">
+        <h2 className="antetitulo">Precio</h2>
+        <p className="mt-1.5 text-sm text-gris">
+          Lo publicado en el catálogo y el ITBMS, calculados solos. El pago único y lo mensual van siempre
+          por separado.
+        </p>
+      </header>
       <div className={`grid ${hayMensual ? 'sm:grid-cols-2' : ''}`}>
         <BloqueCifra
           rotulo="Pago único"
@@ -319,11 +398,11 @@ export function LosDosTotales({ totales }: { totales: Totales }) {
       </div>
 
       {totales.terceros.length ? (
-        <div className="border-t border-white/10 p-5">
+        <div className="border-t border-linea p-5">
           <h3 className="antetitulo">A terceros</h3>
-          <p className="mt-1.5 text-xs leading-relaxed text-gris">
-            No lo cobra PanaClaw. Va en su propio bloque de la propuesta.
-          </p>
+          <div className="mt-2">
+            <TextoEnLugar clave="aTerceros" nombre="la explicación de los costos de terceros" propuesta={propuesta} despachar={despachar} />
+          </div>
           <ul className="mt-3 space-y-1.5">
             {totales.terceros.map((costo) => (
               <Punto key={costo.concepto}>
@@ -351,10 +430,10 @@ function BloqueCifra({
   conSeparador?: boolean;
 }) {
   return (
-    <div className={`p-5 ${conSeparador ? 'border-t border-white/10 sm:border-t-0 sm:border-l' : ''}`}>
+    <div className={`p-5 ${conSeparador ? 'border-t border-linea sm:border-t-0 sm:border-l' : ''}`}>
       <h3 className="antetitulo">{rotulo}</h3>
       <p className="mt-2 text-3xl leading-none font-semibold tracking-tight text-naranja">{cifra}</p>
-      <dl className="mt-3 space-y-1 border-t border-white/10 pt-3 text-xs">
+      <dl className="mt-3 space-y-1 border-t border-linea pt-3 text-xs">
         <div className="flex justify-between text-gris">
           <dt>{ITBMS.texto}</dt>
           <dd>+ {desglose.impuesto}</dd>
@@ -381,16 +460,27 @@ function desgloseDe(base: Dinero, sufijo: string): { impuesto: string; total: st
 
 export function QueNoIncluye({ propuesta, despachar }: { propuesta: Propuesta; despachar: Despachar }) {
   const plantilla = usePlantilla();
-  const lista = noIncluyeDe(propuesta.lineas, propuesta.condiciones.noIncluyeExtra, { ...plantilla, ...propuesta.textos });
+  const entradas = noIncluyeEntradas(propuesta.lineas, propuesta.condiciones.noIncluyeExtra, {
+    ...plantilla,
+    ...propuesta.textos,
+  });
 
   return (
     <Seccion
       titulo="Qué NO incluye"
-      ayuda="Se arma sola según lo que lleve la propuesta, y en el documento va ANTES del precio. Es la firma de la marca."
+      ayuda="En el documento va ANTES del precio: es la firma de la marca. Se arma sola según lo que lleve la propuesta, y cada frase se puede cambiar aquí mismo."
     >
-      <ul className="space-y-2">
-        {lista.map((punto) => (
-          <Punto key={punto}>{punto}</Punto>
+      <TextoEnLugar clave="noIncluyeIntro" nombre="la frase que abre la lista" propuesta={propuesta} despachar={despachar} claseDelTexto="text-sm leading-relaxed text-gris" />
+
+      <ul className="mt-4 space-y-3">
+        {entradas.map((entrada) => (
+          <Punto key={entrada.clave ?? entrada.texto}>
+            {entrada.clave ? (
+              <TextoEnLugar clave={entrada.clave} propuesta={propuesta} despachar={despachar} claseDelTexto="text-sm leading-relaxed text-blanco" />
+            ) : (
+              <span className="text-blanco">{entrada.texto}</span>
+            )}
+          </Punto>
         ))}
       </ul>
 
@@ -412,76 +502,151 @@ export function QueNoIncluye({ propuesta, despachar }: { propuesta: Propuesta; d
   );
 }
 
-export function PlazoYCambios({ propuesta }: { propuesta: Propuesta }) {
-  const plazos = plazosDe(propuesta.lineas);
+/** «Plazo» y «Cambios»: dos secciones del documento, dos secciones aquí. */
+export function PlazoYCambios({ propuesta, despachar }: { propuesta: Propuesta; despachar: Despachar }) {
+  const plantilla = usePlantilla();
+  const textos = { ...plantilla, ...propuesta.textos };
+  const plazos = plazosDe(propuesta.lineas, textos);
   const rondas = rondasDe(propuesta.lineas);
   if (!plazos.length && !rondas) return null;
 
   return (
-    <Seccion titulo="Plazo y cambios">
-      <ul className="space-y-2">
-        {plazos.map((plazo) => (
-          <Punto key={plazo.que}>
-            {plazo.que}: <strong className="font-semibold text-blanco">{plazo.cuando}</strong>
+    <>
+      {plazos.length ? (
+        <Seccion
+          titulo="Plazo"
+          ayuda="Los plazos salen del catálogo y no se cambian aquí. Lo que sí se puede cambiar es cómo se escriben."
+        >
+          <TextoEnLugar
+            clave="plazoLinea"
+            nombre="cómo se escribe cada plazo"
+            propuesta={propuesta}
+            despachar={despachar}
+            valores={{ producto: plazos[0]!.que, plazo: plazos[0]!.cuando }}
+            vista={
+              <ul className="space-y-2">
+                {plazos.map((plazo) => (
+                  <Punto key={plazo.que}>
+                    <span className="font-medium text-blanco">{plazo.linea}</span>
+                  </Punto>
+                ))}
+              </ul>
+            }
+          />
+          <div className="mt-4 border-t border-linea pt-4">
+            <p className="etiqueta">Desde cuándo cuenta el plazo</p>
+            <TextoEnLugar clave="plazoDesde" nombre="desde cuándo cuenta el plazo" propuesta={propuesta} despachar={despachar} claseDelTexto="text-sm font-semibold leading-relaxed text-blanco" />
+          </div>
+        </Seccion>
+      ) : null}
+
+      {rondas ? (
+        <Seccion titulo="Cambios" ayuda="Cuántas rondas de cambios trae el plan y qué pasa cuando se acaban.">
+          <TextoEnLugar
+            clave={rondas.incluidas === 0 ? 'cambiosSinRondas' : 'cambiosConRondas'}
+            nombre="la explicación de los cambios"
+            propuesta={propuesta}
+            despachar={despachar}
+            valores={{
+              plan: rondas.plan,
+              rondas: rondas.incluidas,
+              rondasPalabra: rondas.incluidas === 1 ? 'ronda' : 'rondas',
+              extra: rondas.extra,
+            }}
+          />
+        </Seccion>
+      ) : null}
+    </>
+  );
+}
+
+/** «Qué es cada cosa»: solo existe cuando la propuesta lleva productos que se confunden. */
+export function QueEsCadaCosa({ propuesta, despachar }: { propuesta: Propuesta; despachar: Despachar }) {
+  const plantilla = usePlantilla();
+  const entradas = fronterasEntradas(propuesta.lineas, { ...plantilla, ...propuesta.textos });
+  if (!entradas.length) return null;
+
+  return (
+    <Seccion
+      titulo="Qué es cada cosa"
+      ayuda="Aparece sola cuando la propuesta lleva dos de los productos que suelen confundirse."
+    >
+      <ul className="space-y-3">
+        {entradas.map((e) => (
+          <Punto key={e.clave}>
+            <TextoEnLugar clave={e.clave} propuesta={propuesta} despachar={despachar} claseDelTexto="text-sm leading-relaxed text-blanco" />
           </Punto>
         ))}
-        {rondas ? (
-          <Punto>
-            {rondas.incluidas === 0
-              ? `${rondas.plan} no trae rondas de cambios.`
-              : `${rondas.plan} incluye ${rondas.incluidas} ${rondas.incluidas === 1 ? 'ronda' : 'rondas'} de cambios.`}{' '}
-            Ronda extra: <strong className="font-semibold text-blanco">{rondas.extra}</strong>
-          </Punto>
-        ) : null}
       </ul>
-      <p className="mt-3 text-xs leading-relaxed text-gris">
-        El documento dice solo desde cuándo cuenta el reloj: cuando llega el material del cliente y
-        la mitad del pago.
-      </p>
     </Seccion>
   );
 }
 
 export function PanelCondiciones({ propuesta, despachar }: { propuesta: Propuesta; despachar: Despachar }) {
   const { condiciones } = propuesta;
+  const hayMensual = propuesta.lineas.some((l) => itemDe(l.itemId)?.recurrencia === 'mensual');
+
+  const claves: { clave: string; nombre: string; valores?: Record<string, string> }[] = [
+    { clave: 'condArranque', nombre: 'qué se necesita para arrancar' },
+    { clave: 'condCodigo', nombre: 'a quién pertenece el código' },
+    { clave: 'condCancelacion', nombre: 'qué pasa si se cancela' },
+    ...(hayMensual ? [{ clave: 'condCancelacionMensual', nombre: 'cómo se cancela un plan mensual' }] : []),
+    { clave: 'condRemoto', nombre: 'cómo se trabaja' },
+    { clave: 'condItbms', nombre: 'el aviso del ITBMS', valores: { itbms: ITBMS.texto } },
+  ];
 
   return (
-    <Seccion titulo="Condiciones">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <label className="block">
-          <span className="etiqueta">Validez</span>
-          <select
-            className="campo"
-            value={condiciones.validezDias}
-            onChange={(e) =>
-              despachar({ tipo: 'condiciones', cambios: { validezDias: Number(e.currentTarget.value) } })
-            }
-          >
-            {[8, 15, 30].map((dias) => (
-              <option key={dias} value={dias} className="bg-negro">
-                {dias} días
-              </option>
-            ))}
-          </select>
-        </label>
+    <>
+      <Seccion
+        titulo="Condiciones"
+        ayuda="Lo que el cliente acepta al firmar. Cada condición se puede cambiar aquí mismo."
+      >
+        <ul className="space-y-3">
+          {claves.map(({ clave, nombre, valores }) => (
+            <Punto key={clave}>
+              <TextoEnLugar clave={clave} nombre={nombre} propuesta={propuesta} despachar={despachar} valores={valores} claseDelTexto="text-sm leading-relaxed text-blanco" />
+            </Punto>
+          ))}
+        </ul>
 
-        <div>
-          <span className="etiqueta">Válida hasta</span>
-          <p className="campo bg-transparent">
-            {fechaLarga(sumarDias(propuesta.fecha, condiciones.validezDias))}
-          </p>
+        <div className="mt-5 grid gap-4 border-t border-linea pt-5 sm:grid-cols-2">
+          <label className="block">
+            <span className="etiqueta">Validez de la propuesta</span>
+            <select
+              className="campo"
+              value={condiciones.validezDias}
+              onChange={(e) =>
+                despachar({ tipo: 'condiciones', cambios: { validezDias: Number(e.currentTarget.value) } })
+              }
+            >
+              {[8, 15, 30].map((dias) => (
+                <option key={dias} value={dias} className="bg-negro">
+                  {dias} días
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <div>
+            <span className="etiqueta">Válida hasta</span>
+            <p className="campo bg-transparent">{fechaLarga(sumarDias(propuesta.fecha, condiciones.validezDias))}</p>
+          </div>
         </div>
-      </div>
 
-      <div className="mt-4">
-        <CampoLargo
-          etiqueta="Notas"
-          filas={2}
-          valor={condiciones.observaciones}
-          alCambiar={(texto) => despachar({ tipo: 'condiciones', cambios: { observaciones: texto } })}
-          marcador="Arrancamos la semana del 1 de septiembre."
-        />
-      </div>
-    </Seccion>
+        <div className="mt-4">
+          <CampoLargo
+            etiqueta="Notas para este cliente"
+            filas={2}
+            valor={condiciones.observaciones}
+            alCambiar={(texto) => despachar({ tipo: 'condiciones', cambios: { observaciones: texto } })}
+            marcador="Arrancamos la semana del 1 de septiembre."
+          />
+        </div>
+      </Seccion>
+
+      <Seccion titulo="Aceptación" ayuda="Al final del documento, encima de las líneas de nombre, firma y fecha.">
+        <TextoEnLugar clave="aceptacion" nombre="la frase de la firma" propuesta={propuesta} despachar={despachar} />
+      </Seccion>
+    </>
   );
 }

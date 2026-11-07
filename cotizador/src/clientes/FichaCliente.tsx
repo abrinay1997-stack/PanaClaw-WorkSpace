@@ -26,7 +26,7 @@ import { FalloApi, mensajeDe } from '../api/fallo';
 import { esCero, formato, formatoMensual } from '../dominio/dinero';
 import { fechaLarga } from '../dominio/formato';
 import { NOMBRE_ESTADO } from '../historial/contrato';
-import { Campo, CampoLargo, Pastilla, Seccion, VolverAlHub } from '../ui/componentes';
+import { Campo, CampoLargo, Pastilla, Seccion, BotonDeTema, VolverAlHub } from '../ui/componentes';
 import { clientes } from './almacen';
 
 export function FichaCliente({
@@ -131,6 +131,7 @@ export function FichaCliente({
           ← Volver a clientes
         </button>
         <VolverAlHub />
+        <BotonDeTema />
         <h1 className="mr-auto min-w-0 truncate text-lg font-semibold">
           {ficha ? ficha.negocio || ficha.codigo : 'Cliente nuevo'}
         </h1>
@@ -360,7 +361,7 @@ function Cifras({ totales }: { totales: ActividadCliente['totales'] }) {
     >
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {cuatro.map(({ titulo, cifra, encendida }) => (
-          <div key={titulo} className="rounded-campo border border-white/10 bg-white/2 p-4">
+          <div key={titulo} className="rounded-campo border border-linea bg-velo p-4">
             <p className="etiqueta mb-2">{titulo}</p>
             <p className={`text-sm font-semibold ${encendida ? 'text-naranja' : 'text-blanco'}`}>
               {formato(cifra.unico)}
@@ -395,7 +396,7 @@ function SusPropuestas({ actividad }: { actividad: ActividadCliente }) {
         {actividad.propuestas.map((propuesta) => (
           <li
             key={propuesta.numero}
-            className="flex flex-wrap items-center gap-3 rounded-campo border border-white/10 p-3"
+            className="flex flex-wrap items-center gap-3 rounded-campo border border-linea p-3"
           >
             <div className="mr-auto min-w-0">
               <p className="truncate text-sm text-blanco">{propuesta.numero}</p>

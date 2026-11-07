@@ -194,7 +194,32 @@ export function noIncluyeDe(
   extra: readonly string[] = [],
   textos?: Textos,
 ): string[] {
-  const lista = NO_INCLUYE_SIEMPRE.map((_, i) => textoDe(`noInc.siempre.${i + 1}`, textos));
+  return noIncluyeEntradas(lineas, extra, textos).map((e) => e.texto);
+}
+
+/** Una viñeta de «Qué NO incluye» y, si sale de un texto editable, su clave. */
+export interface EntradaNoIncluye {
+  readonly texto: string;
+  /** Sin clave son las exclusiones que añadió quien cotiza, que se editan aparte. */
+  readonly clave?: string;
+}
+
+/**
+ * Lo mismo que `noIncluyeDe`, pero sabiendo de qué texto sale cada viñeta: es lo
+ * que permite editarla en su sitio, junto a la viñeta, y no en una lista aparte.
+ */
+export function noIncluyeEntradas(
+  lineas: readonly Linea[],
+  extra: readonly string[] = [],
+  textos?: Textos,
+): EntradaNoIncluye[] {
+  const lista: EntradaNoIncluye[] = [];
+  const yaEsta = (texto: string) => lista.some((e) => e.texto === texto);
+
+  NO_INCLUYE_SIEMPRE.forEach((_, i) => {
+    const clave = `noInc.siempre.${i + 1}`;
+    lista.push({ texto: textoDe(clave, textos), clave });
+  });
 
   // Una viñeta por familia presente, no una por línea: dos capacidades
   // avanzadas no producen dos veces la misma frase.
@@ -203,8 +228,9 @@ export function noIncluyeDe(
   );
   for (const familia of familias) {
     (NO_INCLUYE_POR_FAMILIA[familia] ?? []).forEach((_, i) => {
-      const punto = textoDe(`noInc.${familia}.${i + 1}`, textos);
-      if (!lista.includes(punto)) lista.push(punto);
+      const clave = `noInc.${familia}.${i + 1}`;
+      const texto = textoDe(clave, textos);
+      if (!yaEsta(texto)) lista.push({ texto, clave });
     });
   }
 
@@ -212,11 +238,13 @@ export function noIncluyeDe(
   // que más caro sale prometer de más. Aquí no se puede prometer por descuido:
   // si el plan no lo lleva, la exclusión se escribe sola.
   const plan = planDe(lineas);
-  if (plan && plan.editablePorCliente === false) lista.push(textoDe('noInc.sinPanel', textos));
+  if (plan && plan.editablePorCliente === false) {
+    lista.push({ texto: textoDe('noInc.sinPanel', textos), clave: 'noInc.sinPanel' });
+  }
 
   for (const punto of extra) {
     const limpio = punto.trim();
-    if (limpio && !lista.includes(limpio)) lista.push(limpio);
+    if (limpio && !yaEsta(limpio)) lista.push({ texto: limpio });
   }
 
   return lista;
@@ -236,20 +264,28 @@ const CONFUNDIBLES: readonly Familia[] = ['care', 'seguridad', 'auditoria', 'dia
  * frases en toda propuesta las convertiría en relleno, y el relleno no se lee.
  */
 export function fronterasDe(lineas: readonly Linea[], textos?: Textos): string[] {
+  return fronterasEntradas(lineas, textos).map((e) => e.texto);
+}
+
+/** Cada frase de «Qué es cada cosa» con la clave de su texto, para editarla en su sitio. */
+export function fronterasEntradas(
+  lineas: readonly Linea[],
+  textos?: Textos,
+): { texto: string; clave: string }[] {
   const presentes = new Set(CONFUNDIBLES.filter((f) => tieneFamilia(lineas, f)));
-  const frases: string[] = [];
+  const claves: string[] = [];
 
   if (presentes.has('care') && (presentes.has('seguridad') || presentes.has('auditoria'))) {
-    frases.push(textoDe('frontera.careNoEsSeguridad', textos));
+    claves.push('frontera.careNoEsSeguridad');
   }
   if (presentes.has('diagnostico') && presentes.has('auditoria')) {
-    frases.push(textoDe('frontera.auditoriaNoEsDiagnostico', textos));
+    claves.push('frontera.auditoriaNoEsDiagnostico');
   }
   if (presentes.has('seguridad')) {
-    frases.push(textoDe('frontera.auditoriaVaAparte', textos));
+    claves.push('frontera.auditoriaVaAparte');
   }
 
-  return frases;
+  return claves.map((clave) => ({ clave, texto: textoDe(clave, textos) }));
 }
 
 /* ------------------------------------------------------------------ *

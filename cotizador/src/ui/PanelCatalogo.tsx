@@ -56,7 +56,7 @@ export function PanelCatalogo({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="border-b border-white/10 p-4">
+      <div className="border-b border-linea p-4">
         <label className="block">
           <span className="sr-only">Buscar en el catálogo</span>
           <input
@@ -73,12 +73,27 @@ export function PanelCatalogo({
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto p-4">
-        {grupos.map((grupo) => (
-          <section key={grupo.familia} className="mb-6 last:mb-0">
-            <h3 className="antetitulo">{grupo.titulo}</h3>
-            {grupo.ayuda ? <p className="mt-1 mb-3 text-xs text-gris">{grupo.ayuda}</p> : <div className="mb-3" />}
+        {grupos.map((grupo, i) => (
+          /* Cada categoría se pliega: son ocho y veintiún productos, y verlos todos de
+             golpe cansa. Con una búsqueda activa se abren todas, porque quien busca
+             quiere ver qué encontró; sin ella, solo la primera. La `key` cambia con la
+             búsqueda para que el estado de abierto se recalcule. */
+          <details
+            key={`${grupo.familia}-${busqueda.trim() ? 'b' : 'n'}`}
+            open={!!busqueda.trim() || i === 0}
+            className="mb-3 rounded-campo border border-linea bg-papel last:mb-0"
+          >
+            <summary className="flex cursor-pointer items-center justify-between gap-3 p-3">
+              <span className="min-w-0">
+                <span className="antetitulo block">{grupo.titulo}</span>
+                {grupo.ayuda ? <span className="mt-0.5 block text-xs text-gris">{grupo.ayuda}</span> : null}
+              </span>
+              <span className="shrink-0 rounded-pastilla bg-velo-fuerte px-2.5 py-0.5 text-xs font-medium text-gris">
+                {grupo.items.length}
+              </span>
+            </summary>
 
-            <ul className="space-y-2">
+            <ul className="space-y-2 p-3 pt-0">
               {grupo.items.map((item) => (
                 <li key={item.id}>
                   <FilaCatalogo
@@ -90,7 +105,7 @@ export function PanelCatalogo({
                 </li>
               ))}
             </ul>
-          </section>
+          </details>
         ))}
 
         {grupos.length === 0 ? (
@@ -120,7 +135,7 @@ function FilaCatalogo({
       type="button"
       onClick={alAgregar}
       disabled={enUso}
-      className="w-full rounded-campo border border-white/10 bg-white/2 p-3 text-left transition hover:border-white/25 hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:border-white/10 disabled:hover:bg-white/2"
+      className="w-full rounded-campo border border-linea bg-velo p-3 text-left transition hover:border-linea-fuerte hover:bg-velo-fuerte disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:border-linea disabled:hover:bg-velo"
     >
       <span className="flex items-baseline justify-between gap-3">
         <span className="min-w-0 text-sm font-medium text-blanco">{item.nombre}</span>
