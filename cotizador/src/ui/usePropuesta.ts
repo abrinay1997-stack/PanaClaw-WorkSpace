@@ -37,6 +37,8 @@ export type Accion =
   | { tipo: 'asesor'; nombre: string }
   | { tipo: 'condiciones'; cambios: Partial<Propuesta['condiciones']> }
   | { tipo: 'numeroAsignado'; numero: string }
+  /** La fecha de emisión: hoy, mientras la propuesta no haya salido (no tiene número). */
+  | { tipo: 'fecha'; fecha: string }
   /** Cambia (o, con `null`, quita) un texto del documento solo en esta propuesta. */
   | { tipo: 'texto'; clave: string; texto: string | null }
   /** Sustituye todos los retoques de texto. Sin ellos, vale la plantilla del equipo. */
@@ -60,7 +62,7 @@ export function propuestaVacia(): Propuesta {
 const nuevoId = (): string =>
   globalThis.crypto?.randomUUID?.() ?? `l${Date.now()}${Math.random().toString(16).slice(2)}`;
 
-function reducir(propuesta: Propuesta, accion: Accion): Propuesta {
+export function reducir(propuesta: Propuesta, accion: Accion): Propuesta {
   switch (accion.tipo) {
     case 'agregar': {
       // Un item que ya está no se duplica, salvo los repetibles: dos rondas
@@ -105,6 +107,11 @@ function reducir(propuesta: Propuesta, accion: Accion): Propuesta {
 
     case 'condiciones':
       return { ...propuesta, condiciones: { ...propuesta.condiciones, ...accion.cambios } };
+
+    case 'fecha':
+      // Una propuesta ya emitida conserva su fecha: es la que el cliente tiene en el PDF.
+      if (propuesta.numero || propuesta.fecha === accion.fecha) return propuesta;
+      return { ...propuesta, fecha: accion.fecha };
 
     case 'numeroAsignado':
       return { ...propuesta, numero: accion.numero };

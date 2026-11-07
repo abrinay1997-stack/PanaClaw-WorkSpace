@@ -18,6 +18,7 @@ import { useEffect, useState } from 'react';
 
 import { EMPRESA } from './datos/empresa';
 import { esCero, formato, formatoMensual } from './dominio/dinero';
+import { hoyISO } from './dominio/formato';
 import { hayGraves } from './dominio/revision';
 import type { Item, Propuesta } from './dominio/tipos';
 import { mensajeDe } from './api/fallo';
@@ -142,6 +143,16 @@ function Cotizador({
   const [aviso, setAviso] = useState('');
   const [emitiendo, setEmitiendo] = useState(false);
 
+  // La fecha de la propuesta es la de hoy mientras no haya salido: un borrador
+  // abierto ayer y emitido hoy sale con la fecha de hoy, y «Válida hasta» se
+  // cuenta desde ahí. También al volver a la pestaña tras pasar la medianoche.
+  useEffect(() => {
+    const alDia = () => despachar({ tipo: 'fecha', fecha: hoyISO() });
+    alDia();
+    document.addEventListener('visibilitychange', alDia);
+    return () => document.removeEventListener('visibilitychange', alDia);
+  }, [despachar, propuesta.numero]);
+
   const vacia = propuesta.lineas.length === 0;
   const bloqueada = vacia || hayGraves(alertas);
 
@@ -171,7 +182,10 @@ function Cotizador({
       // ahora: congelar los originales porque la red falló un momento, cuando el
       // equipo tiene otra redacción, sacaría un documento distinto sin avisar.
       await refrescarPlantilla();
-      const congelada = congelarTextos(propuesta, plantillaActual());
+      // La fecha de emisión es la de hoy, no la del día en que se abrió el borrador.
+      const fechaDeHoy = propuesta.numero ? propuesta.fecha : hoyISO();
+      if (fechaDeHoy !== propuesta.fecha) despachar({ tipo: 'fecha', fecha: fechaDeHoy });
+      const congelada = congelarTextos({ ...propuesta, fecha: fechaDeHoy }, plantillaActual());
       despachar({ tipo: 'textos', textos: congelada.textos });
 
       const { numero, enlace } = await almacen.registrar(congelada);
