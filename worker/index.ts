@@ -13,6 +13,7 @@
 import * as clientes from './clientes';
 import * as cobrosDe from './cobros';
 import * as contable from './contabilidad';
+import * as plantilla from './textos';
 import * as propuestas from './propuestas';
 import { ErrorPeticion, cuerpoJson, fallo, json } from './http';
 import type { Env } from './entorno';
@@ -157,10 +158,28 @@ async function enrutar(
     (await enrutarPropuestas(peticion, url, base, correo, ruta, metodo)) ??
     (await enrutarClientes(peticion, url, base, correo, ruta, metodo)) ??
     (await enrutarContabilidad(peticion, url, base, correo, ruta, metodo)) ??
+    (await enrutarTextos(peticion, base, correo, ruta, metodo)) ??
     (() => {
       throw new ErrorPeticion(404, 'no-encontrada', 'Esa dirección no existe.');
     })()
   );
+}
+
+/** La plantilla de textos del documento. Devuelve `null` cuando la dirección no es suya. */
+async function enrutarTextos(
+  peticion: Request,
+  base: D1Database,
+  correo: string,
+  ruta: string,
+  metodo: string,
+): Promise<Response | null> {
+  if (ruta === 'textos' && metodo === 'GET') return json(await plantilla.listar(base));
+
+  const uno = /^textos\/([^/]+)$/.exec(ruta);
+  if (uno && metodo === 'PUT') {
+    return json(await plantilla.guardar(base, decodeURIComponent(uno[1]!), peticion, correo));
+  }
+  return null;
 }
 
 /** Gastos, resumen y cuentas por cobrar. Devuelve `null` cuando la dirección no es suya. */

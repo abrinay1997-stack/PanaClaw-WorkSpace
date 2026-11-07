@@ -37,6 +37,10 @@ export type Accion =
   | { tipo: 'asesor'; nombre: string }
   | { tipo: 'condiciones'; cambios: Partial<Propuesta['condiciones']> }
   | { tipo: 'numeroAsignado'; numero: string }
+  /** Cambia (o, con `null`, quita) un texto del documento solo en esta propuesta. */
+  | { tipo: 'texto'; clave: string; texto: string | null }
+  /** Sustituye todos los retoques de texto. Sin ellos, vale la plantilla del equipo. */
+  | { tipo: 'textos'; textos: Record<string, string> | undefined }
   | { tipo: 'cargar'; propuesta: Propuesta }
   | { tipo: 'reiniciar' };
 
@@ -104,6 +108,16 @@ function reducir(propuesta: Propuesta, accion: Accion): Propuesta {
 
     case 'numeroAsignado':
       return { ...propuesta, numero: accion.numero };
+
+    case 'texto': {
+      const textos = { ...propuesta.textos };
+      if (accion.texto === null) delete textos[accion.clave];
+      else textos[accion.clave] = accion.texto;
+      return { ...propuesta, textos: Object.keys(textos).length ? textos : undefined };
+    }
+
+    case 'textos':
+      return { ...propuesta, textos: accion.textos };
 
     case 'cargar':
       return accion.propuesta;

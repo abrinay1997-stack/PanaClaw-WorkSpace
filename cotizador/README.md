@@ -222,6 +222,53 @@ PanaClaw y el PDF las recoge solo.
 
 ---
 
+## Los textos del documento se pueden cambiar
+
+Pantalla `#textos` («Textos» en la cabecera del cotizador). El PDF y el mensaje
+dicen cosas fijas —las condiciones, lo que pasa si se cancela, cómo se explican
+las rondas de cambios, cada viñeta de «Qué NO incluye»— y se pueden reescribir sin
+tocar el código. El **original queda como valor por defecto**: sin editar nada, el
+documento sale exactamente igual que antes.
+
+- **Qué se puede cambiar** (`src/dominio/textos.ts`, el registro): cada viñeta de
+  «Qué NO incluye», la frase que la precede, la línea de cada plazo y «desde cuándo
+  cuenta», los dos textos de «Cambios», los costos de terceros, las condiciones, la
+  frase de la firma, «Qué es cada cosa» y la descripción de cada producto.
+- **Dos niveles.** La **plantilla del equipo** (pantalla «Textos») vale para las
+  propuestas nuevas; el **retoque de una propuesta** (sección «Textos de esta
+  propuesta») vale solo para ese cliente y no toca la plantilla.
+- **El original nunca se pierde.** «Restaurar» lo devuelve. La plantilla es un
+  historial (`migraciones/0006_textos.sql`): cada cambio es un asiento con quién y
+  cuándo, que no se edita ni se elimina.
+- **Lo ya emitido no cambia.** Al emitir, la propuesta guarda dentro de sí **todos**
+  los textos tal como valían ese día (`documento.textos`), y de ahí se regenera el
+  PDF. Editar la plantilla mañana no mueve una coma del PDF que el cliente tiene.
+  `worker/textos.test.ts` y la prueba de punta a punta lo comprueban.
+- **Las cifras no se escriben a mano.** Lo que depende de un dato —lo que cuesta la
+  ronda extra, el ITBMS, el nombre del plan— es una `{variable}` que el documento
+  rellena desde `datos/precios.json`. Un importe tecleado («$40») se queda fijo el
+  día que el catálogo cambie, así que `validarTexto` lo rechaza, igual que una
+  variable que no exista. El servidor aplica la misma validación al documento que
+  recibe.
+- **Nunca se imprime un hueco.** Si un texto pidiera una variable que no llega, se
+  usa el original: `{extra}` impreso en un PDF para un cliente es peor que la frase
+  de siempre.
+- **Lo que no se puede hacer desde la pantalla:** quitar una viñeta de «Qué NO
+  incluye» —se puede cambiar cómo se dice, no que salga—, ni cambiar los plazos y
+  los precios, que son datos de `datos/precios.json`.
+- Al emitir se vuelve a pedir la plantilla al servidor. Si falla, no se emite:
+  congelar los originales porque la red falló un momento, cuando el equipo tiene
+  otra redacción, sacaría un documento distinto sin avisar.
+
+Los originales siguen siendo citas literales de `catalogo/` (`src/datos/textos.ts`).
+Esta capa es solo para los documentos; el sitio y los archivos de `catalogo/` no
+cambian, y si se quiere cambiar la redacción de la marca en todas partes, se hace
+también allí.
+
+Para activarlo en producción: `npm run migrar` (aplica `0006`).
+
+---
+
 ## El historial es del equipo, y el número lo da el servidor
 
 `PROP-2026-0001` lo llevaba el navegador de cada quien. Con una persona

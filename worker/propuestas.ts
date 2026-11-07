@@ -32,6 +32,7 @@ import {
 } from '../compartido/propuestas';
 import { catalogo } from '../cotizador/src/dominio/catalogo';
 import { totalesDe } from '../cotizador/src/dominio/propuesta';
+import { definicion, validarTexto } from '../cotizador/src/dominio/textos';
 import type { Propuesta } from '../cotizador/src/dominio/tipos';
 import { correoNormal, whatsappNormal } from '../compartido/texto';
 import { resolverFicha } from './clientes';
@@ -219,6 +220,28 @@ async function siguienteNumero(base: D1Database, fecha: string): Promise<string>
   return formatoNumero(anio, fila.valor);
 }
 
+/**
+ * Los textos editados que trae el documento.
+ *
+ * Se guardan dentro de la propuesta y de ahí se regenera el PDF, así que pasan por
+ * la misma validación que la pantalla: sin claves inventadas, sin cifras tecleadas
+ * a mano y sin variables que no existan. El PDF de un cliente no puede salir con un
+ * hueco `{extra}` porque alguien le mandó al servidor algo que la pantalla no deja.
+ */
+function comprobarTextos(textos: unknown): void {
+  if (textos === undefined) return;
+  if (!textos || typeof textos !== 'object' || Array.isArray(textos)) {
+    throw new ErrorPeticion(400, 'invalida', 'Los textos de la propuesta no tienen la forma esperada.');
+  }
+  for (const [clave, texto] of Object.entries(textos)) {
+    if (!definicion(clave) || typeof texto !== 'string') {
+      throw new ErrorPeticion(400, 'invalida', `El texto «${clave}» no existe.`);
+    }
+    const problema = validarTexto(clave, texto);
+    if (problema) throw new ErrorPeticion(400, 'invalida', `El texto «${clave}» no es válido: ${problema}`);
+  }
+}
+
 async function leerDocumento(peticion: Request): Promise<Propuesta> {
   const crudo = await peticion.text();
 
@@ -242,6 +265,7 @@ async function leerDocumento(peticion: Request): Promise<Propuesta> {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(documento.fecha ?? '')) {
     throw new ErrorPeticion(400, 'invalida', 'La fecha de la propuesta no es válida.');
   }
+  comprobarTextos(documento.textos);
 
   return documento;
 }

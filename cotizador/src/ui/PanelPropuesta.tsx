@@ -10,6 +10,7 @@ import type { Linea, Propuesta, Totales } from '../dominio/tipos';
 import type { Alerta } from '../dominio/revision';
 import { BuscadorCliente } from '../clientes/BuscadorCliente';
 import { Campo, CampoLargo, Pastilla, Punto, Seccion } from './componentes';
+import { usePlantilla } from '../textos/plantilla';
 import type { Accion } from './usePropuesta';
 
 type Despachar = (accion: Accion) => void;
@@ -379,7 +380,8 @@ function desgloseDe(base: Dinero, sufijo: string): { impuesto: string; total: st
  * ------------------------------------------------------------------ */
 
 export function QueNoIncluye({ propuesta, despachar }: { propuesta: Propuesta; despachar: Despachar }) {
-  const lista = noIncluyeDe(propuesta.lineas, propuesta.condiciones.noIncluyeExtra);
+  const plantilla = usePlantilla();
+  const lista = noIncluyeDe(propuesta.lineas, propuesta.condiciones.noIncluyeExtra, { ...plantilla, ...propuesta.textos });
 
   return (
     <Seccion

@@ -156,6 +156,13 @@ export interface Propuesta {
   cliente: Cliente;
   lineas: Linea[];
   condiciones: Condiciones;
+  /**
+   * Los textos del documento que se cambiaron respecto al original, por clave
+   * (ver `dominio/textos.ts`). Lo que falta vale su original o el de la plantilla
+   * del equipo. Al emitir se congelan todos aquí dentro, para que el PDF que el
+   * cliente tiene se pueda regenerar idéntico aunque la plantilla cambie.
+   */
+  textos?: Record<string, string>;
 }
 
 /**

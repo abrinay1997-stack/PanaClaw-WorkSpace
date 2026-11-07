@@ -13,13 +13,9 @@
 import type { Hito } from '../../../compartido/cobros';
 import { CERO, conImpuesto, multiplicar, sumar, type Dinero } from './dinero';
 import { ITBMS, itemDe } from './catalogo';
+import { textoDe, type Textos } from './textos';
 import { PLANES, type Familia, type Item, type Linea, type PlanSlug, type Totales } from './tipos';
-import {
-  FRONTERAS,
-  NO_INCLUYE_POR_FAMILIA,
-  NO_INCLUYE_SIEMPRE,
-  NO_INCLUYE_SIN_PANEL,
-} from '../datos/textos';
+import { NO_INCLUYE_POR_FAMILIA, NO_INCLUYE_SIEMPRE } from '../datos/textos';
 
 /* ------------------------------------------------------------------ *
  * Paso 3 del procedimiento — separar los dos totales
@@ -137,6 +133,8 @@ export const tieneFamilia = (lineas: readonly Linea[], familia: Familia): boolea
 export interface Plazo {
   readonly que: string;
   readonly cuando: string;
+  /** La línea ya escrita, con el texto editable de «cada línea de plazo». */
+  readonly linea: string;
 }
 
 /**
@@ -147,7 +145,7 @@ export interface Plazo {
  * corto para el más largo o al revés. Los mensuales no aparecen: no se
  * entregan, empiezan.
  */
-export function plazosDe(lineas: readonly Linea[]): Plazo[] {
+export function plazosDe(lineas: readonly Linea[], textos?: Textos): Plazo[] {
   const vistos = new Set<string>();
   const plazos: Plazo[] = [];
 
@@ -155,7 +153,11 @@ export function plazosDe(lineas: readonly Linea[]): Plazo[] {
     const item = itemDe(linea.itemId);
     if (!item?.entrega || vistos.has(item.nombre)) continue;
     vistos.add(item.nombre);
-    plazos.push({ que: item.nombre, cuando: item.entrega });
+    plazos.push({
+      que: item.nombre,
+      cuando: item.entrega,
+      linea: textoDe('plazoLinea', textos, { producto: item.nombre, plazo: item.entrega }),
+    });
   }
 
   return plazos;
@@ -187,8 +189,12 @@ export function rondasDe(lineas: readonly Linea[]): Rondas | null {
  * publicada es la única forma de demostrarla antes de cobrar.
  * ------------------------------------------------------------------ */
 
-export function noIncluyeDe(lineas: readonly Linea[], extra: readonly string[] = []): string[] {
-  const lista = [...NO_INCLUYE_SIEMPRE];
+export function noIncluyeDe(
+  lineas: readonly Linea[],
+  extra: readonly string[] = [],
+  textos?: Textos,
+): string[] {
+  const lista = NO_INCLUYE_SIEMPRE.map((_, i) => textoDe(`noInc.siempre.${i + 1}`, textos));
 
   // Una viñeta por familia presente, no una por línea: dos capacidades
   // avanzadas no producen dos veces la misma frase.
@@ -196,16 +202,17 @@ export function noIncluyeDe(lineas: readonly Linea[], extra: readonly string[] =
     lineas.map((l) => itemDe(l.itemId)?.familia).filter((f): f is Familia => !!f),
   );
   for (const familia of familias) {
-    for (const punto of NO_INCLUYE_POR_FAMILIA[familia] ?? []) {
+    (NO_INCLUYE_POR_FAMILIA[familia] ?? []).forEach((_, i) => {
+      const punto = textoDe(`noInc.${familia}.${i + 1}`, textos);
       if (!lista.includes(punto)) lista.push(punto);
-    }
+    });
   }
 
   // Prometer panel de edición en Start o Launch es, según el procedimiento, lo
   // que más caro sale prometer de más. Aquí no se puede prometer por descuido:
   // si el plan no lo lleva, la exclusión se escribe sola.
   const plan = planDe(lineas);
-  if (plan && plan.editablePorCliente === false) lista.push(NO_INCLUYE_SIN_PANEL);
+  if (plan && plan.editablePorCliente === false) lista.push(textoDe('noInc.sinPanel', textos));
 
   for (const punto of extra) {
     const limpio = punto.trim();
@@ -228,18 +235,18 @@ const CONFUNDIBLES: readonly Familia[] = ['care', 'seguridad', 'auditoria', 'dia
  * Se disparan por pares concretos y no por «hay dos o más»: soltar las tres
  * frases en toda propuesta las convertiría en relleno, y el relleno no se lee.
  */
-export function fronterasDe(lineas: readonly Linea[]): string[] {
+export function fronterasDe(lineas: readonly Linea[], textos?: Textos): string[] {
   const presentes = new Set(CONFUNDIBLES.filter((f) => tieneFamilia(lineas, f)));
   const frases: string[] = [];
 
   if (presentes.has('care') && (presentes.has('seguridad') || presentes.has('auditoria'))) {
-    frases.push(FRONTERAS.careNoEsSeguridad);
+    frases.push(textoDe('frontera.careNoEsSeguridad', textos));
   }
   if (presentes.has('diagnostico') && presentes.has('auditoria')) {
-    frases.push(FRONTERAS.auditoriaNoEsDiagnostico);
+    frases.push(textoDe('frontera.auditoriaNoEsDiagnostico', textos));
   }
   if (presentes.has('seguridad')) {
-    frases.push(FRONTERAS.auditoriaVaAparte);
+    frases.push(textoDe('frontera.auditoriaVaAparte', textos));
   }
 
   return frases;

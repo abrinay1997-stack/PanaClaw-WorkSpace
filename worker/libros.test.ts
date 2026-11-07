@@ -10,9 +10,6 @@
  * escribir por un camino que nadie recordó cerrar.
  */
 
-import { readdirSync, readFileSync } from 'node:fs';
-import { DatabaseSync } from 'node:sqlite';
-import { join } from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { itemDe } from '../cotizador/src/dominio/catalogo';
@@ -20,49 +17,14 @@ import { lineaDesde } from '../cotizador/src/dominio/propuesta';
 import * as cobros from './cobros';
 import * as contable from './contabilidad';
 import * as propuestas from './propuestas';
+import { baseNueva, peticion } from './pruebas/d1';
 
-const MIGRACIONES = new URL('../migraciones/', import.meta.url).pathname;
-
-/** El adaptador mínimo de D1 sobre `node:sqlite`. */
-function d1(db: DatabaseSync): D1Database {
-  const adaptado = {
-    prepare(sql: string) {
-      let parametros: unknown[] = [];
-      const sentencia = {
-        bind(...valores: unknown[]) {
-          parametros = valores;
-          return sentencia;
-        },
-        async all() {
-          return { results: db.prepare(sql).all(...(parametros as never[])) };
-        },
-        async first() {
-          return db.prepare(sql).get(...(parametros as never[])) ?? null;
-        },
-        async run() {
-          const r = db.prepare(sql).run(...(parametros as never[]));
-          return { meta: { changes: Number(r.changes) } };
-        },
-      };
-      return sentencia;
-    },
-  };
-  return adaptado as unknown as D1Database;
-}
-
-let db: DatabaseSync;
+let db: ReturnType<typeof baseNueva>['db'];
 let base: D1Database;
 
 beforeEach(() => {
-  db = new DatabaseSync(':memory:');
-  for (const archivo of readdirSync(MIGRACIONES).filter((f) => f.endsWith('.sql')).sort()) {
-    db.exec(readFileSync(join(MIGRACIONES, archivo), 'utf8'));
-  }
-  base = d1(db);
+  ({ db, base } = baseNueva());
 });
-
-const peticion = (cuerpo: unknown): Request =>
-  new Request('http://hub.prueba/', { method: 'POST', body: JSON.stringify(cuerpo) });
 
 /** Una propuesta de un plan Start ($295 + 7 % = $315.65). */
 function propuesta(numero: string, estado = 'aceptada', cambios: Record<string, unknown> = {}): void {

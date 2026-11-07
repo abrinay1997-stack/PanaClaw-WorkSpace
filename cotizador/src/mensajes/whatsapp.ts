@@ -11,7 +11,7 @@
  */
 
 import { EMPRESA } from '../datos/empresa';
-import { PLAZO_DESDE } from '../datos/textos';
+import { textoDe } from '../dominio/textos';
 import { catalogo, ITBMS, itemDe } from '../dominio/catalogo';
 import { conImpuesto, esCero, formato, formatoExacto, formatoMensual } from '../dominio/dinero';
 import { fechaLarga, MONEDA_DECLARADA, sumarDias } from '../dominio/formato';
@@ -65,7 +65,7 @@ export function mensajeWhatsapp(propuesta: Propuesta): string {
   bloques.push(
     [
       fuerte('QUÉ NO INCLUYE'),
-      ...noIncluyeDe(propuesta.lineas, propuesta.condiciones.noIncluyeExtra).map((p) => `• ${p}`),
+      ...noIncluyeDe(propuesta.lineas, propuesta.condiciones.noIncluyeExtra, propuesta.textos).map((p) => `• ${p}`),
     ].join('\n'),
   );
 
@@ -104,10 +104,10 @@ export function mensajeWhatsapp(propuesta: Propuesta): string {
     );
   }
 
-  const plazos = plazosDe(propuesta.lineas);
+  const plazos = plazosDe(propuesta.lineas, propuesta.textos);
   if (plazos.length) {
     bloques.push(
-      [fuerte('PLAZO'), ...plazos.map((p) => `• ${p.que}: ${p.cuando}`), PLAZO_DESDE].join('\n'),
+      [fuerte('PLAZO'), ...plazos.map((p) => `• ${p.linea}`), textoDe('plazoDesde', propuesta.textos)].join('\n'),
     );
   }
 
@@ -123,7 +123,7 @@ export function mensajeWhatsapp(propuesta: Propuesta): string {
     );
   }
 
-  const fronteras = fronterasDe(propuesta.lineas);
+  const fronteras = fronterasDe(propuesta.lineas, propuesta.textos);
   if (fronteras.length) {
     bloques.push([fuerte('QUÉ ES CADA COSA'), ...fronteras.map((f) => `• ${f}`)].join('\n'));
   }
