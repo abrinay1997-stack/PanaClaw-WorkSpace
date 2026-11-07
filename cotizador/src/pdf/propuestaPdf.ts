@@ -14,7 +14,7 @@
 
 import { jsPDF } from 'jspdf';
 
-import { EMPRESA } from '../datos/empresa';
+import { EMPRESA, type FormaDePago } from '../datos/empresa';
 import {
   CANCELACION,
   CANCELACION_MENSUAL,
@@ -39,7 +39,10 @@ import { altoDe, anchoDe, escribir, Hoja, panel, regla, tinta } from './document
 import { anchoDeLogo, dibujarLogo } from './logo';
 import { ANCHO_UTIL, COLOR, FUENTE, HOJA, TIPO } from './marca';
 
-export function generarPdf(propuesta: Propuesta): jsPDF {
+export function generarPdf(
+  propuesta: Propuesta,
+  opciones: { formasDePago?: readonly FormaDePago[] } = {},
+): jsPDF {
   const doc = new jsPDF({ unit: 'mm', format: 'a4', compress: true });
   doc.setProperties({
     title: `Propuesta ${propuesta.numero} · ${EMPRESA.nombre}`,
@@ -56,6 +59,7 @@ export function generarPdf(propuesta: Propuesta): jsPDF {
   queIncluye(hoja, propuesta);
   queNoIncluye(hoja, propuesta);
   lasCifras(hoja, propuesta, totales);
+  comoPagar(hoja, opciones.formasDePago ?? EMPRESA.formasDePago);
   plazoYCambios(hoja, propuesta);
   lasFronteras(hoja, propuesta);
   condiciones(hoja, propuesta);
@@ -433,6 +437,31 @@ function bloqueCifra(hoja: Hoja, bloque: BloqueCifra & { alto: number }): void {
     color: COLOR.tintaSuave,
     ancho: bloque.ancho - 14,
   });
+}
+
+/**
+ * Cómo pagar. Solo sale si el dueño cargó cuentas reales en `datos/marca.json`:
+ * una cotización que dice «paga a este número» con un número inventado es peor
+ * que una que no lo dice.
+ */
+function comoPagar(hoja: Hoja, formas: readonly FormaDePago[]): void {
+  if (!formas.length) return;
+  const { doc } = hoja;
+
+  hoja.rotulo('Cómo pagar');
+  const xDato = hoja.x + 70;
+  for (const forma of formas) {
+    hoja.espacio(9);
+    hoja.y += 5;
+    escribir(doc, forma.metodo, hoja.x, hoja.y, { tamano: 9, color: COLOR.negro, negrita: true });
+    escribir(doc, forma.dato, xDato, hoja.y, { tamano: 9, color: COLOR.negro });
+    if (forma.titular) {
+      escribir(doc, forma.titular, hoja.x + 28, hoja.y, { tamano: 8.5, color: COLOR.tintaSuave, ancho: 38 });
+    }
+    regla(doc, hoja.x, hoja.y + 2.6, hoja.ancho, COLOR.borde, 0.2);
+    hoja.y += 2.6;
+  }
+  hoja.avanzar(5);
 }
 
 /** Cómo se cobra el pago único, según lo que lleve la propuesta. */

@@ -143,6 +143,23 @@ describe('ITBMS · aparte, y bloque por bloque', () => {
   });
 });
 
+describe('cómo pagar', () => {
+  it('sin cuentas cargadas, la cotización no inventa ninguna', () => {
+    expect(textoDelPdf(generarPdf(propuesta([linea('web-start')])))).not.toContain('CÓMO PAGAR');
+  });
+
+  it('con cuentas cargadas, salen en su propia sección', () => {
+    const doc = generarPdf(propuesta([linea('web-start')]), {
+      formasDePago: [{ metodo: 'Yappy', titular: 'Titular de prueba', dato: '0000-0000' }],
+    });
+    const texto = textoDelPdf(doc);
+    expect(texto).toContain('CÓMO PAGAR');
+    expect(texto).toContain('0000-0000');
+    expect(doc.getNumberOfPages()).toBeLessThanOrEqual(2);
+    guardar('con-pagos.pdf', doc);
+  });
+});
+
 describe('el cliente y la aceptación', () => {
   it('el RUC o la cédula sale en el panel del cliente cuando existe', () => {
     const base = propuesta([linea('web-start')]);

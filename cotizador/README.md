@@ -156,6 +156,38 @@ Para activarlo en producción hay que aplicar la migración: `npm run migrar`.
 
 ---
 
+## La contabilidad ligera
+
+Pantalla `#contabilidad`. Es **flujo de caja**: lo que entró y lo que salió en las
+fechas del periodo, y la pantalla lo dice junto a cada cifra. No es una utilidad
+contable ni una declaración: lo que va a la DGI lo decide la contadora.
+
+- **Gastos** (`migraciones/0004_gastos.sql`): un libro como el de cobros. No se
+  edita ni se elimina, se corrige con un asiento contrario con motivo, una sola
+  vez por gasto. El importe va **sin ITBMS** y el ITBMS de la factura del
+  proveedor, en su propia columna.
+- **Resumen del periodo**, sumando los libros: ingreso (lo cobrado sin ITBMS),
+  gastos, resultado de caja y el ITBMS por pagar o a favor (cobrado menos
+  pagado, orientativo). Cobrado por método y gastos por categoría.
+- **Cuentas por cobrar con antigüedad**: lo aceptado que no se ha cobrado entero,
+  en tramos de 0–30, 31–60, 61–90 y más de 90 días desde que se aceptó. No
+  depende del periodo elegido: una deuda de hace tres meses sigue siéndolo.
+- Todo es del **pago único**. Lo mensual no entra, y no existe un total que lo
+  mezcle (regla 2). Las cuentas puras viven en `compartido/contabilidad.ts` y las
+  usan la pantalla y el servidor, así que no pueden discrepar.
+
+Para activarlo en producción: `npm run migrar` (aplica `0003` y `0004`).
+
+## Cómo pagar
+
+La cotización imprime «Cómo pagar» solo si `datos/marca.json` →
+`contacto.formasDePago.lista` tiene al menos una cuenta (método, titular y dato).
+Hoy está vacía a propósito: una cotización que dice «paga a este número» con un
+dato inventado es peor que una que no lo dice. Se llena con las cuentas reales de
+PanaClaw y el PDF las recoge solo.
+
+---
+
 ## El historial es del equipo, y el número lo da el servidor
 
 `PROP-2026-0001` lo llevaba el navegador de cada quien. Con una persona
@@ -346,7 +378,8 @@ implementación y el resto de la aplicación no se entera.
 ## Lo que NO hace
 
 - **No factura.** Saca una propuesta, no un documento fiscal.
-- **No cobra.** No hay pasarela de pago ni enlace de cobro. Sí **registra** lo que el cliente ya pagó (ver «Los cobros»).
+- **No cobra.** No hay pasarela de pago ni enlace de cobro. Sí **registra** lo que el cliente ya pagó (ver «Los cobros») y lleva una contabilidad ligera de caja (ver «La contabilidad ligera»).
+- **No es contabilidad devengada ni declara impuestos.** No emite factura fiscal ni lleva plan de cuentas; eso lo hace la contadora.
 - **No manda correos.** Sale por WhatsApp o como archivo, y lo manda una persona.
 - **No inventa un plan.** Si el caso no encaja en ninguno, eso lo decide quien
   vende, y la respuesta oficial de la marca es decirlo.

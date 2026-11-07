@@ -23,6 +23,7 @@ import type { Item, Propuesta } from './dominio/tipos';
 import { mensajeDe } from './api/fallo';
 import { FichaCliente } from './clientes/FichaCliente';
 import { PantallaClientes } from './clientes/PantallaClientes';
+import { PantallaContabilidad } from './contabilidad/PantallaContabilidad';
 import { almacen } from './historial/almacen';
 import { PantallaHistorial } from './historial/PantallaHistorial';
 import { abrirWhatsapp, copiarMensaje, descargarPdf, verPdf } from './ui/acciones';
@@ -47,6 +48,9 @@ export default function App() {
   const [ruta, ir] = useRuta();
 
   switch (ruta.pantalla) {
+    case 'contabilidad':
+      return <PantallaContabilidad alVolver={() => ir({ pantalla: 'cotizador' })} />;
+
     case 'historial':
       return (
         <PantallaHistorial
@@ -100,6 +104,7 @@ export default function App() {
           estado={estado}
           alHistorial={() => ir({ pantalla: 'historial' })}
           alClientes={() => ir({ pantalla: 'clientes' })}
+          alContabilidad={() => ir({ pantalla: 'contabilidad' })}
         />
       );
   }
@@ -109,10 +114,12 @@ function Cotizador({
   estado,
   alHistorial,
   alClientes,
+  alContabilidad,
 }: {
   estado: ReturnType<typeof usePropuesta>;
   alHistorial: () => void;
   alClientes: () => void;
+  alContabilidad: () => void;
 }) {
   const { propuesta, despachar, totales, alertas, plan, itemsEnUso } = estado;
   const [panel, setPanel] = useState<Panel>('catalogo');
@@ -201,6 +208,10 @@ function Cotizador({
 
           <button type="button" className="boton boton-secundario" onClick={alHistorial}>
             Historial
+          </button>
+
+          <button type="button" className="boton boton-secundario" onClick={alContabilidad}>
+            Contabilidad
           </button>
 
           <div className="hidden flex-wrap items-center gap-2 lg:flex">

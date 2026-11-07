@@ -8,6 +8,14 @@
 
 import marca from '../../../datos/marca.json';
 
+export interface FormaDePago {
+  /** «Yappy», «Transferencia»… */
+  readonly metodo: string;
+  readonly titular: string;
+  /** El número de Yappy, la cuenta o lo que el cliente necesite para pagar. */
+  readonly dato: string;
+}
+
 export const EMPRESA = {
   nombre: marca.identidad.nombre,
   tagline: marca.identidad.tagline,
@@ -26,6 +34,8 @@ export const EMPRESA = {
   whatsappCrudo: marca.contacto.whatsappCrudo,
   horario: marca.contacto.horario,
   zona: marca.contacto.zona,
+  /** Cómo se le paga a PanaClaw. Vacío hasta que el dueño cargue las cuentas reales. */
+  formasDePago: marca.contacto.formasDePago.lista as readonly FormaDePago[],
 } as const;
 
 /** El símbolo de la marca, trazado. Seis figuras, regla de relleno par-impar. */

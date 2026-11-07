@@ -12,6 +12,7 @@
 
 import * as clientes from './clientes';
 import * as cobrosDe from './cobros';
+import * as contable from './contabilidad';
 import * as propuestas from './propuestas';
 import { ErrorPeticion, cuerpoJson, fallo, json } from './http';
 import type { Env } from './entorno';
@@ -155,10 +156,35 @@ async function enrutar(
   return (
     (await enrutarPropuestas(peticion, url, base, correo, ruta, metodo)) ??
     (await enrutarClientes(peticion, url, base, correo, ruta, metodo)) ??
+    (await enrutarContabilidad(peticion, url, base, correo, ruta, metodo)) ??
     (() => {
       throw new ErrorPeticion(404, 'no-encontrada', 'Esa dirección no existe.');
     })()
   );
+}
+
+/** Gastos, resumen y cuentas por cobrar. Devuelve `null` cuando la dirección no es suya. */
+async function enrutarContabilidad(
+  peticion: Request,
+  url: URL,
+  base: D1Database,
+  correo: string,
+  ruta: string,
+  metodo: string,
+): Promise<Response | null> {
+  if (ruta === 'contabilidad' && metodo === 'GET') {
+    const hoy = contable.hoyEnPanama();
+    const { desde, hasta } = contable.periodoDeUrl(url, hoy);
+    return json(await contable.contabilidad(base, desde, hasta, hoy));
+  }
+  if (ruta === 'gastos' && metodo === 'POST') {
+    return json(await contable.registrarGasto(base, peticion, correo), 201);
+  }
+  const correccion = /^gastos\/(\d+)\/corregir$/.exec(ruta);
+  if (correccion && metodo === 'POST') {
+    return json(await contable.corregirGasto(base, Number(correccion[1]), peticion, correo));
+  }
+  return null;
 }
 
 /** El historial. Devuelve `null` cuando la dirección no es suya. */
