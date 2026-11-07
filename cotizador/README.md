@@ -224,6 +224,16 @@ PanaClaw y el PDF las recoge solo.
 
 ## Los textos del documento se pueden cambiar
 
+**Se editan donde se ven.** Cada sección de la propuesta (Qué incluye, Qué NO incluye,
+Plazo, Cambios, Condiciones, Aceptación) enseña su texto con un botón «Editar» al
+lado; al pulsarlo se abre ahí mismo el campo con la vista de cómo se leerá en el
+PDF, y se elige si vale «Solo en esta propuesta» o «En todas las propuestas nuevas»
+(`src/textos/TextoEnLugar.tsx`). La pantalla `#textos` queda para ver y restaurar
+toda la plantilla de una vez. El catálogo completo ya no ocupa un lado: se abre con
+«Incluir algo más» (`HojaDeCatalogo`). El tema es claro por defecto, con un botón
+para el oscuro (`ui/tema.ts`); los colores del claro viven en `datos/marca.json`
+(`color.temaClaro`) y tienen contraste medido (texto 16:1, secundario 5.8:1).
+
 Pantalla `#textos` («Textos» en la cabecera del cotizador). El PDF y el mensaje
 dicen cosas fijas —las condiciones, lo que pasa si se cancela, cómo se explican
 las rondas de cambios, cada viñeta de «Qué NO incluye»— y se pueden reescribir sin
@@ -235,8 +245,7 @@ documento sale exactamente igual que antes.
   cuenta», los dos textos de «Cambios», los costos de terceros, las condiciones, la
   frase de la firma, «Qué es cada cosa» y la descripción de cada producto.
 - **Dos niveles.** La **plantilla del equipo** (pantalla «Textos») vale para las
-  propuestas nuevas; el **retoque de una propuesta** (sección «Textos de esta
-  propuesta») vale solo para ese cliente y no toca la plantilla.
+  propuestas nuevas; el **retoque de una propuesta** (el «Editar» de cada sección) vale solo para ese cliente y no toca la plantilla.
 - **El original nunca se pierde.** «Restaurar» lo devuelve. La plantilla es un
   historial (`migraciones/0006_textos.sql`): cada cambio es un asiento con quién y
   cuándo, que no se edita ni se elimina.

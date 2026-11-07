@@ -119,7 +119,7 @@ export function BuscadorCliente({
             <li key={cliente.codigo}>
               <button
                 type="button"
-                className="w-full rounded-campo border border-white/10 p-2.5 text-left hover:border-white/30"
+                className="w-full rounded-campo border border-linea p-2.5 text-left hover:border-linea-fuerte"
                 onClick={() => {
                   setTexto('');
                   setResultados([]);

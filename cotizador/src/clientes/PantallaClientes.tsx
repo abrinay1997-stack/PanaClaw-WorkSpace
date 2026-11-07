@@ -19,7 +19,7 @@ import {
 } from '../../../compartido/clientes';
 import { ES_DEMOSTRACION } from '../api/pedir';
 import { mensajeDe } from '../api/fallo';
-import { Pastilla, Seccion, VolverAlHub } from '../ui/componentes';
+import { Pastilla, Seccion, BotonDeTema, VolverAlHub } from '../ui/componentes';
 import { clientes } from './almacen';
 import { descargarCsv } from './exportar';
 
@@ -129,6 +129,7 @@ export function PantallaClientes({
           ← Volver al cotizador
         </button>
         <VolverAlHub />
+        <BotonDeTema />
         <h1 className="mr-auto text-lg font-semibold">
           Clientes
           <span className="ml-2 text-sm font-normal text-gris">
@@ -300,7 +301,7 @@ export function PantallaClientes({
                     {NOMBRE_ESTADO_CLIENTE[cliente.estado]}
                   </Pastilla>
                   {cliente.asesor ? (
-                    <span className="text-[0.6875rem] text-gris">{cliente.asesor}</span>
+                    <span className="text-[0.75rem] text-gris">{cliente.asesor}</span>
                   ) : null}
                 </div>
               </div>
@@ -358,6 +359,7 @@ function SinServidor({ alVolver }: { alVolver: () => void }) {
           ← Volver al cotizador
         </button>
         <VolverAlHub />
+        <BotonDeTema />
         <h1 className="text-lg font-semibold">Clientes</h1>
       </header>
 

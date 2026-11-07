@@ -29,10 +29,9 @@ import { PantallaHistorial } from './historial/PantallaHistorial';
 import { congelarTextos, conPlantilla } from './dominio/textos';
 import { cargarPlantilla, plantillaActual, refrescarPlantilla } from './textos/plantilla';
 import { PantallaTextos } from './textos/PantallaTextos';
-import { TextosDeLaPropuesta } from './textos/TextosDeLaPropuesta';
 import { abrirWhatsapp, copiarMensaje, descargarPdf, verPdf } from './ui/acciones';
-import { Simbolo, VolverAlHub } from './ui/componentes';
-import { PanelCatalogo } from './ui/PanelCatalogo';
+import { Simbolo, BotonDeTema, VolverAlHub } from './ui/componentes';
+import { HojaDeCatalogo } from './ui/HojaDeCatalogo';
 import {
   Alertas,
   DatosCliente,
@@ -40,12 +39,11 @@ import {
   LosDosTotales,
   PanelCondiciones,
   PlazoYCambios,
+  QueEsCadaCosa,
   QueNoIncluye,
 } from './ui/PanelPropuesta';
 import { usePropuesta } from './ui/usePropuesta';
 import { useRuta } from './ui/useRuta';
-
-type Panel = 'catalogo' | 'propuesta';
 
 export default function App() {
   const estado = usePropuesta();
@@ -139,7 +137,8 @@ function Cotizador({
   alTextos: () => void;
 }) {
   const { propuesta, despachar, totales, alertas, plan, itemsEnUso } = estado;
-  const [panel, setPanel] = useState<Panel>('catalogo');
+  // El catálogo ya no ocupa media pantalla: se abre desde «Incluir algo más».
+  const [catalogoAbierto, setCatalogoAbierto] = useState(false);
   const [aviso, setAviso] = useState('');
   const [emitiendo, setEmitiendo] = useState(false);
 
@@ -211,16 +210,17 @@ function Cotizador({
     nueva: () => {
       if (vacia || confirm('¿Descartar esta propuesta y empezar una nueva?')) {
         despachar({ tipo: 'reiniciar' });
-        setPanel('catalogo');
+        setCatalogoAbierto(false);
       }
     },
   };
 
   return (
-    <div className="flex min-h-screen flex-col pb-24 lg:pb-0">
-      <header className="cristal sticky top-0 z-30 border-b border-white/10">
+    <div className="flex min-h-screen flex-col pb-28">
+      <header className="cristal sticky top-0 z-30 border-b border-linea">
         <div className="mx-auto flex w-full max-w-[110rem] flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 lg:flex-nowrap lg:px-6">
           <VolverAlHub conFlecha />
+          <BotonDeTema />
           <Simbolo className="h-6 shrink-0 text-naranja" />
           <div className="mr-auto min-w-0">
             <h1 className="truncate text-sm font-semibold">Cotizador · {EMPRESA.nombre}</h1>
@@ -249,93 +249,74 @@ function Cotizador({
             </button>
           </nav>
 
-          <div className="hidden flex-wrap items-center gap-2 lg:flex">
-            <button type="button" className="boton boton-fantasma" onClick={acciones.nueva}>
-              Nueva
-            </button>
-            <button
-              type="button"
-              className="boton boton-secundario"
-              onClick={acciones.copiar}
-              disabled={bloqueada || emitiendo}
-            >
-              Copiar mensaje
-            </button>
-            <button
-              type="button"
-              className="boton boton-secundario"
-              onClick={acciones.whatsapp}
-              disabled={bloqueada || emitiendo}
-            >
-              WhatsApp
-            </button>
-            <button type="button" className="boton boton-secundario" onClick={acciones.ver} disabled={vacia}>
-              Vista previa
-            </button>
-            <button
-              type="button"
-              className="boton boton-primario"
-              onClick={acciones.descargar}
-              disabled={bloqueada || emitiendo}
-            >
-              {emitiendo ? 'Emitiendo…' : 'Emitir PDF'}
-            </button>
-          </div>
         </div>
 
-        <Conmutador panel={panel} alCambiar={setPanel} lineas={propuesta.lineas.length} />
       </header>
 
-      <main className="mx-auto flex w-full max-w-[110rem] flex-1 flex-col gap-6 p-4 lg:flex-row lg:p-6">
-        <aside
-          className={`tarjeta h-[calc(100vh-17rem)] overflow-hidden lg:sticky lg:top-24 lg:flex lg:h-[calc(100vh-8rem)] lg:w-[24rem] lg:shrink-0 ${
-            panel === 'catalogo' ? 'flex' : 'hidden'
-          }`}
-        >
-          <PanelCatalogo itemsEnUso={itemsEnUso} planActual={plan} alAgregar={agregar} />
-        </aside>
+      {/*
+        UNA columna, en el mismo orden que el documento: lo que se escribe aquí es lo
+        que sale en el PDF, de arriba abajo. Cada sección se edita en su sitio; el
+        catálogo no está a la vista, se abre desde «Incluir algo más».
+      */}
+      <main className="mx-auto w-full max-w-4xl flex-1 space-y-5 p-4 lg:p-6">
+        <Alertas alertas={alertas} />
+        <DatosCliente propuesta={propuesta} despachar={despachar} />
+        <ListaLineas
+          propuesta={propuesta}
+          despachar={despachar}
+          alertas={alertas}
+          alIncluir={() => setCatalogoAbierto(true)}
+        />
+        <QueNoIncluye propuesta={propuesta} despachar={despachar} />
+        <LosDosTotales totales={totales} propuesta={propuesta} despachar={despachar} />
+        <PlazoYCambios propuesta={propuesta} despachar={despachar} />
+        <QueEsCadaCosa propuesta={propuesta} despachar={despachar} />
+        <PanelCondiciones propuesta={propuesta} despachar={despachar} />
 
-        <div className={`min-w-0 flex-1 space-y-5 lg:block ${panel === 'propuesta' ? 'block' : 'hidden'}`}>
-          <Alertas alertas={alertas} />
-          <DatosCliente propuesta={propuesta} despachar={despachar} />
-          <ListaLineas propuesta={propuesta} despachar={despachar} alertas={alertas} />
-          <QueNoIncluye propuesta={propuesta} despachar={despachar} />
-          <LosDosTotales totales={totales} />
-          <PlazoYCambios propuesta={propuesta} />
-          <PanelCondiciones propuesta={propuesta} despachar={despachar} />
-          <TextosDeLaPropuesta propuesta={propuesta} despachar={despachar} />
-
-          <div className="flex flex-wrap gap-2 lg:hidden">
-            <button type="button" className="boton boton-fantasma" onClick={acciones.nueva}>
-              Nueva
-            </button>
-            <button
-              type="button"
-              className="boton boton-secundario"
-              onClick={acciones.copiar}
-              disabled={bloqueada || emitiendo}
-            >
-              Copiar mensaje
-            </button>
-            <button type="button" className="boton boton-secundario" onClick={acciones.ver} disabled={vacia}>
-              Vista previa
-            </button>
-          </div>
-
-          <PieCatalogo />
+        <div className="flex flex-wrap gap-2 lg:hidden">
+          <button type="button" className="boton boton-fantasma" onClick={acciones.nueva}>
+            Nueva
+          </button>
+          <button
+            type="button"
+            className="boton boton-secundario"
+            onClick={acciones.copiar}
+            disabled={bloqueada || emitiendo}
+          >
+            Copiar mensaje
+          </button>
+          <button type="button" className="boton boton-secundario" onClick={acciones.ver} disabled={vacia}>
+            Vista previa
+          </button>
         </div>
+
+        <PieCatalogo />
       </main>
 
-      <BarraMovil
+      <HojaDeCatalogo
+        abierta={catalogoAbierto}
+        alCerrar={() => setCatalogoAbierto(false)}
+        itemsEnUso={itemsEnUso}
+        planActual={plan}
+        alAgregar={agregar}
+        lineas={propuesta.lineas.length}
+      />
+
+      <BarraDeAcciones
         totales={totales}
         bloqueada={bloqueada || emitiendo}
+        vacia={vacia}
+        emitiendo={emitiendo}
+        alNueva={acciones.nueva}
+        alCopiar={acciones.copiar}
+        alVer={acciones.ver}
         alWhatsapp={acciones.whatsapp}
         alDescargar={acciones.descargar}
       />
 
       <div
         aria-live="polite"
-        className="pointer-events-none fixed inset-x-0 bottom-28 z-40 flex justify-center px-4 lg:bottom-6"
+        className="pointer-events-none fixed inset-x-0 bottom-24 z-[60] flex justify-center px-4"
       >
         {aviso ? (
           <p className="rounded-pastilla bg-blanco px-5 py-2 text-center text-sm font-semibold text-negro shadow-lg">
@@ -347,81 +328,62 @@ function Cotizador({
   );
 }
 
-/**
- * Conmutador entre catálogo y propuesta, solo en móvil.
- *
- * Son dos botones con `aria-pressed` y no un `tablist`: en escritorio los dos
- * paneles se ven a la vez y el conmutador desaparece, así que anunciarlos como
- * pestañas sería mentir sobre la mitad de los casos.
- */
-function Conmutador({
-  panel,
-  alCambiar,
-  lineas,
-}: {
-  panel: Panel;
-  alCambiar: (panel: Panel) => void;
-  lineas: number;
-}) {
-  const opciones: { clave: Panel; texto: string; contador?: number }[] = [
-    { clave: 'catalogo', texto: 'Catálogo' },
-    { clave: 'propuesta', texto: 'Propuesta', contador: lineas },
-  ];
-
-  return (
-    <div className="flex gap-2 border-t border-white/10 px-4 py-2 lg:hidden">
-      {opciones.map(({ clave, texto, contador }) => {
-        const activo = panel === clave;
-        return (
-          <button
-            key={clave}
-            type="button"
-            aria-pressed={activo}
-            onClick={() => alCambiar(clave)}
-            className={`boton flex-1 ${activo ? 'boton-primario' : 'boton-secundario'}`}
-          >
-            {texto}
-            {contador ? (
-              <span className="rounded-pastilla bg-black/25 px-2 py-0.5 text-xs">{contador}</span>
-            ) : null}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
 /** Las dos cifras siempre a la vista y las dos acciones de envío, en móvil. */
-function BarraMovil({
+function BarraDeAcciones({
   totales,
   bloqueada,
+  vacia,
+  alNueva,
+  alCopiar,
+  alVer,
   alWhatsapp,
   alDescargar,
+  emitiendo,
 }: {
   totales: ReturnType<typeof usePropuesta>['totales'];
   bloqueada: boolean;
+  vacia: boolean;
+  alNueva: () => void;
+  alCopiar: () => void;
+  alVer: () => void;
   alWhatsapp: () => void;
   alDescargar: () => void;
+  emitiendo: boolean;
 }) {
   return (
     <section
       aria-label="Totales y envío de la propuesta"
-      className="cristal fixed inset-x-0 bottom-0 z-30 border-t border-white/10 px-4 py-3 lg:hidden"
+      className="cristal fixed inset-x-0 bottom-0 z-30 border-t border-linea px-4 py-3"
     >
-      <div className="flex items-center gap-3">
+      <div className="mx-auto flex w-full max-w-4xl items-center gap-3">
         <div className="mr-auto min-w-0">
-          <p className="text-sm font-semibold text-naranja">{formato(totales.unico)}</p>
-          <p className="truncate text-[0.6875rem] text-gris">
+          <p className="text-base font-semibold text-naranja">{formato(totales.unico)}</p>
+          <p className="truncate text-xs text-gris">
             {esCero(totales.mensual)
-              ? 'pago único'
+              ? 'pago único, más ITBMS'
               : `pago único · y ${formatoMensual(totales.mensual)}`}
           </p>
         </div>
+
+        {/* Las acciones de apoyo solo en pantalla ancha; en el móvil bajan a una fila
+            dentro de la propuesta, para que la barra no tape lo que se escribe. */}
+        <div className="hidden items-center gap-2 lg:flex">
+          <button type="button" className="boton boton-fantasma" onClick={alNueva}>
+            Nueva
+          </button>
+          <button type="button" className="boton boton-secundario" onClick={alCopiar} disabled={bloqueada}>
+            Copiar mensaje
+          </button>
+          <button type="button" className="boton boton-secundario" onClick={alVer} disabled={vacia}>
+            Vista previa
+          </button>
+        </div>
+
         <button type="button" className="boton boton-secundario" onClick={alWhatsapp} disabled={bloqueada}>
           WhatsApp
         </button>
         <button type="button" className="boton boton-primario" onClick={alDescargar} disabled={bloqueada}>
-          PDF
+          {emitiendo ? 'Emitiendo…' : 'Emitir PDF'}
         </button>
       </div>
     </section>
@@ -432,7 +394,7 @@ function BarraMovil({
 function PieCatalogo() {
   return (
     <p className="tarjeta p-5 text-xs leading-relaxed text-gris">
-      Todos los importes salen de <code className="rounded bg-white/10 px-1">datos/precios.json</code>,
+      Todos los importes salen de <code className="rounded bg-velo-fuerte px-1">datos/precios.json</code>,
       que es la fuente única de cifras de la marca y espejo del repositorio del sitio. El cotizador
       no inventa ninguna: si un precio cambia allí, cambia aquí, en el PDF y en el mensaje a la vez.
     </p>

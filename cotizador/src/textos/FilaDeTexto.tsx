@@ -51,7 +51,7 @@ export function FilaDeTexto({ def, vigente, base, etiquetaGuardar, alGuardar, au
   };
 
   return (
-    <div className="border-t border-white/10 py-4 first:border-t-0 first:pt-0">
+    <div className="border-t border-linea py-4 first:border-t-0 first:pt-0">
       <div className="flex flex-wrap items-center gap-2">
         <h4 className="text-sm font-semibold text-blanco">{def.titulo}</h4>
         {editado ? (

@@ -28,7 +28,7 @@ import { aCentavos, dolares, NOMBRE_METODO, type Metodo } from '../../../compart
 import { mensajeDe } from '../api/fallo';
 import { ES_DEMOSTRACION } from '../api/pedir';
 import { hoyISO } from '../dominio/formato';
-import { Pastilla, Seccion, VolverAlHub } from '../ui/componentes';
+import { Pastilla, Seccion, BotonDeTema, VolverAlHub } from '../ui/componentes';
 import { descargarTexto } from '../ui/csv';
 import { almacenContabilidad } from './almacenContabilidad';
 import { cobrosACsv, gastosACsv } from './exportar';
@@ -65,6 +65,7 @@ export function PantallaContabilidad({ alVolver }: { alVolver: () => void }) {
           ← Volver al cotizador
         </button>
         <VolverAlHub />
+        <BotonDeTema />
         <h1 className="text-lg font-semibold">Contabilidad</h1>
       </header>
 
@@ -225,7 +226,7 @@ function Desglose({ titulo, filas }: { titulo: string; filas: { nombre: string; 
   return (
     <div>
       <h3 className="antetitulo">{titulo}</h3>
-      <ul className="mt-2 divide-y divide-white/10 text-sm">
+      <ul className="mt-2 divide-y divide-linea text-sm">
         {filas.map((f) => (
           <li key={f.nombre} className="flex justify-between py-1.5">
             <span>{f.nombre}</span>
@@ -268,7 +269,7 @@ function CuentasPorCobrar({ datos }: { datos: ContabilidadDelPeriodo }) {
             </div>
           </dl>
 
-          <ul className="mt-4 divide-y divide-white/10 text-sm">
+          <ul className="mt-4 divide-y divide-linea text-sm">
             {a.cuentas.map((c) => (
               <li key={c.numero} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
                 <span className="font-semibold text-blanco">{c.negocio || 'Sin nombre'}</span>
@@ -309,7 +310,7 @@ function Cobros({ datos, desde, hasta }: { datos: ContabilidadDelPeriodo; desde:
       }
     >
       {datos.cobros.length ? (
-        <ul className="divide-y divide-white/10 text-sm">
+        <ul className="divide-y divide-linea text-sm">
           {datos.cobros.map((c) => (
             <li key={c.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
               <span className="text-xs text-gris">{c.fecha}</span>
@@ -410,7 +411,7 @@ function Gastos({
       }
     >
       {datos.gastos.length ? (
-        <ul className="divide-y divide-white/10 text-sm">
+        <ul className="divide-y divide-linea text-sm">
           {datos.gastos.map((g) => (
             <li key={g.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
               <span className="text-xs text-gris">{g.fecha}</span>
@@ -599,7 +600,7 @@ function CierreDeMes({ alCambiar }: { alCambiar: () => Promise<void> }) {
           </div>
 
           {estado.historial.length ? (
-            <ul className="mt-4 divide-y divide-white/10 text-xs text-gris">
+            <ul className="mt-4 divide-y divide-linea text-xs text-gris">
               {estado.historial.map((h) => (
                 <li key={h.id} className="py-1.5">
                   {h.accion === 'cerrar' ? 'Cerrado' : 'Reabierto'} el {h.en.slice(0, 10)} por {h.por}
