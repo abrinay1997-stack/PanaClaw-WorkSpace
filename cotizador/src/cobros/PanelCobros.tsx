@@ -24,6 +24,7 @@ import { almacenCobros } from './almacenCobros';
 const VACIO: LibroDeCobros = {
   cobros: [],
   resumen: { debidoCentavos: null, cobradoCentavos: 0, pendienteCentavos: null },
+  hitos: null,
 };
 
 export function PanelCobros({ numero }: { numero: string }) {
@@ -107,6 +108,20 @@ export function PanelCobros({ numero }: { numero: string }) {
             resaltar={resumen.pendienteCentavos! > 0}
           />
         </dl>
+      ) : null}
+
+      {libro.hitos ? (
+        <ul className="mt-4 space-y-1.5 text-xs" aria-label="Etapas del pago">
+          {libro.hitos.map((h) => (
+            <li key={h.nombre} className="flex items-center gap-2">
+              <span className={h.cubierto ? 'font-semibold text-blanco' : 'text-gris'}>
+                {h.cubierto ? 'Cubierto' : 'Pendiente'}
+              </span>
+              <span>{h.nombre}</span>
+              <span className="ml-auto font-semibold text-blanco">{dolares(h.centavos)}</span>
+            </li>
+          ))}
+        </ul>
       ) : null}
 
       {libro.cobros.length ? (

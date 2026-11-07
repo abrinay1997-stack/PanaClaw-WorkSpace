@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { aCentavos, dolares, resumenDeCobros, type Cobro } from '../../../compartido/cobros';
 import { itemDe } from './catalogo';
-import { debidoCentavos, lineaDesde } from './propuesta';
+import { debidoCentavos, hitosDe, lineaDesde } from './propuesta';
 import type { Linea } from './tipos';
 
 let n = 0;
@@ -48,6 +48,42 @@ describe('lo debido: la misma cuenta que el PDF', () => {
   it('con el rango cerrado a una cifra sí', () => {
     const cerrada = { ...linea('web-start'), precio: { min: 100, max: 100 } };
     expect(debidoCentavos([cerrada])).toBe(10700);
+  });
+});
+
+describe('etapas del pago', () => {
+  const web = [linea('web-start')];
+  const debido = debidoCentavos(web)!;
+
+  it('un plan web se cobra mitad y mitad, y las dos mitades suman exactamente lo debido', () => {
+    const hitos = hitosDe(web, debido, 0)!;
+    expect(hitos.map((h) => h.nombre)).toEqual(['50 % al empezar', '50 % al entregar']);
+    expect(hitos[0]!.centavos + hitos[1]!.centavos).toBe(debido);
+  });
+
+  it('con un monto impar de centavos, la segunda etapa se queda con el centavo que sobra', () => {
+    // $315.65 = 31565 centavos: la mitad redondeada es 15783 y queda 15782.
+    expect(debido % 2).toBe(1);
+    const [anticipo, saldo] = hitosDe(web, debido, 0)!;
+    expect(anticipo!.centavos).toBe(Math.round(debido / 2));
+    expect(saldo!.centavos).toBe(debido - anticipo!.centavos);
+  });
+
+  it('cada etapa se da por cubierta cuando lo cobrado la alcanza', () => {
+    const [anticipo] = hitosDe(web, debido, 0)!;
+    expect(hitosDe(web, debido, 0)!.map((h) => h.cubierto)).toEqual([false, false]);
+    expect(hitosDe(web, debido, anticipo!.centavos)!.map((h) => h.cubierto)).toEqual([true, false]);
+    expect(hitosDe(web, debido, debido)!.map((h) => h.cubierto)).toEqual([true, true]);
+  });
+
+  it('si la propuesta mezcla formas de cobro, no hay etapas: no se inventa un calendario', () => {
+    expect(hitosDe([linea('web-start'), linea('diagnostico')], 50000, 0)).toBeNull();
+    expect(hitosDe([linea('ebot')], 50000, 0)).toBeNull();
+  });
+
+  it('sin cifra debida o sin nada que cobrar, no hay etapas', () => {
+    expect(hitosDe(web, null, 0)).toBeNull();
+    expect(hitosDe([linea('care-base')], 0, 0)).toBeNull();
   });
 });
 

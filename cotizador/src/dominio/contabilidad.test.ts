@@ -4,11 +4,16 @@ import {
   anioDe,
   antiguedadDe,
   diasEntre,
+  esMes,
   itbmsIncluido,
   mesAnteriorDe,
   mesDe,
+  mesDeFecha,
+  periodoAnteriorDe,
   resumirPeriodo,
+  sumarDiasISO,
   tramoDe,
+  variacion,
 } from '../../../compartido/contabilidad';
 import { ITBMS } from './catalogo';
 
@@ -123,6 +128,46 @@ describe('antigüedad de las cuentas por cobrar', () => {
     const suma = Object.values(a.porTramo).reduce((s, v) => s + v, 0);
     expect(suma).toBe(a.pendienteCentavos);
     expect(a.pendienteCentavos).toBe(95475);
+  });
+});
+
+describe('comparar con el periodo anterior', () => {
+  it('un mes completo se compara con el mes anterior completo, no con «los 30 días de antes»', () => {
+    expect(periodoAnteriorDe('2026-03-01', '2026-03-31')).toEqual({ desde: '2026-02-01', hasta: '2026-02-28' });
+    expect(periodoAnteriorDe('2026-01-01', '2026-01-31')).toEqual({ desde: '2025-12-01', hasta: '2025-12-31' });
+  });
+
+  it('cualquier otro periodo se compara con el tramo de la misma duración que lo precede', () => {
+    // 10 al 19 de noviembre (10 días) → 31 de octubre al 9 de noviembre... los 10 días anteriores.
+    expect(periodoAnteriorDe('2026-11-10', '2026-11-19')).toEqual({ desde: '2026-10-31', hasta: '2026-11-09' });
+    expect(periodoAnteriorDe('2026-11-01', '2026-11-15')).toEqual({ desde: '2026-10-17', hasta: '2026-10-31' });
+  });
+
+  it('el año completo se compara con el tramo de 365 días anterior', () => {
+    expect(periodoAnteriorDe('2026-01-01', '2026-12-31')).toEqual({ desde: '2025-01-01', hasta: '2025-12-31' });
+  });
+
+  it('suma días cruzando meses y años', () => {
+    expect(sumarDiasISO('2026-12-31', 1)).toBe('2027-01-01');
+    expect(sumarDiasISO('2026-03-01', -1)).toBe('2026-02-28');
+  });
+
+  it('la variación es la diferencia y su porcentaje, y sin base no inventa un porcentaje', () => {
+    expect(variacion(120, 100)).toEqual({ diferencia: 20, porcentaje: 20 });
+    expect(variacion(80, 100)).toEqual({ diferencia: -20, porcentaje: -20 });
+    expect(variacion(50, 0)).toEqual({ diferencia: 50, porcentaje: null });
+    expect(variacion(-50, -100).porcentaje).toBe(50);
+  });
+});
+
+describe('meses', () => {
+  it('reconoce un mes bien escrito y rechaza lo demás', () => {
+    for (const bueno of ['2026-01', '2026-12']) expect(esMes(bueno), bueno).toBe(true);
+    for (const malo of ['2026-13', '2026-00', '2026-1', 'octubre', '2026-10-01', '', 7, null]) expect(esMes(malo), String(malo)).toBe(false);
+  });
+
+  it('saca el mes de una fecha', () => {
+    expect(mesDeFecha('2026-11-07')).toBe('2026-11');
   });
 });
 

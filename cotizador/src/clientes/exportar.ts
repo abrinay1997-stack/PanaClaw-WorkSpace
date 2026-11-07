@@ -9,6 +9,7 @@
 
 import type { Cliente } from '../../../compartido/clientes';
 import { NOMBRE_ESTADO_CLIENTE } from '../../../compartido/clientes';
+import { celda } from '../ui/csv';
 
 /** Los títulos, en el orden en que salen. */
 const COLUMNAS: { titulo: string; de: (c: Cliente) => string }[] = [
@@ -30,19 +31,6 @@ const COLUMNAS: { titulo: string; de: (c: Cliente) => string }[] = [
   { titulo: 'Notas', de: (c) => c.notas },
   { titulo: 'Alta', de: (c) => c.creadoEn.slice(0, 10) },
 ];
-
-/**
- * Una celda, escapada.
- *
- * Se entrecomilla siempre que haya punto y coma, comillas o salto de línea.
- * Y se antepone un apóstrofo a lo que empiece por `=`, `+`, `-` o `@`: son los
- * cuatro caracteres con los que Excel entiende que una celda es una fórmula, y
- * un teléfono escrito «+507…» abre una hoja con un error en vez de un número.
- */
-function celda(valor: string): string {
-  const conFormula = /^[=+\-@]/.test(valor) ? `'${valor}` : valor;
-  return /[";\n\r]/.test(conFormula) ? `"${conFormula.replace(/"/g, '""')}"` : conFormula;
-}
 
 export function aCsv(lista: readonly Cliente[]): string {
   const filas = [

@@ -1,6 +1,6 @@
 /**
- * La contabilidad ligera: el libro de gastos, el resumen del periodo y las
- * cuentas por cobrar.
+ * La contabilidad ligera: el libro de gastos, el resumen del periodo, las cuentas
+ * por cobrar y el cierre de mes.
  *
  * Todo sale de los libros —cobros y gastos— sumando asientos. No hay cifras
  * guardadas aparte, y por eso el resumen no puede discrepar de los asientos que
@@ -9,16 +9,25 @@
  *
  * El libro de gastos se rige como el de cobros: lo escrito no se edita ni se
  * elimina (la base lo impide) y un error se corrige con un asiento contrario.
+ * Y en un mes cerrado no se escribe nada en ninguno de los dos.
  */
 
 import {
   antiguedadDe,
   esCategoria,
+  esMes,
   mesDe,
+  mesDeFecha,
+  periodoAnteriorDe,
   resumirPeriodo,
+  type AsientoDeCierre,
+  type Chequeo,
+  type CobroDelPeriodo,
   type ContabilidadDelPeriodo,
+  type EstadoDeCierre,
   type Gasto,
   type NuevoGasto,
+  type ResumenContable,
 } from '../compartido/contabilidad';
 import { ITBMS } from '../cotizador/src/dominio/catalogo';
 import { debidoCentavos } from '../cotizador/src/dominio/propuesta';
@@ -67,6 +76,219 @@ export function periodoDeUrl(url: URL, hoy: string): { desde: string; hasta: str
   return { desde, hasta };
 }
 
+/* ------------------------------------------------------------------ *
+ * Cierre de mes
+ * ------------------------------------------------------------------ */
+
+/** Los meses cuyo último asiento es «cerrar». */
+export async function mesesCerrados(base: D1Database): Promise<Set<string>> {
+  const { results } = await base
+    .prepare('SELECT mes, accion FROM cierres_mes ORDER BY id')
+    .all<{ mes: string; accion: string }>();
+  const cerrados = new Set<string>();
+  for (const { mes, accion } of results) {
+    if (accion === 'cerrar') cerrados.add(mes);
+    else cerrados.delete(mes);
+  }
+  return cerrados;
+}
+
+/**
+ * Rechaza escribir en un mes cerrado.
+ *
+ * Lo llaman todos los caminos que escriben en un libro —registrar y corregir,
+ * cobros y gastos—, con la fecha del asiento. Una corrección lleva la fecha del
+ * original, así que corregir algo de un mes cerrado también exige reabrirlo.
+ */
+export async function exigirMesAbierto(base: D1Database, fecha: string): Promise<void> {
+  const mes = mesDeFecha(fecha);
+  if ((await mesesCerrados(base)).has(mes)) {
+    throw new ErrorPeticion(
+      400,
+      'invalida',
+      `El mes ${mes} está cerrado, así que no admite cambios. Reábrelo en Contabilidad si de verdad hace falta.`,
+    );
+  }
+}
+
+/** Los meses que toca un periodo, de `2026-10` a `2026-12`. Con tope, por si alguien pide veinte años. */
+function mesesEntre(desde: string, hasta: string): string[] {
+  const meses: string[] = [];
+  let [anio, mes] = desde.split('-').map(Number) as [number, number];
+  const [anioFin, mesFin] = hasta.split('-').map(Number) as [number, number];
+  while ((anio < anioFin || (anio === anioFin && mes <= mesFin)) && meses.length < 36) {
+    meses.push(`${anio}-${String(mes).padStart(2, '0')}`);
+    mes += 1;
+    if (mes > 12) {
+      mes = 1;
+      anio += 1;
+    }
+  }
+  return meses;
+}
+
+async function historialDeCierres(base: D1Database, mes: string): Promise<AsientoDeCierre[]> {
+  const { results } = await base
+    .prepare('SELECT id, mes, accion, motivo, por, en FROM cierres_mes WHERE mes = ? ORDER BY id')
+    .bind(mes)
+    .all<AsientoDeCierre>();
+  return results;
+}
+
+/**
+ * La lista de chequeo de un mes, con datos reales.
+ *
+ * Solo una comprobación impide el cierre: que el mes haya terminado. Las demás
+ * avisan. Cerrar es reversible (se reabre, con motivo), pero un aviso ignorado
+ * a ciegas no lo es, y por eso se enseñan todos.
+ */
+async function chequeoDelMes(base: D1Database, mes: string, hoy: string, cerrados: Set<string>): Promise<Chequeo[]> {
+  const { desde, hasta } = mesDe(`${mes}-01`);
+  const chequeo: Chequeo[] = [];
+
+  const terminado = mes < mesDeFecha(hoy);
+  chequeo.push({
+    clave: 'mes-terminado',
+    titulo: 'El mes ya terminó',
+    ok: terminado,
+    bloquea: true,
+    detalle: terminado ? `${mes} ya pasó.` : 'Un mes que sigue en curso todavía recibe cobros y gastos: se cierra cuando termina.',
+  });
+
+  const anterior = periodoAnteriorDe(desde, hasta);
+  const mesAnterior = mesDeFecha(anterior.desde);
+  const huboAntes = (await historialDeCierres(base, mesAnterior)).length > 0;
+  const anteriorOk = cerrados.has(mesAnterior) || !huboAntes;
+  chequeo.push({
+    clave: 'mes-anterior',
+    titulo: 'El mes anterior está cerrado',
+    ok: anteriorOk,
+    bloquea: false,
+    detalle: anteriorOk
+      ? 'En orden.'
+      : `${mesAnterior} se cerró alguna vez y hoy está abierto: conviene cerrar los meses en orden.`,
+  });
+
+  const { results: gastos } = await base
+    .prepare('SELECT COUNT(*) AS n FROM gastos WHERE fecha BETWEEN ? AND ? AND corrige_a IS NULL')
+    .bind(desde, hasta)
+    .all<{ n: number }>();
+  const nGastos = Number(gastos[0]?.n ?? 0);
+  chequeo.push({
+    clave: 'gastos-del-mes',
+    titulo: 'Hay gastos registrados',
+    ok: nGastos > 0,
+    bloquea: false,
+    detalle:
+      nGastos > 0
+        ? `${nGastos} ${nGastos === 1 ? 'gasto' : 'gastos'} en el mes.`
+        : 'No hay ningún gasto en el mes. Si pagaste servidores, dominio o herramientas, falta registrarlos.',
+  });
+
+  const { results: aceptadas } = await base
+    .prepare(
+      `SELECT p.numero, p.negocio, p.documento,
+              COALESCE((SELECT SUM(c.centavos) FROM cobros c WHERE c.propuesta = p.numero), 0) AS cobrado
+         FROM propuestas p
+        WHERE p.estado = 'aceptada' AND p.eliminada_en IS NULL
+          AND substr(COALESCE(p.estado_en, p.emitida_en), 1, 10) BETWEEN ? AND ?`,
+    )
+    .bind(desde, hasta)
+    .all<{ numero: string; negocio: string; documento: string; cobrado: number }>();
+  const sinCobro = aceptadas.filter((p) => {
+    const debido = debidoCentavos((JSON.parse(p.documento) as Propuesta).lineas);
+    return debido !== null && debido > 0 && Number(p.cobrado) === 0;
+  });
+  chequeo.push({
+    clave: 'aceptadas-sin-cobro',
+    titulo: 'Lo aceptado este mes tiene algún cobro',
+    ok: sinCobro.length === 0,
+    bloquea: false,
+    detalle: sinCobro.length
+      ? `Sin ningún cobro todavía: ${sinCobro.map((p) => p.negocio || p.numero).join(', ')}.`
+      : 'Todo lo aceptado en el mes tiene al menos un cobro.',
+  });
+
+  return chequeo;
+}
+
+export async function estadoDeCierre(base: D1Database, mes: string, hoy: string): Promise<EstadoDeCierre> {
+  if (!esMes(mes)) {
+    throw new ErrorPeticion(400, 'invalida', 'El mes tiene que ser como 2026-11.');
+  }
+  const cerrados = await mesesCerrados(base);
+  const historial = await historialDeCierres(base, mes);
+  const ultimoCierre = [...historial].reverse().find((h) => h.accion === 'cerrar');
+
+  let resumenAlCerrar: ResumenContable | null = null;
+  if (cerrados.has(mes) && ultimoCierre) {
+    const fila = await base.prepare('SELECT resumen FROM cierres_mes WHERE id = ?').bind(ultimoCierre.id).first<{ resumen: string | null }>();
+    resumenAlCerrar = fila?.resumen ? (JSON.parse(fila.resumen) as ResumenContable) : null;
+  }
+
+  return {
+    mes,
+    cerrado: cerrados.has(mes),
+    historial,
+    chequeo: await chequeoDelMes(base, mes, hoy, cerrados),
+    resumenAlCerrar,
+  };
+}
+
+export async function cerrarMes(base: D1Database, peticion: Request, correo: string, hoy: string): Promise<EstadoDeCierre> {
+  const cuerpo = await cuerpoJson<{ mes?: unknown; nota?: unknown }>(peticion);
+  if (!esMes(cuerpo.mes)) {
+    throw new ErrorPeticion(400, 'invalida', 'El mes tiene que ser como 2026-11.');
+  }
+  const mes = cuerpo.mes;
+
+  const estado = await estadoDeCierre(base, mes, hoy);
+  if (estado.cerrado) {
+    throw new ErrorPeticion(400, 'invalida', `El mes ${mes} ya está cerrado.`);
+  }
+  const impide = estado.chequeo.find((c) => c.bloquea && !c.ok);
+  if (impide) {
+    throw new ErrorPeticion(400, 'invalida', impide.detalle);
+  }
+
+  // La foto del mes tal como está ahora, para poder compararla después.
+  const { desde, hasta } = mesDe(`${mes}-01`);
+  const { resumen } = await librosDe(base, desde, hasta);
+
+  await base
+    .prepare('INSERT INTO cierres_mes (mes, accion, motivo, resumen, por, en) VALUES (?, ?, ?, ?, ?, ?)')
+    .bind(mes, 'cerrar', texto(cuerpo.nota, 500), JSON.stringify(resumen), correo, new Date().toISOString())
+    .run();
+
+  return estadoDeCierre(base, mes, hoy);
+}
+
+export async function reabrirMes(base: D1Database, peticion: Request, correo: string, hoy: string): Promise<EstadoDeCierre> {
+  const cuerpo = await cuerpoJson<{ mes?: unknown; motivo?: unknown }>(peticion);
+  if (!esMes(cuerpo.mes)) {
+    throw new ErrorPeticion(400, 'invalida', 'El mes tiene que ser como 2026-11.');
+  }
+  const mes = cuerpo.mes;
+  const motivo = texto(cuerpo.motivo, 500);
+  if (!motivo) {
+    throw new ErrorPeticion(400, 'invalida', 'Escribe por qué se reabre el mes. Queda escrito en el historial.');
+  }
+  if (!(await mesesCerrados(base)).has(mes)) {
+    throw new ErrorPeticion(400, 'invalida', `El mes ${mes} no está cerrado.`);
+  }
+
+  await base
+    .prepare('INSERT INTO cierres_mes (mes, accion, motivo, por, en) VALUES (?, ?, ?, ?, ?)')
+    .bind(mes, 'reabrir', motivo, correo, new Date().toISOString())
+    .run();
+
+  return estadoDeCierre(base, mes, hoy);
+}
+
+/* ------------------------------------------------------------------ *
+ * El resumen del periodo
+ * ------------------------------------------------------------------ */
+
 async function gastosDelPeriodo(base: D1Database, desde: string, hasta: string): Promise<Gasto[]> {
   const { results } = await base
     .prepare('SELECT * FROM gastos WHERE fecha BETWEEN ? AND ? ORDER BY fecha DESC, id DESC')
@@ -75,16 +297,40 @@ async function gastosDelPeriodo(base: D1Database, desde: string, hasta: string):
   return results.map(aGasto);
 }
 
-/** El resumen, las cuentas por cobrar y los gastos de un periodo. */
-export async function contabilidad(base: D1Database, desde: string, hasta: string, hoy: string): Promise<ContabilidadDelPeriodo> {
-  const gastos = await gastosDelPeriodo(base, desde, hasta);
-
-  const { results: cobros } = await base
-    .prepare('SELECT centavos, metodo FROM cobros WHERE fecha BETWEEN ? AND ?')
+async function cobrosDelPeriodo(base: D1Database, desde: string, hasta: string): Promise<CobroDelPeriodo[]> {
+  const { results } = await base
+    .prepare(
+      `SELECT c.id, c.propuesta, p.negocio, c.fecha, c.centavos, c.metodo, c.referencia, c.corrige_a
+         FROM cobros c JOIN propuestas p ON p.numero = c.propuesta
+        WHERE c.fecha BETWEEN ? AND ?
+        ORDER BY c.fecha DESC, c.id DESC`,
+    )
     .bind(desde, hasta)
-    .all<{ centavos: number; metodo: string }>();
+    .all<Record<string, unknown>>();
+  return results.map((f) => ({
+    id: Number(f.id),
+    propuesta: String(f.propuesta),
+    negocio: String(f.negocio ?? ''),
+    fecha: String(f.fecha),
+    centavos: Number(f.centavos),
+    metodo: String(f.metodo),
+    referencia: String(f.referencia ?? ''),
+    corrigeA: f.corrige_a === null || f.corrige_a === undefined ? null : Number(f.corrige_a),
+  }));
+}
 
-  const resumen = resumirPeriodo(desde, hasta, cobros, gastos, ITBMS.tasa);
+async function librosDe(base: D1Database, desde: string, hasta: string) {
+  const [gastos, cobros] = await Promise.all([gastosDelPeriodo(base, desde, hasta), cobrosDelPeriodo(base, desde, hasta)]);
+  return { gastos, cobros, resumen: resumirPeriodo(desde, hasta, cobros, gastos, ITBMS.tasa) };
+}
+
+/** El resumen, la comparación, las cuentas por cobrar y los asientos de un periodo. */
+export async function contabilidad(base: D1Database, desde: string, hasta: string, hoy: string): Promise<ContabilidadDelPeriodo> {
+  const { gastos, cobros, resumen } = await librosDe(base, desde, hasta);
+  const previo = periodoAnteriorDe(desde, hasta);
+  const { resumen: anterior } = await librosDe(base, previo.desde, previo.hasta);
+
+  const cerrados = await mesesCerrados(base);
 
   // Las cuentas por cobrar son lo aceptado que todavía no se ha cobrado entero,
   // sin importar el periodo: una deuda de hace tres meses sigue siéndolo.
@@ -116,8 +362,20 @@ export async function contabilidad(base: D1Database, desde: string, hasta: strin
     ];
   });
 
-  return { resumen, antiguedad: antiguedadDe(entradas, hoy), gastos, hoy };
+  return {
+    resumen,
+    anterior,
+    antiguedad: antiguedadDe(entradas, hoy),
+    gastos,
+    cobros,
+    mesesCerrados: mesesEntre(mesDeFecha(desde), mesDeFecha(hasta)).filter((m) => cerrados.has(m)),
+    hoy,
+  };
 }
+
+/* ------------------------------------------------------------------ *
+ * Gastos
+ * ------------------------------------------------------------------ */
 
 export async function registrarGasto(base: D1Database, peticion: Request, correo: string): Promise<Gasto[]> {
   const cuerpo = await cuerpoJson<Partial<NuevoGasto>>(peticion);
@@ -141,6 +399,7 @@ export async function registrarGasto(base: D1Database, peticion: Request, correo
   if (!proveedor) {
     throw new ErrorPeticion(400, 'invalida', 'Escribe a quién se le pagó.');
   }
+  await exigirMesAbierto(base, fecha);
 
   await base
     .prepare(
@@ -180,6 +439,7 @@ export async function corregirGasto(base: D1Database, id: number, peticion: Requ
   if (gasto.corrigeA !== null || gasto.centavos < 0) {
     throw new ErrorPeticion(400, 'invalida', 'Una corrección no se corrige: registra el gasto de nuevo.');
   }
+  await exigirMesAbierto(base, gasto.fecha);
 
   try {
     await base

@@ -17,8 +17,9 @@ import {
   type LibroDeCobros,
   type NuevoCobro,
 } from '../compartido/cobros';
-import { debidoCentavos } from '../cotizador/src/dominio/propuesta';
+import { debidoCentavos, hitosDe } from '../cotizador/src/dominio/propuesta';
 import type { Propuesta } from '../cotizador/src/dominio/tipos';
+import { exigirMesAbierto } from './contabilidad';
 import { cuerpoJson, ErrorPeticion, texto } from './http';
 
 const FECHA = /^\d{4}-\d{2}-\d{2}$/;
@@ -49,25 +50,33 @@ async function propuestaDe(base: D1Database, numero: string) {
   if (!fila) {
     throw new ErrorPeticion(404, 'no-encontrada', `No hay ninguna propuesta ${numero}.`);
   }
+  const lineas = (JSON.parse(fila.documento) as Propuesta).lineas;
   return {
     estado: fila.estado,
     enPapelera: fila.eliminada_en !== null,
-    debido: debidoCentavos((JSON.parse(fila.documento) as Propuesta).lineas),
+    debido: debidoCentavos(lineas),
+    lineas,
   };
 }
 
-async function librosDe(base: D1Database, numero: string, debido: number | null): Promise<LibroDeCobros> {
+async function librosDe(
+  base: D1Database,
+  numero: string,
+  debido: number | null,
+  lineas: Propuesta['lineas'],
+): Promise<LibroDeCobros> {
   const { results } = await base
     .prepare('SELECT * FROM cobros WHERE propuesta = ? ORDER BY fecha, id')
     .bind(numero)
     .all<Record<string, unknown>>();
   const cobros = results.map(aCobro);
-  return { cobros, resumen: resumenDeCobros(debido, cobros) };
+  const resumen = resumenDeCobros(debido, cobros);
+  return { cobros, resumen, hitos: hitosDe(lineas, debido, resumen.cobradoCentavos) };
 }
 
 export async function listar(base: D1Database, numero: string): Promise<LibroDeCobros> {
   const propuesta = await propuestaDe(base, numero);
-  return librosDe(base, numero, propuesta.debido);
+  return librosDe(base, numero, propuesta.debido, propuesta.lineas);
 }
 
 export async function registrar(
@@ -107,7 +116,9 @@ export async function registrar(
     throw new ErrorPeticion(400, 'invalida', 'La fecha del cobro no es válida.');
   }
 
-  const libro = await librosDe(base, numero, propuesta.debido);
+  await exigirMesAbierto(base, fecha);
+
+  const libro = await librosDe(base, numero, propuesta.debido, propuesta.lineas);
   // Cobrar de más es un error de tecleo casi siempre. Un saldo a favor es una
   // decisión que se toma a propósito y que este libro todavía no sabe llevar.
   if (centavos > (libro.resumen.pendienteCentavos ?? 0)) {
@@ -132,7 +143,7 @@ export async function registrar(
     )
     .run();
 
-  return librosDe(base, numero, propuesta.debido);
+  return librosDe(base, numero, propuesta.debido, propuesta.lineas);
 }
 
 /** Corrige un cobro con un asiento contrario. El original no se toca. */
@@ -162,6 +173,8 @@ export async function corregir(
     throw new ErrorPeticion(400, 'invalida', 'Una corrección no se corrige: registra el cobro de nuevo.');
   }
 
+  await exigirMesAbierto(base, cobro.fecha);
+
   try {
     await base
       .prepare(
@@ -186,5 +199,5 @@ export async function corregir(
     throw new ErrorPeticion(400, 'invalida', 'Ese cobro ya fue corregido.');
   }
 
-  return librosDe(base, numero, propuesta.debido);
+  return librosDe(base, numero, propuesta.debido, propuesta.lineas);
 }

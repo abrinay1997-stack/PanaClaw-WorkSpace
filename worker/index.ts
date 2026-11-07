@@ -177,6 +177,16 @@ async function enrutarContabilidad(
     const { desde, hasta } = contable.periodoDeUrl(url, hoy);
     return json(await contable.contabilidad(base, desde, hasta, hoy));
   }
+  if (ruta === 'contabilidad/cierre' && metodo === 'GET') {
+    const hoy = contable.hoyEnPanama();
+    return json(await contable.estadoDeCierre(base, url.searchParams.get('mes') ?? '', hoy));
+  }
+  if (ruta === 'contabilidad/cerrar' && metodo === 'POST') {
+    return json(await contable.cerrarMes(base, peticion, correo, contable.hoyEnPanama()), 201);
+  }
+  if (ruta === 'contabilidad/reabrir' && metodo === 'POST') {
+    return json(await contable.reabrirMes(base, peticion, correo, contable.hoyEnPanama()));
+  }
   if (ruta === 'gastos' && metodo === 'POST') {
     return json(await contable.registrarGasto(base, peticion, correo), 201);
   }

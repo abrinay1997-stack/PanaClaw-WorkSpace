@@ -59,9 +59,18 @@ export interface ResumenCobros {
   pendienteCentavos: number | null;
 }
 
+/** Un pedazo del pago que se pacta por etapas, y si ya está cubierto. */
+export interface Hito {
+  nombre: string;
+  centavos: number;
+  cubierto: boolean;
+}
+
 export interface LibroDeCobros {
   cobros: Cobro[];
   resumen: ResumenCobros;
+  /** Solo si la propuesta se cobra por etapas (50 % al empezar, 50 % al entregar). */
+  hitos: Hito[] | null;
 }
 
 /** Suma el libro. Las correcciones restan solas porque van en negativo. */

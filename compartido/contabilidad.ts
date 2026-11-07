@@ -202,13 +202,68 @@ export function resumirPeriodo(
   };
 }
 
+/** Un cobro tal como se lista en el periodo: con el negocio al que pertenece. */
+export interface CobroDelPeriodo {
+  id: number;
+  propuesta: string;
+  negocio: string;
+  fecha: string;
+  centavos: number;
+  metodo: string;
+  referencia: string;
+  corrigeA: number | null;
+}
+
 export interface ContabilidadDelPeriodo {
   resumen: ResumenContable;
+  /** El periodo inmediatamente anterior, para ver si el mes va mejor o peor. */
+  anterior: ResumenContable;
   antiguedad: Antiguedad;
   gastos: Gasto[];
+  cobros: CobroDelPeriodo[];
+  /** Los meses del periodo que están cerrados: ahí no se registra ni se corrige nada. */
+  mesesCerrados: string[];
   /** La fecha que el servidor tomó por «hoy», en hora de Panamá. */
   hoy: string;
 }
+
+/* ------------------------------------------------------------------ *
+ * Cierre de mes
+ * ------------------------------------------------------------------ */
+
+/** Una comprobación antes de cerrar. `bloquea` decide si impide el cierre o solo avisa. */
+export interface Chequeo {
+  clave: string;
+  titulo: string;
+  ok: boolean;
+  bloquea: boolean;
+  detalle: string;
+}
+
+/** Un asiento del historial de cierres. Se cierra y se reabre; nunca se borra. */
+export interface AsientoDeCierre {
+  id: number;
+  mes: string;
+  accion: 'cerrar' | 'reabrir';
+  motivo: string;
+  por: string;
+  en: string;
+}
+
+export interface EstadoDeCierre {
+  mes: string;
+  cerrado: boolean;
+  historial: AsientoDeCierre[];
+  chequeo: Chequeo[];
+  /** Con el mes cerrado, la foto del resumen tal como estaba al cerrar. */
+  resumenAlCerrar: ResumenContable | null;
+}
+
+/** `2026-11` de `2026-11-07`. */
+export const mesDeFecha = (fecha: string): string => fecha.slice(0, 7);
+
+export const esMes = (valor: unknown): valor is string =>
+  typeof valor === 'string' && /^\d{4}-(0[1-9]|1[0-2])$/.test(valor);
 
 /* ------------------------------------------------------------------ *
  * Periodos
@@ -227,6 +282,36 @@ export function mesDe(fecha: string): { desde: string; hasta: string } {
 export function mesAnteriorDe(fecha: string): { desde: string; hasta: string } {
   const [anio, mes] = fecha.split('-').map(Number) as [number, number];
   return mesDe(mes === 1 ? `${anio - 1}-12-01` : `${anio}-${pad(mes - 1)}-01`);
+}
+
+/** La fecha ISO `dias` días después (o antes, si es negativo). */
+export function sumarDiasISO(fecha: string, dias: number): string {
+  return new Date(Date.parse(`${fecha}T00:00:00Z`) + dias * 86_400_000).toISOString().slice(0, 10);
+}
+
+/**
+ * El periodo con el que comparar uno dado.
+ *
+ * Un mes completo se compara con el mes anterior completo, que es lo que se
+ * quiere ver: marzo contra febrero, no contra «los 31 días anteriores», que
+ * empezarían a mitad de febrero. Cualquier otro periodo se compara con el tramo
+ * de la misma duración que lo precede.
+ */
+export function periodoAnteriorDe(desde: string, hasta: string): { desde: string; hasta: string } {
+  const mes = mesDe(desde);
+  if (mes.desde === desde && mes.hasta === hasta) return mesAnteriorDe(desde);
+
+  const duracion = diasEntre(desde, hasta) + 1;
+  const fin = sumarDiasISO(desde, -1);
+  return { desde: sumarDiasISO(fin, -(duracion - 1)), hasta: fin };
+}
+
+/** Cuánto cambió una cifra respecto a la anterior. `porcentaje` es `null` si antes era cero. */
+export function variacion(actual: number, anterior: number): { diferencia: number; porcentaje: number | null } {
+  return {
+    diferencia: actual - anterior,
+    porcentaje: anterior === 0 ? null : Math.round(((actual - anterior) / Math.abs(anterior)) * 1000) / 10,
+  };
 }
 
 /** Del 1 de enero al 31 de diciembre del año de `fecha`. */

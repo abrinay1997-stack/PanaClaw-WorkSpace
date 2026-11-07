@@ -4,7 +4,7 @@
  * un libro.
  */
 
-import type { ContabilidadDelPeriodo, NuevoGasto } from '../../../compartido/contabilidad';
+import type { ContabilidadDelPeriodo, EstadoDeCierre, NuevoGasto } from '../../../compartido/contabilidad';
 import { BASE, consulta, pedir } from '../api/pedir';
 
 export const almacenContabilidad = {
@@ -13,6 +13,15 @@ export const almacenContabilidad = {
 
   registrarGasto: (gasto: NuevoGasto): Promise<unknown> =>
     pedir(`${BASE}/gastos`, { method: 'POST', body: JSON.stringify(gasto) }),
+
+  cierre: (mes: string): Promise<EstadoDeCierre> =>
+    pedir<EstadoDeCierre>(`${BASE}/contabilidad/cierre${consulta({ mes })}`),
+
+  cerrarMes: (mes: string, nota: string): Promise<EstadoDeCierre> =>
+    pedir<EstadoDeCierre>(`${BASE}/contabilidad/cerrar`, { method: 'POST', body: JSON.stringify({ mes, nota }) }),
+
+  reabrirMes: (mes: string, motivo: string): Promise<EstadoDeCierre> =>
+    pedir<EstadoDeCierre>(`${BASE}/contabilidad/reabrir`, { method: 'POST', body: JSON.stringify({ mes, motivo }) }),
 
   corregirGasto: (id: number, motivo: string): Promise<unknown> =>
     pedir(`${BASE}/gastos/${id}/corregir`, { method: 'POST', body: JSON.stringify({ motivo }) }),

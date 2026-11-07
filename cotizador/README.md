@@ -147,6 +147,12 @@ historial). Es el mismo criterio del libro de D'Casa:
   que lo mezcle (regla 2).
 - **Con un rango sin cerrar no hay cifra que cobrar**, y el libro no deja
   registrar nada hasta emitir la versión definitiva.
+- **Etapas del pago.** Si todo lo que se cobra dice «50 % al empezar», el panel
+  enseña las dos etapas y cuál ya está cubierta; las dos suman exactamente lo
+  debido (la segunda se queda con el centavo que sobre). Si la propuesta mezcla
+  formas de cobro —un plan web con un diagnóstico «completo por adelantado»—, no
+  hay etapas: no existe una regla única que la parta, y no se inventa un calendario
+  de pagos que ningún documento publica.
 - No se cobra de más (un saldo a favor es una decisión que este libro todavía no
   lleva), ni una propuesta que no esté aceptada, ni una que esté en la papelera.
 - Una propuesta con cobros no se puede purgar de la papelera.
@@ -176,7 +182,35 @@ contable ni una declaración: lo que va a la DGI lo decide la contadora.
   mezcle (regla 2). Las cuentas puras viven en `compartido/contabilidad.ts` y las
   usan la pantalla y el servidor, así que no pueden discrepar.
 
-Para activarlo en producción: `npm run migrar` (aplica `0003` y `0004`).
+- **Comparación**: cada cifra del resumen se enseña frente al periodo anterior. Un
+  mes completo se compara con el mes anterior completo (marzo contra febrero, no
+  contra «los 31 días de antes»); cualquier otro periodo, con el tramo de la misma
+  duración que lo precede.
+- **Exportar a CSV** los gastos y los cobros del periodo, para la contadora: una
+  fila por asiento, con las correcciones como filas aparte y en negativo, igual que
+  en el libro. Separado por punto y coma y con marca de orden de bytes (Excel en
+  español). Los importes negativos salen como números, no como texto.
+
+### Cierre de mes
+
+Pestaña «Cierre de mes» de la pantalla, y es lo que hace D'Casa con la fecha de
+bloqueo de Odoo: con el mes cerrado **no se registra ni se corrige nada** en cobros
+ni en gastos —una corrección lleva la fecha del original, así que también exige
+reabrir—, y lo que se mandó a la contadora no cambia debajo de ella.
+
+- Una **lista de chequeo con datos reales**. Solo una comprobación impide cerrar:
+  que el mes ya haya terminado. Las demás avisan (mes anterior cerrado, gastos
+  registrados, lo aceptado en el mes con algún cobro).
+- Es un **historial**, no una bandera: se cierra y se reabre, y cada vez queda
+  escrito quién, cuándo y —al reabrir— por qué. La base impide editar o borrar ese
+  rastro (`migraciones/0005_cierres.sql`).
+- Al cerrar se guarda una **foto del resumen** tal como estaba ese día.
+- El bloqueo lo imponen los caminos que escriben (`exigirMesAbierto` en
+  `worker/contabilidad.ts`), y `worker/libros.test.ts` comprueba cada uno.
+- Cualquiera con acceso al hub puede cerrar y reabrir: hoy no hay roles. Es la
+  diferencia con D'Casa, donde solo lo hace la gerencia contable.
+
+Para activarlo en producción: `npm run migrar` (aplica `0003`, `0004` y `0005`).
 
 ## Cómo pagar
 
@@ -320,9 +354,15 @@ abra en columnas y no estropee las tildes.
 ```bash
 npm install     # desde esta carpeta, o `npm run instalar` desde la raíz
 npm run dev     # la pantalla, en :5173
-npm test        # las reglas de precio, el PDF, el mensaje y el contrato
+npm test        # las reglas de precio, el PDF, el mensaje, el contrato y los libros
 npm run tipos   # comprobación de tipos
 ```
+
+`npm test` también corre `worker/libros.test.ts`: el código real del Worker (cobros,
+gastos, cierre de mes, purga) contra una base SQLite de verdad con las migraciones
+del repositorio aplicadas. D1 es SQLite, así que las consultas, los disparadores y
+las llaves foráneas son las de producción; solo la envoltura de D1 es un adaptador.
+Usa `node:sqlite`, que pide Node 22 o más.
 
 La pantalla sola no tiene historial ni clientes: eso lo atiende el Worker. Desde
 la raíz del repositorio, en otra terminal:
