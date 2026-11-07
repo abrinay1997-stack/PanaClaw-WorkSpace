@@ -14,7 +14,7 @@
  * «PROP-2026-0007» a dos clientes distintos— y el panel de clientes.
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { EMPRESA } from './datos/empresa';
 import { esCero, formato, formatoMensual } from './dominio/dinero';
@@ -26,6 +26,10 @@ import { PantallaClientes } from './clientes/PantallaClientes';
 import { PantallaContabilidad } from './contabilidad/PantallaContabilidad';
 import { almacen } from './historial/almacen';
 import { PantallaHistorial } from './historial/PantallaHistorial';
+import { congelarTextos, conPlantilla } from './dominio/textos';
+import { cargarPlantilla, plantillaActual, refrescarPlantilla } from './textos/plantilla';
+import { PantallaTextos } from './textos/PantallaTextos';
+import { TextosDeLaPropuesta } from './textos/TextosDeLaPropuesta';
 import { abrirWhatsapp, copiarMensaje, descargarPdf, verPdf } from './ui/acciones';
 import { Simbolo, VolverAlHub } from './ui/componentes';
 import { PanelCatalogo } from './ui/PanelCatalogo';
@@ -47,7 +51,17 @@ export default function App() {
   const estado = usePropuesta();
   const [ruta, ir] = useRuta();
 
+  // La plantilla de textos del equipo se lee una vez al abrir. Si el servidor no
+  // contesta, todo vale su original; y al emitir se vuelve a pedir, que es cuando
+  // importa de verdad (ver `emitir`).
+  useEffect(() => {
+    void cargarPlantilla();
+  }, []);
+
   switch (ruta.pantalla) {
+    case 'textos':
+      return <PantallaTextos alVolver={() => ir({ pantalla: 'cotizador' })} />;
+
     case 'contabilidad':
       return <PantallaContabilidad alVolver={() => ir({ pantalla: 'cotizador' })} />;
 
@@ -105,6 +119,7 @@ export default function App() {
           alHistorial={() => ir({ pantalla: 'historial' })}
           alClientes={() => ir({ pantalla: 'clientes' })}
           alContabilidad={() => ir({ pantalla: 'contabilidad' })}
+          alTextos={() => ir({ pantalla: 'textos' })}
         />
       );
   }
@@ -115,11 +130,13 @@ function Cotizador({
   alHistorial,
   alClientes,
   alContabilidad,
+  alTextos,
 }: {
   estado: ReturnType<typeof usePropuesta>;
   alHistorial: () => void;
   alClientes: () => void;
   alContabilidad: () => void;
+  alTextos: () => void;
 }) {
   const { propuesta, despachar, totales, alertas, plan, itemsEnUso } = estado;
   const [panel, setPanel] = useState<Panel>('catalogo');
@@ -149,14 +166,23 @@ function Cotizador({
     if (emitiendo || bloqueada) return;
     setEmitiendo(true);
     try {
-      const { numero, enlace } = await almacen.registrar(propuesta);
+      // Los textos se congelan DENTRO de la propuesta antes de guardarla: así el
+      // PDF que el cliente recibe se puede regenerar idéntico dentro de un año, y
+      // editar la plantilla mañana no lo cambia. Se pide la plantilla fresca justo
+      // ahora: congelar los originales porque la red falló un momento, cuando el
+      // equipo tiene otra redacción, sacaría un documento distinto sin avisar.
+      await refrescarPlantilla();
+      const congelada = congelarTextos(propuesta, plantillaActual());
+      despachar({ tipo: 'textos', textos: congelada.textos });
+
+      const { numero, enlace } = await almacen.registrar(congelada);
       if (numero !== propuesta.numero) despachar({ tipo: 'numeroAsignado', numero });
       // Emitir puede haber creado o reconocido la ficha del cliente. Se guarda
       // el enlace para que reemitir la misma propuesta no cree una segunda.
       if (enlace.codigo && enlace.codigo !== propuesta.clienteCodigo) {
         despachar({ tipo: 'ficha', codigo: enlace.codigo });
       }
-      await accion({ ...propuesta, numero, clienteCodigo: enlace.codigo ?? undefined });
+      await accion({ ...congelada, numero, clienteCodigo: enlace.codigo ?? undefined });
       // El aviso del enlace se enseña después de que el documento haya salido:
       // lo urgente es la propuesta, y lo de la ficha se arregla luego.
       if (enlace.aviso) anunciar(enlace.aviso, 7000);
@@ -172,7 +198,7 @@ function Cotizador({
     descargar: () => void emitir((p) => descargarPdf(p)),
     // La vista previa NO emite: es para revisar, no para enviar, y no gasta
     // número ni deja registro.
-    ver: () => void verPdf(propuesta).catch(() => anunciar('No se pudo abrir la vista previa.')),
+    ver: () => void verPdf(conPlantilla(propuesta, plantillaActual())).catch(() => anunciar('No se pudo abrir la vista previa.')),
     whatsapp: () => void emitir(abrirWhatsapp),
     copiar: () =>
       void emitir(async (p) =>
@@ -208,7 +234,7 @@ function Cotizador({
             reparten el ancho: con cuatro botones en la fila del título, el último
             se salía de la pantalla y el panel no admite desbordes laterales.
           */}
-          <nav className="order-last flex w-full gap-2 lg:order-none lg:w-auto" aria-label="Pantallas del cotizador">
+          <nav className="order-last flex w-full flex-wrap gap-2 lg:order-none lg:w-auto" aria-label="Pantallas del cotizador">
             <button type="button" className="boton boton-secundario flex-1 lg:flex-none" onClick={alClientes}>
               Clientes
             </button>
@@ -217,6 +243,9 @@ function Cotizador({
             </button>
             <button type="button" className="boton boton-secundario flex-1 lg:flex-none" onClick={alContabilidad}>
               Contabilidad
+            </button>
+            <button type="button" className="boton boton-secundario flex-1 lg:flex-none" onClick={alTextos}>
+              Textos
             </button>
           </nav>
 
@@ -274,6 +303,7 @@ function Cotizador({
           <LosDosTotales totales={totales} />
           <PlazoYCambios propuesta={propuesta} />
           <PanelCondiciones propuesta={propuesta} despachar={despachar} />
+          <TextosDeLaPropuesta propuesta={propuesta} despachar={despachar} />
 
           <div className="flex flex-wrap gap-2 lg:hidden">
             <button type="button" className="boton boton-fantasma" onClick={acciones.nueva}>

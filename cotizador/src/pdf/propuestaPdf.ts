@@ -15,14 +15,6 @@
 import { jsPDF } from 'jspdf';
 
 import { EMPRESA, type FormaDePago } from '../datos/empresa';
-import {
-  CANCELACION,
-  CANCELACION_MENSUAL,
-  CODIGO_TUYO,
-  PLAZO_DESDE,
-  QUE_NECESITAS_PARA_ARRANCAR,
-  TRABAJO_REMOTO,
-} from '../datos/textos';
 import { catalogo, ITBMS, itemDe } from '../dominio/catalogo';
 import { conImpuesto, esCero, formato, formatoExacto, formatoMensual, type Dinero } from '../dominio/dinero';
 import { fechaLarga, sumarDias } from '../dominio/formato';
@@ -34,6 +26,7 @@ import {
   rondasDe,
   totalesDe,
 } from '../dominio/propuesta';
+import { definicion, textoDe } from '../dominio/textos';
 import type { Propuesta } from '../dominio/tipos';
 import { altoDe, anchoDe, escribir, Hoja, panel, regla, tinta } from './documento';
 import { anchoDeLogo, dibujarLogo } from './logo';
@@ -63,7 +56,7 @@ export function generarPdf(
   plazoYCambios(hoja, propuesta);
   lasFronteras(hoja, propuesta);
   condiciones(hoja, propuesta);
-  aceptacion(hoja);
+  aceptacion(hoja, propuesta);
   pies(doc, propuesta);
 
   return doc;
@@ -233,7 +226,10 @@ function queIncluye(hoja: Hoja, propuesta: Propuesta): void {
 
   propuesta.lineas.forEach((linea) => {
     const item = itemDe(linea.itemId);
-    const nota = [linea.nota.trim(), item?.queConsigue].find(Boolean) ?? '';
+    // Una nota escrita en la propia línea manda; si no, la descripción del
+    // producto, que también se puede editar (`item.<id>`).
+    const descripcion = item && definicion(`item.${item.id}`) ? textoDe(`item.${item.id}`, propuesta.textos) : '';
+    const nota = [linea.nota.trim(), descripcion].find(Boolean) ?? '';
     const titulo = linea.descripcion;
 
     const altoTitulo = altoDe(doc, titulo, { tamano: TIPO.tabla, negrita: true, ancho: anchoTexto });
@@ -297,12 +293,12 @@ function queIncluye(hoja: Hoja, propuesta: Propuesta): void {
 }
 
 function queNoIncluye(hoja: Hoja, propuesta: Propuesta): void {
-  const lista = noIncluyeDe(propuesta.lineas, propuesta.condiciones.noIncluyeExtra);
+  const lista = noIncluyeDe(propuesta.lineas, propuesta.condiciones.noIncluyeExtra, propuesta.textos);
   if (!lista.length) return;
 
   hoja.rotulo('Qué NO incluye');
   hoja.parrafo(
-    'Si algo de esto te hace falta, lo cotizamos aparte y lo sabes antes de firmar.',
+    textoDe('noIncluyeIntro', propuesta.textos),
     { tamano: 8.5, color: COLOR.tintaTenue },
   );
   for (const punto of lista) hoja.punto(punto);
@@ -356,10 +352,7 @@ function lasCifras(hoja: Hoja, propuesta: Propuesta, totales: ReturnType<typeof 
 
   if (totales.terceros.length) {
     hoja.rotulo('A terceros');
-    hoja.parrafo(
-      'Esto no lo cobra PanaClaw. Son las cuentas donde vive tu eBot y las pagas tú, directamente a quien presta el servicio. Se publican aquí porque callarlas sería exactamente la letra chica que no tenemos.',
-      { tamano: 8.5 },
-    );
+    hoja.parrafo(textoDe('aTerceros', propuesta.textos), { tamano: 8.5 });
     for (const costo of totales.terceros) {
       hoja.punto(`${costo.concepto}: ${costo.precioTexto} a ${costo.aQuien}`);
     }
@@ -478,14 +471,14 @@ function cobroDe(propuesta: Propuesta): string {
  * ------------------------------------------------------------------ */
 
 function plazoYCambios(hoja: Hoja, propuesta: Propuesta): void {
-  const plazos = plazosDe(propuesta.lineas);
+  const plazos = plazosDe(propuesta.lineas, propuesta.textos);
 
   if (plazos.length) {
     hoja.rotulo('Plazo');
-    for (const plazo of plazos) hoja.punto(`${plazo.que}: ${plazo.cuando}`);
+    for (const plazo of plazos) hoja.punto(plazo.linea);
     // Va donde se anuncia el plazo, no en una nota al pie: la causa número uno
     // de retraso, con diferencia, es esperar los textos del cliente.
-    hoja.parrafo(PLAZO_DESDE, { tamano: 9, color: COLOR.negro, negrita: true });
+    hoja.parrafo(textoDe('plazoDesde', propuesta.textos), { tamano: 9, color: COLOR.negro, negrita: true });
     hoja.avanzar(3);
   }
 
@@ -493,9 +486,12 @@ function plazoYCambios(hoja: Hoja, propuesta: Propuesta): void {
   if (rondas) {
     hoja.rotulo('Cambios');
     hoja.parrafo(
-      rondas.incluidas === 0
-        ? `${rondas.plan} no trae rondas de cambios. Cada ronda extra cuesta ${rondas.extra}, sin discusión y sin mala cara.`
-        : `${rondas.plan} incluye ${rondas.incluidas} ${rondas.incluidas === 1 ? 'ronda' : 'rondas'} de cambios. La ronda extra cuesta ${rondas.extra}, sin discusión y sin mala cara.`,
+      textoDe(rondas.incluidas === 0 ? 'cambiosSinRondas' : 'cambiosConRondas', propuesta.textos, {
+        plan: rondas.plan,
+        rondas: rondas.incluidas,
+        rondasPalabra: rondas.incluidas === 1 ? 'ronda' : 'rondas',
+        extra: rondas.extra,
+      }),
       { tamano: 9, color: COLOR.negro },
     );
     hoja.avanzar(3);
@@ -507,7 +503,7 @@ function plazoYCambios(hoja: Hoja, propuesta: Propuesta): void {
  * ------------------------------------------------------------------ */
 
 function lasFronteras(hoja: Hoja, propuesta: Propuesta): void {
-  const frases = fronterasDe(propuesta.lineas);
+  const frases = fronterasDe(propuesta.lineas, propuesta.textos);
   if (!frases.length) return;
 
   hoja.rotulo('Qué es cada cosa');
@@ -517,14 +513,15 @@ function lasFronteras(hoja: Hoja, propuesta: Propuesta): void {
 
 function condiciones(hoja: Hoja, propuesta: Propuesta): void {
   hoja.rotulo('Condiciones');
-  hoja.punto(QUE_NECESITAS_PARA_ARRANCAR);
-  hoja.punto(CODIGO_TUYO);
-  hoja.punto(CANCELACION);
+  const t = (clave: string) => textoDe(clave, propuesta.textos, { itbms: ITBMS.texto });
+  hoja.punto(t('condArranque'));
+  hoja.punto(t('condCodigo'));
+  hoja.punto(t('condCancelacion'));
   if (propuesta.lineas.some((l) => itemDe(l.itemId)?.recurrencia === 'mensual')) {
-    hoja.punto(CANCELACION_MENSUAL);
+    hoja.punto(t('condCancelacionMensual'));
   }
-  hoja.punto(TRABAJO_REMOTO);
-  hoja.punto(`Los precios de esta cotización no incluyen ${ITBMS.texto}: se suma aparte, sobre el pago único y sobre lo mensual por separado.`);
+  hoja.punto(t('condRemoto'));
+  hoja.punto(t('condItbms'));
 
   if (propuesta.condiciones.observaciones.trim()) {
     hoja.avanzar(2);
@@ -542,12 +539,12 @@ function condiciones(hoja: Hoja, propuesta: Propuesta): void {
  * «dale» por WhatsApp y se discute meses después necesita una línea con fecha
  * y nombre; este bloque la pone sin añadir una sola promesa.
  */
-function aceptacion(hoja: Hoja): void {
+function aceptacion(hoja: Hoja, propuesta: Propuesta): void {
   const { doc } = hoja;
   hoja.avanzar(4);
   hoja.espacio(48);
   hoja.rotulo('Aceptación');
-  hoja.parrafo('Firmar aquí es aceptar esta propuesta con lo que incluye y con lo que no incluye.', {
+  hoja.parrafo(textoDe('aceptacion', propuesta.textos), {
     tamano: 9,
     color: COLOR.negro,
   });

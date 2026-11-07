@@ -14,6 +14,7 @@ export type Ruta =
   | { pantalla: 'historial' }
   | { pantalla: 'clientes' }
   | { pantalla: 'contabilidad' }
+  | { pantalla: 'textos' }
   /** `codigo` en `null` es la ficha nueva, que todavía no tiene código. */
   | { pantalla: 'cliente'; codigo: string | null };
 
@@ -24,6 +25,7 @@ function leer(): Ruta {
   if (hash === 'historial') return { pantalla: 'historial' };
   if (hash === 'clientes') return { pantalla: 'clientes' };
   if (hash === 'contabilidad') return { pantalla: 'contabilidad' };
+  if (hash === 'textos') return { pantalla: 'textos' };
 
   const ficha = /^cliente\/(.+)$/.exec(hash);
   if (ficha) {
@@ -42,6 +44,8 @@ function aHash(ruta: Ruta): string {
       return '#clientes';
     case 'contabilidad':
       return '#contabilidad';
+    case 'textos':
+      return '#textos';
     case 'cliente':
       return `#cliente/${ruta.codigo ? encodeURIComponent(ruta.codigo) : 'nuevo'}`;
     default:
