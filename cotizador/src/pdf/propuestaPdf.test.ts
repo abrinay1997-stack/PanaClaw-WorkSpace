@@ -120,6 +120,61 @@ describe('regla 2 · el documento no puede enseñar la suma prohibida', () => {
   });
 });
 
+describe('ITBMS · aparte, y bloque por bloque', () => {
+  it('lo único y lo mensual llevan cada uno su impuesto, y ninguno suma al otro', () => {
+    const texto = textoDelPdf(generarPdf(propuesta([linea('web-corporate'), linea('care-base')])));
+    // 7 % de $850 y de $35, cada uno sobre su propio bloque.
+    expect(texto).toContain('$59.50');
+    expect(texto).toContain('$909.50');
+    expect(texto).toContain('$2.45/mes');
+    expect(texto).toContain('$37.45/mes');
+    // $909.50 + $37.45 no existe como número, ni con impuesto ni sin él.
+    expect(texto).not.toContain('$946.95');
+    expect(texto).not.toContain('$885');
+  });
+
+  it('declara que ningún precio lo incluye', () => {
+    expect(textoDelPdf(generarPdf(propuesta([linea('web-start')])))).toContain('no incluyen ITBMS 7 %');
+  });
+
+  it('el impuesto de un rango se calcula en sus dos extremos', () => {
+    const texto = textoDelPdf(generarPdf(propuesta([linea('aud-medio'), linea('seg-protegida')])));
+    expect(texto).toContain('$2.10\u2013$4.20/mes');
+  });
+});
+
+describe('cómo pagar', () => {
+  it('sin cuentas cargadas, la cotización no inventa ninguna', () => {
+    expect(textoDelPdf(generarPdf(propuesta([linea('web-start')])))).not.toContain('CÓMO PAGAR');
+  });
+
+  it('con cuentas cargadas, salen en su propia sección', () => {
+    const doc = generarPdf(propuesta([linea('web-start')]), {
+      formasDePago: [{ metodo: 'Yappy', titular: 'Titular de prueba', dato: '0000-0000' }],
+    });
+    const texto = textoDelPdf(doc);
+    expect(texto).toContain('CÓMO PAGAR');
+    expect(texto).toContain('0000-0000');
+    expect(doc.getNumberOfPages()).toBeLessThanOrEqual(2);
+    guardar('con-pagos.pdf', doc);
+  });
+});
+
+describe('el cliente y la aceptación', () => {
+  it('el RUC o la cédula sale en el panel del cliente cuando existe', () => {
+    const base = propuesta([linea('web-start')]);
+    const con = textoDelPdf(generarPdf({ ...base, cliente: { ...base.cliente, documento: '8-123-4567' } }));
+    expect(con).toContain('RUC / Cédula 8-123-4567');
+    expect(textoDelPdf(generarPdf(base))).not.toContain('RUC / Cédula');
+  });
+
+  it('cierra con un espacio para firmar y fechar', () => {
+    const texto = textoDelPdf(generarPdf(propuesta([linea('web-start')])));
+    expect(texto).toContain('ACEPTACIÓN');
+    expect(texto).toContain('NOMBRE Y FIRMA');
+  });
+});
+
 describe('regla 8 · los rangos se citan enteros', () => {
   it('un mensual con rango sale con sus dos extremos', () => {
     const texto = textoDelPdf(

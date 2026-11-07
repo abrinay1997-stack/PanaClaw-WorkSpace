@@ -10,8 +10,9 @@
  * paso al que corresponde.
  */
 
-import { CERO, multiplicar, sumar, type Dinero } from './dinero';
-import { itemDe } from './catalogo';
+import type { Hito } from '../../../compartido/cobros';
+import { CERO, conImpuesto, multiplicar, sumar, type Dinero } from './dinero';
+import { ITBMS, itemDe } from './catalogo';
 import { PLANES, type Familia, type Item, type Linea, type PlanSlug, type Totales } from './tipos';
 import {
   FRONTERAS,
@@ -40,6 +41,48 @@ export function importeDeLinea(linea: Linea): Dinero {
  * Los costos de terceros de eBot van en su tercer bloque por la misma razón
  * invertida: son dinero que el cliente paga, pero no a PanaClaw.
  */
+/**
+ * Lo que el cliente debe por el pago único, con ITBMS, en centavos.
+ *
+ * `null` cuando el pago único es un rango sin cerrar: no hay una cifra que
+ * cobrar, y elegir un extremo sería inventarla. Es la misma cuenta que enseña el
+ * PDF (`conImpuesto` sobre `totalesDe`), para que el saldo no pueda discrepar del
+ * documento que el cliente tiene en la mano. Lo mensual no entra.
+ */
+/**
+ * Si el pago único se cobra por etapas, en qué etapas.
+ *
+ * Solo cuando TODO lo que se cobra dice «50 % al empezar»: una propuesta que
+ * mezcla un plan web (50 y 50) con un diagnóstico «completo por adelantado» no
+ * tiene una regla única que la parta, y inventar una sería prometerle al cliente
+ * un calendario de pagos que ningún documento publica. Con más de una forma de
+ * cobro, no hay etapas y se registra lo que vaya entrando.
+ *
+ * La primera etapa es la mitad al centavo; la segunda, lo que falta, para que
+ * las dos sumen exactamente lo debido.
+ */
+export function hitosDe(lineas: readonly Linea[], debido: number | null, cobrado: number): Hito[] | null {
+  if (debido === null || debido <= 0) return null;
+
+  const cobrables = lineas
+    .filter((l) => !l.incluida)
+    .map((l) => itemDe(l.itemId))
+    .filter((i): i is Item => i !== undefined && i.recurrencia === 'unico');
+  if (!cobrables.length || !cobrables.every((i) => /^50\s?% al empezar/i.test(i.cobro))) return null;
+
+  const anticipo = Math.round(debido / 2);
+  return [
+    { nombre: '50 % al empezar', centavos: anticipo, cubierto: cobrado >= anticipo },
+    { nombre: '50 % al entregar', centavos: debido - anticipo, cubierto: cobrado >= debido },
+  ];
+}
+
+export function debidoCentavos(lineas: readonly Linea[]): number | null {
+  const { unico } = totalesDe(lineas, []);
+  if (unico.min !== unico.max) return null;
+  return Math.round(conImpuesto(unico, ITBMS.tasa).total.min * 100);
+}
+
 export function totalesDe(lineas: readonly Linea[], terceros: Totales['terceros']): Totales {
   let unico = CERO;
   let mensual = CERO;

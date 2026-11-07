@@ -12,8 +12,8 @@
 
 import { EMPRESA } from '../datos/empresa';
 import { PLAZO_DESDE } from '../datos/textos';
-import { catalogo, itemDe } from '../dominio/catalogo';
-import { esCero, formato, formatoMensual } from '../dominio/dinero';
+import { catalogo, ITBMS, itemDe } from '../dominio/catalogo';
+import { conImpuesto, esCero, formato, formatoExacto, formatoMensual } from '../dominio/dinero';
 import { fechaLarga, MONEDA_DECLARADA, sumarDias } from '../dominio/formato';
 import {
   fronterasDe,
@@ -77,13 +77,18 @@ export function mensajeWhatsapp(propuesta: Propuesta): string {
    * mensualidad se reenvía, se cita y acaba siendo lo que el cliente recuerda.
    */
   bloques.push(
-    [fuerte(`PAGO ÚNICO: ${formato(totales.unico)}`), cobroDe(propuesta)].join('\n'),
+    [
+      fuerte(`PAGO ÚNICO: ${formato(totales.unico)}`),
+      `+ ${ITBMS.texto}: ${formatoExacto(conImpuesto(totales.unico, ITBMS.tasa).impuesto)} · Total con ITBMS: ${formatoExacto(conImpuesto(totales.unico, ITBMS.tasa).total)}`,
+      cobroDe(propuesta),
+    ].join('\n'),
   );
 
   if (!esCero(totales.mensual)) {
     bloques.push(
       [
         fuerte(`CADA MES: ${formatoMensual(totales.mensual)}`),
+        `+ ${ITBMS.texto}: ${formatoExacto(conImpuesto(totales.mensual, ITBMS.tasa).impuesto)}/mes · Total con ITBMS: ${formatoExacto(conImpuesto(totales.mensual, ITBMS.tasa).total)}/mes`,
         'Opcional y sin permanencia. Se cancela cuando quieras.',
       ].join('\n'),
     );
@@ -126,7 +131,7 @@ export function mensajeWhatsapp(propuesta: Propuesta): string {
   bloques.push(
     [
       `Válida hasta el ${fechaLarga(sumarDias(propuesta.fecha, propuesta.condiciones.validezDias))}.`,
-      MONEDA_DECLARADA,
+      `${MONEDA_DECLARADA} Los precios no incluyen ${ITBMS.texto}, que se suma aparte.`,
       ...(propuesta.condiciones.observaciones.trim()
         ? [propuesta.condiciones.observaciones.trim()]
         : []),

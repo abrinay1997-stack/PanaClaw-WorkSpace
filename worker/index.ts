@@ -11,6 +11,8 @@
  */
 
 import * as clientes from './clientes';
+import * as cobrosDe from './cobros';
+import * as contable from './contabilidad';
 import * as propuestas from './propuestas';
 import { ErrorPeticion, cuerpoJson, fallo, json } from './http';
 import type { Env } from './entorno';
@@ -154,10 +156,45 @@ async function enrutar(
   return (
     (await enrutarPropuestas(peticion, url, base, correo, ruta, metodo)) ??
     (await enrutarClientes(peticion, url, base, correo, ruta, metodo)) ??
+    (await enrutarContabilidad(peticion, url, base, correo, ruta, metodo)) ??
     (() => {
       throw new ErrorPeticion(404, 'no-encontrada', 'Esa dirección no existe.');
     })()
   );
+}
+
+/** Gastos, resumen y cuentas por cobrar. Devuelve `null` cuando la dirección no es suya. */
+async function enrutarContabilidad(
+  peticion: Request,
+  url: URL,
+  base: D1Database,
+  correo: string,
+  ruta: string,
+  metodo: string,
+): Promise<Response | null> {
+  if (ruta === 'contabilidad' && metodo === 'GET') {
+    const hoy = contable.hoyEnPanama();
+    const { desde, hasta } = contable.periodoDeUrl(url, hoy);
+    return json(await contable.contabilidad(base, desde, hasta, hoy));
+  }
+  if (ruta === 'contabilidad/cierre' && metodo === 'GET') {
+    const hoy = contable.hoyEnPanama();
+    return json(await contable.estadoDeCierre(base, url.searchParams.get('mes') ?? '', hoy));
+  }
+  if (ruta === 'contabilidad/cerrar' && metodo === 'POST') {
+    return json(await contable.cerrarMes(base, peticion, correo, contable.hoyEnPanama()), 201);
+  }
+  if (ruta === 'contabilidad/reabrir' && metodo === 'POST') {
+    return json(await contable.reabrirMes(base, peticion, correo, contable.hoyEnPanama()));
+  }
+  if (ruta === 'gastos' && metodo === 'POST') {
+    return json(await contable.registrarGasto(base, peticion, correo), 201);
+  }
+  const correccion = /^gastos\/(\d+)\/corregir$/.exec(ruta);
+  if (correccion && metodo === 'POST') {
+    return json(await contable.corregirGasto(base, Number(correccion[1]), peticion, correo));
+  }
+  return null;
 }
 
 /** El historial. Devuelve `null` cuando la dirección no es suya. */
@@ -185,6 +222,20 @@ async function enrutarPropuestas(
   }
   if (metodo === 'POST' && ruta === 'propuestas/purgar') {
     return json(await propuestas.purgar(base, await propuestas.leerSeleccion(peticion)));
+  }
+
+  // Los cobros de una propuesta: el libro, el cobro nuevo y la corrección.
+  const cobros = /^propuestas\/([^/]+)\/cobros$/.exec(ruta);
+  if (cobros) {
+    const numero = decodeURIComponent(cobros[1]!);
+    if (metodo === 'GET') return json(await cobrosDe.listar(base, numero));
+    if (metodo === 'POST') return json(await cobrosDe.registrar(base, numero, peticion, correo), 201);
+  }
+  const correccion = /^propuestas\/([^/]+)\/cobros\/(\d+)\/corregir$/.exec(ruta);
+  if (correccion && metodo === 'POST') {
+    return json(
+      await cobrosDe.corregir(base, decodeURIComponent(correccion[1]!), Number(correccion[2]), peticion, correo),
+    );
   }
 
   const estado = /^propuestas\/([^/]+)\/estado$/.exec(ruta);

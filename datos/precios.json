@@ -193,5 +193,9 @@
     "$nota": "Cifras que aparecen en el copy del sitio y que un agente puede necesitar citar.",
     "dominioAnual": { "precioTexto": "$15 al año", "concepto": "Renovación del dominio, único costo obligatorio de un sitio sin Care" },
     "referenciaCompetencia": { "precioTexto": "$1,200", "concepto": "Lo que cobra una agencia por un WordPress equivalente al Corporate" }
+  },
+  "impuestos": {
+    "$nota": "El ITBMS no está incluido en ningún precio publicado: se suma aparte, sobre cada bloque por separado. El pago único y el mensual nunca se suman entre sí, ni con impuesto ni sin él.",
+    "itbms": { "nombre": "ITBMS", "tasa": 0.07, "texto": "ITBMS 7 %" }
   }
 }

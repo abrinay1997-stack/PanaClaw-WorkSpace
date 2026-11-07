@@ -47,6 +47,7 @@ interface PreciosJson {
     planes: PlanWeb[];
     rondaExtra: { precioTexto: string; unidad: string };
   };
+  impuestos: { itbms: { tasa: number; texto: string } };
   capacidades: { items: { slug: string; nombre: string; precioTexto: string }[] };
   ebot: {
     nombre: string;
@@ -279,3 +280,9 @@ function rondasEnPalabras(rondas: number): string {
   if (rondas === 0) return 'sin rondas de cambios';
   return rondas === 1 ? '1 ronda de cambios' : `${rondas} rondas de cambios`;
 }
+
+/**
+ * El impuesto, tal como lo declara `datos/precios.json → impuestos`.
+ * Ningún precio publicado lo incluye: se suma aparte, bloque por bloque.
+ */
+export const ITBMS = precios.impuestos.itbms;

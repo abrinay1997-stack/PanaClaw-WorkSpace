@@ -1,9 +1,17 @@
+/// <reference types="vitest/config" />
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+
+  test: {
+    // Las pruebas del Worker viven con el Worker (`../worker/*.test.ts`) y corren
+    // aquí, con el mismo vitest: ejecutan su código contra una base SQLite de
+    // verdad con las migraciones del repositorio aplicadas.
+    include: ['src/**/*.test.{ts,tsx}', '../worker/**/*.test.ts'],
+  },
 
   // Rutas relativas: el `dist/` resultante se puede abrir desde el disco o
   // colgar de un subdirectorio del sitio sin reconfigurar nada. Es lo que

@@ -18,6 +18,7 @@ import { ES_DEMOSTRACION } from '../api/pedir';
 import { mensajeDe } from '../api/fallo';
 import { descargarPdf } from '../ui/acciones';
 import { Pastilla, Seccion } from '../ui/componentes';
+import { PanelCobros } from '../cobros/PanelCobros';
 import { almacen } from './almacen';
 import {
   ESTADOS,
@@ -57,6 +58,8 @@ export function PantallaHistorial({
   const [marcadas, setMarcadas] = useState<Set<string>>(new Set());
   const [todasDelFiltro, setTodasDelFiltro] = useState(false);
   const [fallo, setFallo] = useState('');
+  // La propuesta cuyo libro de cobros está abierto. Uno a la vez: son datos de dinero.
+  const [conCobros, setConCobros] = useState<string | null>(null);
 
   const filtro: FiltroHistorial = {
     texto: texto.trim() || undefined,
@@ -379,6 +382,17 @@ export function PantallaHistorial({
                   </button>
                 )}
 
+                {fila.estado === 'aceptada' && !papelera && !ES_DEMOSTRACION ? (
+                  <button
+                    type="button"
+                    className="boton boton-secundario px-3 py-1 text-xs"
+                    aria-expanded={conCobros === fila.numero}
+                    onClick={() => setConCobros(conCobros === fila.numero ? null : fila.numero)}
+                  >
+                    Cobros
+                  </button>
+                ) : null}
+
                 {fila.clienteCodigo ? (
                   <button
                     type="button"
@@ -391,6 +405,8 @@ export function PantallaHistorial({
                   <span className="text-xs text-gris">Sin ficha enlazada</span>
                 )}
               </div>
+
+              {conCobros === fila.numero ? <PanelCobros numero={fila.numero} /> : null}
 
               {fila.eliminadaEn ? (
                 <p className="mt-3 text-xs text-gris">

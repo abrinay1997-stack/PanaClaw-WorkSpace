@@ -1,5 +1,5 @@
 /**
- * Cuatro pantallas y una barra de direcciones.
+ * Las pantallas y una barra de direcciones.
  *
  * El hash y no un enrutador: son cuatro vistas, el cotizador se sirve desde un
  * subdirectorio del hub, y una dependencia más para esto sería más de lo que
@@ -13,6 +13,7 @@ export type Ruta =
   | { pantalla: 'cotizador' }
   | { pantalla: 'historial' }
   | { pantalla: 'clientes' }
+  | { pantalla: 'contabilidad' }
   /** `codigo` en `null` es la ficha nueva, que todavía no tiene código. */
   | { pantalla: 'cliente'; codigo: string | null };
 
@@ -22,6 +23,7 @@ function leer(): Ruta {
 
   if (hash === 'historial') return { pantalla: 'historial' };
   if (hash === 'clientes') return { pantalla: 'clientes' };
+  if (hash === 'contabilidad') return { pantalla: 'contabilidad' };
 
   const ficha = /^cliente\/(.+)$/.exec(hash);
   if (ficha) {
@@ -38,6 +40,8 @@ function aHash(ruta: Ruta): string {
       return '#historial';
     case 'clientes':
       return '#clientes';
+    case 'contabilidad':
+      return '#contabilidad';
     case 'cliente':
       return `#cliente/${ruta.codigo ? encodeURIComponent(ruta.codigo) : 'nuevo'}`;
     default:

@@ -109,6 +109,119 @@ eBot en su propio bloque cuando lleva eBot.
 
 ---
 
+## El ITBMS, aparte y bloque por bloque
+
+Ningún precio publicado incluye el ITBMS. La tasa vive en
+[`datos/precios.json`](../datos/precios.json) → `impuestos.itbms` y se aplica con
+`conImpuesto` **sobre cada bloque por separado**: el pago único lleva su impuesto
+y lo mensual el suyo. Es la regla 1 llevada al impuesto: no existe un total que
+mezcle los dos, con impuesto ni sin él. En un rango se calcula en los dos
+extremos. El PDF, la pantalla y el mensaje de WhatsApp enseñan lo publicado, el
+impuesto y el total con impuesto, y declaran que los precios no lo incluyen.
+
+El PDF es un documento de oficina, no una pieza de campaña: papel blanco, el
+logo en su color, una franja con fecha, vigencia y moneda, «preparada para» y
+«preparada por» a dos columnas, una tabla ligera, y los totales en dos tarjetas
+claras separadas. El naranja queda para el símbolo y un filete corto sobre cada
+sección; el resto es tinta y gris. Pensado para que lo firme un despacho de
+abogados, un arquitecto o un consultorio sin que parezca publicidad.
+
+El PDF también lleva el RUC o la cédula del cliente cuando se escribe, el detalle
+con cantidad, precio e importe por renglón, y un espacio para firmar y fechar.
+
+---
+
+## Los cobros
+
+Una propuesta **aceptada** tiene su libro de cobros (botón «Cobros» en el
+historial). Es el mismo criterio del libro de D'Casa:
+
+- **El saldo es la suma del libro**, no una columna. Lo debido sale del documento
+  guardado con la misma cuenta del PDF (`debidoCentavos`: el pago único más su
+  ITBMS); lo cobrado, de sumar los asientos.
+- **Lo escrito no se edita ni se elimina.** Dos disparadores de la base
+  (`migraciones/0003_cobros.sql`) lo impiden. Un cobro mal puesto se corrige con
+  un asiento contrario con motivo; los dos quedan a la vista y cada cobro se
+  corrige una sola vez.
+- **Solo el pago único.** Lo mensual no pasa por el libro, y no existe un total
+  que lo mezcle (regla 2).
+- **Con un rango sin cerrar no hay cifra que cobrar**, y el libro no deja
+  registrar nada hasta emitir la versión definitiva.
+- **Etapas del pago.** Si todo lo que se cobra dice «50 % al empezar», el panel
+  enseña las dos etapas y cuál ya está cubierta; las dos suman exactamente lo
+  debido (la segunda se queda con el centavo que sobre). Si la propuesta mezcla
+  formas de cobro —un plan web con un diagnóstico «completo por adelantado»—, no
+  hay etapas: no existe una regla única que la parta, y no se inventa un calendario
+  de pagos que ningún documento publica.
+- No se cobra de más (un saldo a favor es una decisión que este libro todavía no
+  lleva), ni una propuesta que no esté aceptada, ni una que esté en la papelera.
+- Una propuesta con cobros no se puede purgar de la papelera.
+- Quién registró cada asiento sale del token de Access, nunca del cuerpo.
+
+Para activarlo en producción hay que aplicar la migración: `npm run migrar`.
+
+---
+
+## La contabilidad ligera
+
+Pantalla `#contabilidad`. Es **flujo de caja**: lo que entró y lo que salió en las
+fechas del periodo, y la pantalla lo dice junto a cada cifra. No es una utilidad
+contable ni una declaración: lo que va a la DGI lo decide la contadora.
+
+- **Gastos** (`migraciones/0004_gastos.sql`): un libro como el de cobros. No se
+  edita ni se elimina, se corrige con un asiento contrario con motivo, una sola
+  vez por gasto. El importe va **sin ITBMS** y el ITBMS de la factura del
+  proveedor, en su propia columna.
+- **Resumen del periodo**, sumando los libros: ingreso (lo cobrado sin ITBMS),
+  gastos, resultado de caja y el ITBMS por pagar o a favor (cobrado menos
+  pagado, orientativo). Cobrado por método y gastos por categoría.
+- **Cuentas por cobrar con antigüedad**: lo aceptado que no se ha cobrado entero,
+  en tramos de 0–30, 31–60, 61–90 y más de 90 días desde que se aceptó. No
+  depende del periodo elegido: una deuda de hace tres meses sigue siéndolo.
+- Todo es del **pago único**. Lo mensual no entra, y no existe un total que lo
+  mezcle (regla 2). Las cuentas puras viven en `compartido/contabilidad.ts` y las
+  usan la pantalla y el servidor, así que no pueden discrepar.
+
+- **Comparación**: cada cifra del resumen se enseña frente al periodo anterior. Un
+  mes completo se compara con el mes anterior completo (marzo contra febrero, no
+  contra «los 31 días de antes»); cualquier otro periodo, con el tramo de la misma
+  duración que lo precede.
+- **Exportar a CSV** los gastos y los cobros del periodo, para la contadora: una
+  fila por asiento, con las correcciones como filas aparte y en negativo, igual que
+  en el libro. Separado por punto y coma y con marca de orden de bytes (Excel en
+  español). Los importes negativos salen como números, no como texto.
+
+### Cierre de mes
+
+Pestaña «Cierre de mes» de la pantalla, y es lo que hace D'Casa con la fecha de
+bloqueo de Odoo: con el mes cerrado **no se registra ni se corrige nada** en cobros
+ni en gastos —una corrección lleva la fecha del original, así que también exige
+reabrir—, y lo que se mandó a la contadora no cambia debajo de ella.
+
+- Una **lista de chequeo con datos reales**. Solo una comprobación impide cerrar:
+  que el mes ya haya terminado. Las demás avisan (mes anterior cerrado, gastos
+  registrados, lo aceptado en el mes con algún cobro).
+- Es un **historial**, no una bandera: se cierra y se reabre, y cada vez queda
+  escrito quién, cuándo y —al reabrir— por qué. La base impide editar o borrar ese
+  rastro (`migraciones/0005_cierres.sql`).
+- Al cerrar se guarda una **foto del resumen** tal como estaba ese día.
+- El bloqueo lo imponen los caminos que escriben (`exigirMesAbierto` en
+  `worker/contabilidad.ts`), y `worker/libros.test.ts` comprueba cada uno.
+- Cualquiera con acceso al hub puede cerrar y reabrir: hoy no hay roles. Es la
+  diferencia con D'Casa, donde solo lo hace la gerencia contable.
+
+Para activarlo en producción: `npm run migrar` (aplica `0003`, `0004` y `0005`).
+
+## Cómo pagar
+
+La cotización imprime «Cómo pagar» solo si `datos/marca.json` →
+`contacto.formasDePago.lista` tiene al menos una cuenta (método, titular y dato).
+Hoy está vacía a propósito: una cotización que dice «paga a este número» con un
+dato inventado es peor que una que no lo dice. Se llena con las cuentas reales de
+PanaClaw y el PDF las recoge solo.
+
+---
+
 ## El historial es del equipo, y el número lo da el servidor
 
 `PROP-2026-0001` lo llevaba el navegador de cada quien. Con una persona
@@ -241,9 +354,15 @@ abra en columnas y no estropee las tildes.
 ```bash
 npm install     # desde esta carpeta, o `npm run instalar` desde la raíz
 npm run dev     # la pantalla, en :5173
-npm test        # las reglas de precio, el PDF, el mensaje y el contrato
+npm test        # las reglas de precio, el PDF, el mensaje, el contrato y los libros
 npm run tipos   # comprobación de tipos
 ```
+
+`npm test` también corre `worker/libros.test.ts`: el código real del Worker (cobros,
+gastos, cierre de mes, purga) contra una base SQLite de verdad con las migraciones
+del repositorio aplicadas. D1 es SQLite, así que las consultas, los disparadores y
+las llaves foráneas son las de producción; solo la envoltura de D1 es un adaptador.
+Usa `node:sqlite`, que pide Node 22 o más.
 
 La pantalla sola no tiene historial ni clientes: eso lo atiende el Worker. Desde
 la raíz del repositorio, en otra terminal:
@@ -299,7 +418,8 @@ implementación y el resto de la aplicación no se entera.
 ## Lo que NO hace
 
 - **No factura.** Saca una propuesta, no un documento fiscal.
-- **No cobra.** No hay pasarela de pago ni enlace de cobro.
+- **No cobra.** No hay pasarela de pago ni enlace de cobro. Sí **registra** lo que el cliente ya pagó (ver «Los cobros») y lleva una contabilidad ligera de caja (ver «La contabilidad ligera»).
+- **No es contabilidad devengada ni declara impuestos.** No emite factura fiscal ni lleva plan de cuentas; eso lo hace la contadora.
 - **No manda correos.** Sale por WhatsApp o como archivo, y lo manda una persona.
 - **No inventa un plan.** Si el caso no encaja en ninguno, eso lo decide quien
   vende, y la respuesta oficial de la marca es decirlo.

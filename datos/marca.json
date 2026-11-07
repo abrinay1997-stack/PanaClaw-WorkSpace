@@ -385,7 +385,11 @@
     "mensajePorDefecto": "Hola PanaClaw, quiero cotizar mi sitio web",
     "horario": "Lun–Vie · 9:00 – 18:00",
     "zona": "Hora de Panamá (GMT-5)",
-    "plantillaEnlace": "https://wa.me/50765310721?text={mensaje-url-encoded}"
+    "plantillaEnlace": "https://wa.me/50765310721?text={mensaje-url-encoded}",
+    "formasDePago": {
+      "$regla": "Cómo se le paga a PanaClaw. Se imprime en la cotización, bajo «Cómo pagar», solo si hay al menos una. Cada una lleva metodo (Yappy, Transferencia…), titular y dato (número o cuenta). Vacío = la cotización no dice cómo pagar. Nunca se escribe un dato que no sea de la cuenta real de PanaClaw.",
+      "lista": []
+    }
   },
 
   "medicion": {
