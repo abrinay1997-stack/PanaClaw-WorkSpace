@@ -28,7 +28,7 @@ import { aCentavos, dolares, NOMBRE_METODO, type Metodo } from '../../../compart
 import { mensajeDe } from '../api/fallo';
 import { ES_DEMOSTRACION } from '../api/pedir';
 import { hoyISO } from '../dominio/formato';
-import { Pastilla, Seccion } from '../ui/componentes';
+import { Pastilla, Seccion, VolverAlHub } from '../ui/componentes';
 import { descargarTexto } from '../ui/csv';
 import { almacenContabilidad } from './almacenContabilidad';
 import { cobrosACsv, gastosACsv } from './exportar';
@@ -64,6 +64,7 @@ export function PantallaContabilidad({ alVolver }: { alVolver: () => void }) {
         <button type="button" className="boton boton-secundario" onClick={alVolver}>
           ← Volver al cotizador
         </button>
+        <VolverAlHub />
         <h1 className="text-lg font-semibold">Contabilidad</h1>
       </header>
 

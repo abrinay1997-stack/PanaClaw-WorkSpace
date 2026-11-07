@@ -123,3 +123,23 @@ export function Pastilla({ children, encendida = false }: { children: ReactNode;
     </span>
   );
 }
+
+/**
+ * La salida a la portada del hub.
+ *
+ * El cotizador y los clientes son una pantalla más del hub, no una aplicación
+ * aparte, y sin esto quien entra por la portada no tiene cómo volver a ella
+ * salvo la flecha del navegador (que con las direcciones `#clientes` e
+ * `#historial` tampoco lleva a la portada: lleva a la pantalla anterior).
+ *
+ * `../` y no `/`: el cotizador se sirve en `/cotizador/`, y relativo funciona
+ * igual si algún día el hub cuelga de un subdirectorio. En el servidor de
+ * desarrollo, donde la aplicación ES la raíz, apunta a sí misma.
+ */
+export function VolverAlHub({ conFlecha = false }: { conFlecha?: boolean }) {
+  return (
+    <a href="../" className="boton boton-secundario" aria-label="Volver a la portada del hub">
+      {conFlecha ? '← Hub' : 'Hub'}
+    </a>
+  );
+}
