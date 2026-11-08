@@ -1,8 +1,15 @@
 # 03 · eBot
 
-Un asistente que contesta por WhatsApp, Instagram, Messenger y Telegram las 24
-horas, con un panel donde el cliente ve cada conversación. **$499, pago único.**
-Vive en la cuenta del cliente, no en la nuestra.
+Un agente de inteligencia artificial que conoce el negocio del cliente y contesta
+por WhatsApp, Instagram, Messenger y Telegram las 24 horas, con un panel donde
+ve cada conversación. **$499, pago único.** Vive en la cuenta del cliente, no en
+la nuestra.
+
+> **Agente, no «bot».** Decisión de la dueña (8-nov-2026). Un bot repite
+> respuestas sueltas; eBot conoce el negocio —lo que se le carga— y además
+> actúa: apunta a quien pregunta, agenda citas y pasa la conversación cuando
+> toca. Son las capacidades que ya están publicadas más abajo; **no se anuncia
+> nada que no esté en esa lista.**
 
 **Cifras:** [`datos/precios.json` → `ebot`](../datos/precios.json)
 
@@ -12,9 +19,10 @@ Vive en la cuenta del cliente, no en la nuestra.
 
 ## Frase oficial
 
-> Un asistente que contesta por WhatsApp, Instagram, Messenger y Telegram las 24
-> horas, con un panel donde ves cada conversación y cada cliente nuevo. Lo
-> montamos por $499 y queda en tu cuenta, no en la nuestra.
+> Un agente de inteligencia artificial que conoce tu negocio y contesta por
+> WhatsApp, Instagram, Messenger y Telegram las 24 horas, con un panel donde ves
+> cada conversación y cada cliente nuevo. Lo montamos por $499 y queda en tu
+> cuenta, no en la nuestra.
 
 Tagline: **«Todos tus mensajes, en un solo lugar.»**
 
