@@ -20,8 +20,8 @@ tabla que te manda al resto según lo que te haya pedido el humano.
 
 Agencia de sitios web en Panamá. Vende webs que abren en menos de un segundo,
 se entregan en días en vez de meses, y cuyo código queda a nombre del cliente.
-Desde $295. Además vende un bot multicanal (eBot), ciberseguridad web,
-mantenimiento (Care) y un diagnóstico de ventas.
+Desde $295. Además vende un agente de inteligencia artificial (eBot),
+ciberseguridad web, mantenimiento (Care) y un diagnóstico de ventas.
 
 El argumento entero de la marca es **la ausencia de trampa**: precio publicado,
 plazo publicado, lista de lo que NO está incluido publicada, y el código en manos
