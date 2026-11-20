@@ -467,8 +467,8 @@
    "alta gama",
    "los mejores"
   ],
-  "emojis": "Solo en la descripción de una publicación, y solo en sus tres articulaciones.",
-  "$ejemploEmojis": "Solo en la descripción de una publicación, y solo en sus tres articulaciones.",
+  "emojis": "Solo en la descripción de una publicación, de ritmo: uno por grupo de sentido, ninguno dentro de la imagen ni pegado a una cifra que no es la cifra.",
+  "$ejemploEmojis": "Solo en la descripción de una publicación, de ritmo: uno por grupo de sentido, ninguno dentro de la imagen ni pegado a una cifra que no es la cifra.",
   "exclamaciones": false,
   "firma": "PanaClaw — sitios rápidos, código tuyo.",
   "topeDescripcion": {
@@ -480,7 +480,8 @@
   "topeHashtags": 6,
   "hashtagsConcretos": true,
   "notaObligatoriaConCifra": true,
-  "$notaNota": "Si la pieza dice una cifra o un plazo, lleva su nota de límite. Sin ella, la pieza promete sin condición y prepara una discusión."
+  "$notaNota": "Si la pieza dice una cifra o un plazo, lleva su nota de límite. Sin ella, la pieza promete sin condición y prepara una discusión.",
+  "$notaHashtags": "Nombran algo real: la marca, el país, el servicio, el producto, el precio (#desde295) o el nombre del plan (#corporate). El hashtag de precio tiene que coincidir con el importe que dice la pieza."
  },
  "antirrepeticion": {
   "$que": "Ver references/antirrepeticion.md.",

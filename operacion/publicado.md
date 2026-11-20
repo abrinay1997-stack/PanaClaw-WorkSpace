@@ -136,3 +136,35 @@ mecanismo 1. Seis de las ocho, ninguna por encima de tres.
 **Escena madre de la semana:** cintas de luz roja trenzándose sobre obsidiana
 pulida. No se repite en el siguiente lote de este público — la tabla de escenas
 por producto está en [`prompts/README.md`](../prompts/README.md).
+
+---
+
+### 2026-09 · Lote «Páginas web»
+
+Público: el que no tiene sitio · Producto: los cuatro planes web ·
+Firma: `PanaClaw — sitios rápidos, código tuyo.`
+
+| # | Puerta | Titular | Escena |
+|---|---|---|---|
+| 01 | cifra | TU PÁGINA WEB / HECHA Y PUBLICADA / EN TRES DÍAS. | proyectil de lado, cerca, estelas arriba |
+| 02 | lo que pasa si no hace nada | HOY TU NEGOCIO / VIVE EN UN PERFIL / QUE NO ES TUYO. / TE HACEMOS / TU PÁGINA WEB. | proyectil lejano y solo, estela fina |
+| 03 | objeción | EMPIEZA POR / LA MÁS PEQUEÑA. / AMPLIARLA DESPUÉS / CUESTA LO MISMO. | dos proyectiles, estelas de largo distinto |
+| 04 | cifra | carrusel · TU PÁGINA WEB SE PAGA UNA SOLA VEZ. → LA PÁGINA QUEDA PUBLICADA Y NO NOS PAGAS MÁS. → RENOVAR TU DIRECCIÓN CUESTA UNOS $15 AL AÑO. | panorámica de 3: entra, cruza, se detiene |
+| 05 | situación | CADA DÍA ESCRIBES / EL MISMO PRECIO / EN UN MENSAJE. / TU PÁGINA / LO DICE UNA VEZ. | proyectil de frente, estelas en abanico |
+| 06 | objeción | CAMBIAR UN PRECIO / O UNA FOTO / DESDE EL CELULAR, / SIN LLAMARNOS. | proyectil partido en dos mitades que viajan juntas |
+| 07 | límite | TU PÁGINA SALE / LISTA PARA QUE / GOOGLE LA LEA / ENTERA. / SALIR PRIMERO / ES OTRA COSA. | proyectil detenido, estela ya apagada |
+| 08 | mecanismo | ESTA LA HICIMOS / PARA UNA EMPRESA / PANAMEÑA. / PUEDES ABRIRLA / AHORA MISMO. | proyectil aterrizado sobre cristal negro |
+| 09 | comparación | carrusel · SI LO QUE QUIERES ES SOLO EXISTIR EN INTERNET. → SI PAGAS ANUNCIOS Y NECESITAS TENER DÓNDE CAER. → SI QUIERES PODER CAMBIARLA TÚ UN DOMINGO. → SI QUIERES COBRAR DESDE AHÍ CON YAPPY. | cadena de relevo de 4: la luz crece |
+| 10 | comparación | EL WORDPRESS / QUE TE COTIZAN / EN $1,200, / AQUÍ SON $850. | dos proyectiles, uno pesado y turbio, otro limpio |
+| 11 | límite | EL PRECIO QUE VES / ES EL PRECIO. / Y DEBAJO VA / LO QUE NO ENTRA. | proyectil seccionado, interior encendido |
+| 12 | proceso | NO HACE FALTA / QUE SEPAS NADA / DE PÁGINAS WEB. / SOLO TUS TEXTOS, / TUS FOTOS Y TU LOGO. | tres piezas sueltas encajando en un proyectil |
+
+**Puertas usadas:** cifra 2 · objeción 2 · comparación 2 · límite 2 ·
+lo que pasa si no hace nada 1 · situación 1 · mecanismo 1 · proceso 1. Las ocho,
+ninguna por encima de dos. Estrena `comparación` y `lo que pasa si no hace nada`,
+que era lo que el lote de agosto dejó pendiente.
+
+**Alturas:** 6 consecuencia · 4 hecho · 2 condición.
+
+**Escena madre del lote:** proyectil oscuro atravesando estelas de luz roja a
+alta velocidad. No se repite en el siguiente lote de este público.
