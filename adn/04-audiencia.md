@@ -86,7 +86,11 @@ sepa usarla.
 
 **Lo que abre la conversación:** **Yappy**. Que pueda cobrar como cobra hoy.
 
-**Producto:** Commerce ($1,200) + Control de inventario ($550)
+**Producto:** Commerce ($1,200) — ya trae catálogo con control de stock
+incluido en el precio. No se le suma el Control de inventario: pagar los
+$550 encima de Commerce sería pagar dos veces por lo mismo, y es el error
+que el cotizador bloquea antes de dejar emitir una propuesta
+(`cotizador/README.md`).
 **Objeción principal:** «¿y quién gestiona los pedidos?»
 **Respuesta:** el panel es suyo; la gestión diaria sigue siendo suya. No se
 promete operación.
